@@ -171,7 +171,4 @@ namespace melv
     const char* get_gamepad_button_name(SDL_GamepadButton button);
     ValueType get_input_value_type(InputKind kind);
 
-    typedef void (*KeyboardCallback)(void *userdata, KeyboardState *keyboard);
-    typedef void (*MouseCallback)(void *userdata, MouseState *mouse);
-
 } // namespace

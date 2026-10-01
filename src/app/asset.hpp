@@ -100,6 +100,27 @@ namespace melv
 
     void init_asset(Asset& asset, AssetKind kind);
 
+    enum AssetCatalogSourceType
+    {
+        CatalogFile = 0,   // read catalog from a file
+        CatalogMemory = 1, // read catalog (as text) from memory
+        CatalogUser = 2,   // user fills the catalog manually
+    };
+
+    struct AssetInitConfig
+    {
+        AssetCatalogSourceType source_type = CatalogFile;
+
+        union
+        {
+            // if source type is file
+            const char* filename;
+            // if source type is memory
+            // needs to be null terminated
+            const char* catalog;
+        } source = {};
+    };
+
     struct AssetCatalog {
         // This holds the asset description we loaded.
         // Asset names and paths reference this buffer so don't mess with it unless you know what you are doing.

@@ -416,6 +416,8 @@ namespace melv
     bool parse_assets(const char* path, AssetCatalog& catalog)
     {
         catalog.reset();
+
+        // we don't free this because it contains names and paths assets reference
         bool success = load_file_text(path, catalog.catalog);
         if (!success)
         {

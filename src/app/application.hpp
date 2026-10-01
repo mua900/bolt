@@ -67,13 +67,6 @@ namespace melv
     	BeforeCleanupCallback before_cleanup = nullptr;
     	// called after SDL and everything else is quitted
     	AfterCleanupCallback after_cleanup = nullptr;
-
-    	// called with SDL_KeyboardEvent
-    	// you can also access this from event callback but this is something more specific
-    	KeyboardCallback keyboard = nullptr;
-    	// called with SDL_MouseEvent
-    	// you can also access this from event callback but this is something more specific
-    	MouseCallback mouse = nullptr;
     };
 
     struct InitConfiguration {
@@ -89,8 +82,11 @@ namespace melv
     	const char* name = nullptr;
 
         RenderInitConfig render = {};
+        AssetInitConfig asset = {};
     };
 
+    // we need this even though there are default initializers because there are unions etc.
+    // you shouldn't rely on default initializers and call this to get default values
     InitConfiguration get_default_init_configuration();
 
     class Application {
@@ -174,7 +170,7 @@ namespace melv
         void text_input_stop();
         void toggle_text_input();
 
-        bool read_asset_catalog(String_Builder& path);
+        bool read_asset_catalog(String_Builder& path, AssetInitConfig asset_config);
 
         void render_rectangle_outline(melv::Rectangle rect, melv::Color color, bool center = true) const;
         void render_rectangle(melv::Rectangle rect, melv::Color color, bool center = true) const;

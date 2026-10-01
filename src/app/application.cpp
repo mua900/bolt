@@ -24,6 +24,9 @@ namespace melv
     	conf.render.gpuDebug = false;
     	conf.render.doLights = false;
 
+        conf.asset.source_type = CatalogFile;
+        conf.asset.source.filename = "run_tree.txt";
+
     	return conf;
     }
 
@@ -37,7 +40,7 @@ namespace melv
         String_Builder path(256);
 
         get_base_path(path);
-        if (!read_asset_catalog(path)) {
+        if (!read_asset_catalog(path, conf.asset)) {
             log_error("Could not read asset catalog");
             return false;
         }
@@ -158,17 +161,36 @@ namespace melv
         active_camera = cameras.get_ref(cam);
     }
 
-    bool Application::read_asset_catalog(String_Builder& path)
+    bool Application::read_asset_catalog(String_Builder& path, AssetInitConfig asset_config)
     {
-    	// @todo let the user rename or provide a static string for this
-        const char* desc_name = "run_tree.txt";
-        path.append(make_string(desc_name));
-        bool parse_description = parse_assets(path.c_string(), catalog);
+        if (asset_config.source_type == CatalogFile)
+        {
+            const char* desc_name = asset_config.source.filename;
+            path.append(make_string(desc_name));
+            bool parse_description = parse_assets(path.c_string(), catalog);
 
-        catalog.load_context.render = &render;
-        catalog.load_context.audio = &audio_player;
+            catalog.load_context.render = &render;
+            catalog.load_context.audio = &audio_player;
 
-        return parse_description;
+            return parse_description;
+        }
+        else if (asset_config.source_type == CatalogMemory)
+        {
+            const char* description = asset_config.source.catalog;
+            bool parse_description = parse_asset_description(description, catalog, false);
+
+            catalog.load_context.render = &render;
+            catalog.load_context.audio = &audio_player;
+
+            return parse_description;
+        }
+        else if (asset_config.source_type == CatalogUser)
+        {
+            // the user wants to fill it
+            return true;
+        }
+
+        panic("Invalid asset catalog source type");
     }
 
     bool Application::reload_assets()
