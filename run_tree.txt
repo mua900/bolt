@@ -7,22 +7,27 @@
 # attributes are in key value format
 
 # font
-font file FiraSans font/Fira_Sans/FiraSans-Regular.ttf size=32
-font file FiraCode font/Fira_Code/FiraCode-Regular.ttf size=32
+font file AwesomeFont font/AwesomeFont-Regular.ttf size=32
 
 # image
 image file MyImage images/image.png mip_levels=3
 image file MyVectorImage images/image.svg
 
 # folder
-# get register all the files in the folder and assign their file names for their names
-# doesn't recurse into other folders
+# gets all the files in the folder and uses their file names for their asset names
+# this doesn't recurse into subfolders
 image folder Icons icon
 
-audio file Fantasia audio/music/Fantasia_No3.mp3
+# audio uses sdl mixer to load and playback
+# any format supported by sdl mixer is supported by this library
+audio file AwesomeTrack audio/music/track.mp3
 
 # shader
-shader file VertexShader shader/binary/vertex.spv     stage=vertex   nUniforms=1
-shader file FragmentShader shader/binary/fragment.spv stage=fragment
-# shader file VertexShader shader/binary/vertex.dxil      stage=vertex   nUniforms=1
-# shader file FragmentShader shader/binary/fragment.dxil  stage=fragment
+# the extension can be spv, dxil or msl and only relevant ones for the platforms will be loaded
+# if you want details search for 'loadShader' in the source code
+shader file VertexShader shader/binary/vertex.spv       stage=vertex   nUniforms=1
+shader file FragmentShader shader/binary/fragment.spv   stage=fragment
+shader file VertexShader shader/binary/vertex.dxil      stage=vertex   nUniforms=1
+shader file FragmentShader shader/binary/fragment.dxil  stage=fragment
+shader file VertexShader shader/binary/vertex.msl       stage=vertex   nUniforms=1
+shader file FragmentShader shader/binary/fragment.msl   stage=fragment
