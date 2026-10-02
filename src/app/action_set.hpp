@@ -5,7 +5,7 @@
 #include <util/hash_table.hpp>
 #include <util/value.hpp>
 
-namespace melv {
+namespace bolt {
 
     #define ACTION_MAX_INPUT 4
 

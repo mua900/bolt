@@ -11,7 +11,7 @@
 #include "util/math_util.hpp"
 #include "util/template.hpp"
 
-namespace melv
+namespace bolt
 {
 
     // @todo
@@ -39,7 +39,7 @@ namespace melv
     const TextureFormat RenderFormat = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
     const TextureFormat DepthFormat = SDL_GPU_TEXTUREFORMAT_D16_UNORM;
 
-    static const auto DEBUG_COLOR = melv::Colorf(0.6, 0.5, 0.4, 1.0);
+    static const auto DEBUG_COLOR = bolt::Colorf(0.6, 0.5, 0.4, 1.0);
 
     using Viewport = SDL_GPUViewport;
 
@@ -62,12 +62,12 @@ namespace melv
     const int VBufferDescriptionCountVertex = 1;
     const int VBufferDescriptionCountInstance = 2;
     const int VBufferDescriptionCountLight = 2;
-    const int VBufferDescriptionCountMax = melv::max(VBufferDescriptionCountLight, melv::max(VBufferDescriptionCountVertex, VBufferDescriptionCountInstance));
+    const int VBufferDescriptionCountMax = bolt::max(VBufferDescriptionCountLight, bolt::max(VBufferDescriptionCountVertex, VBufferDescriptionCountInstance));
 
     const int InputAttributeCountVertex = 3;
     const int InputAttributeCountInstance = 8;
     const int InputAttributeCountLight = 6;
-    const int InputAttributeCountMax = melv::max(InputAttributeCountLight, melv::max(InputAttributeCountVertex, InputAttributeCountInstance));
+    const int InputAttributeCountMax = bolt::max(InputAttributeCountLight, bolt::max(InputAttributeCountVertex, InputAttributeCountInstance));
 
     struct Vertex {
         float x = 0;
@@ -348,7 +348,7 @@ namespace melv
     };
 
     struct RenderContext {
-        melv::vec2 render_size = {};
+        bolt::vec2 render_size = {};
 
         CoordinateSpace space = {};  // what coordinate space input vertices are in
         // a view matrix is derived from this if this pointer is not null
@@ -363,7 +363,7 @@ namespace melv
         // view matrix is calculated from the camera
         // you can set a model matrix for a draw command
         // or just set the mvp
-        melv::mat4x4 mvp = {};
+        bolt::mat4x4 mvp = {};
 
         DArray<GPUBuffer> buffers = {};
         int active_vertex_buffer = 0;
@@ -441,7 +441,7 @@ namespace melv
 
         GPUTexture& get_texture(Texture handle);
 
-        melv::vec2 get_center() const { return render_size / 2; }
+        bolt::vec2 get_center() const { return render_size / 2; }
 
         bool start_render_pass();
         void end_render_pass();
@@ -482,9 +482,9 @@ namespace melv
 
         void set_mvp(mat4x4* mat, DrawMatrixUsage usage);
 
-        melv::vec2 transformWorld(melv::vec2 p) const;
-        melv::vec2 transformScreen(melv::vec2 p) const;
-        melv::Rectangle transform_rectangle(melv::Rectangle r) const;
+        bolt::vec2 transformWorld(bolt::vec2 p) const;
+        bolt::vec2 transformScreen(bolt::vec2 p) const;
+        bolt::Rectangle transform_rectangle(bolt::Rectangle r) const;
     };
 
     enum ShaderStage {
@@ -593,8 +593,8 @@ namespace melv
     void destroy_default_shaders(SDL_GPUDevice* device, DefaultShaders* shaders);
 
     // @todo
-    Texture render_text(RenderContext& render, String text, Font font, melv::Color color);
-    Text create_text(RenderContext& render, String text, Font font, melv::Color color);
+    Texture render_text(RenderContext& render, String text, Font font, bolt::Color color);
+    Text create_text(RenderContext& render, String text, Font font, bolt::Color color);
 
     // convenience
     bool draw(RenderContext& render, Draw& d, DrawGroupId groupId);

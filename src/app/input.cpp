@@ -1,6 +1,6 @@
 #include "input.hpp"
 
-namespace melv {
+namespace bolt {
 
     ValueType get_input_value_type(InputKind kind)
     {

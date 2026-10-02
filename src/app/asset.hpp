@@ -8,7 +8,7 @@
 #include "util/template.hpp"
 #include "util/log.hpp"
 
-namespace melv
+namespace bolt
 {
 
     enum AssetKind {

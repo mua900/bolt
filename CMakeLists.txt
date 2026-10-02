@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 4.0)
 
-project(melv)
+project(bolt)
 
-add_library(melv STATIC
+add_library(bolt STATIC
 	src/util/common.hpp
 	src/util/common.cpp
 	src/util/template.hpp
@@ -87,12 +87,12 @@ if (BUILD_EXAMPLE_PROGRAM)
 	)
 
 	target_include_directories(example PRIVATE src)
-	target_link_libraries(example PUBLIC melv)
+	target_link_libraries(example PUBLIC bolt)
 
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT example)
 endif()
 
-target_include_directories(melv PUBLIC src/)
+target_include_directories(bolt PUBLIC src/)
 
 add_subdirectory(vendor/SDL EXCLUDE_FROM_ALL)
 
@@ -143,7 +143,7 @@ add_subdirectory(vendor/SDL_ttf EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/SDL_net EXCLUDE_FROM_ALL)
 
 target_link_libraries(
-	melv
+	bolt
 	PUBLIC
 	SDL3::SDL3
 	SDL3_image::SDL3_image

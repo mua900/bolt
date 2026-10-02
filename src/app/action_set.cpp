@@ -1,6 +1,6 @@
 #include "action_set.hpp"
 
-namespace melv {
+namespace bolt {
 
 	void ActionSet::add_action(const char* name, Input& input)
 	{

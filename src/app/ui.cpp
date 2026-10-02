@@ -1,7 +1,7 @@
 #include "ui.hpp"
 #include "util/log.hpp"
 
-namespace melv
+namespace bolt
 {
 
     void GapBuffer::initialize(int init_buffer_size) {
@@ -154,7 +154,7 @@ namespace melv
         int cursor_pixel_x = 0;
         size_t cursor_byte = 0;
 
-        melv::Rectangle area = m_area;
+        bolt::Rectangle area = m_area;
 
         if (wrapped)
         {
@@ -217,10 +217,10 @@ namespace melv
         return pos;
     }
 
-    size_t Text_Field::calculate_cursor_from_mouse(melv::vec2 position, String string, Font font, bool wrapped)
+    size_t Text_Field::calculate_cursor_from_mouse(bolt::vec2 position, String string, Font font, bool wrapped)
     {
         int line_skip = TTF_GetFontLineSkip(font.font);
-        melv::Rectangle area = m_area;
+        bolt::Rectangle area = m_area;
         int line_count = m_line_count;
 
         int cursor_line = position.y / line_skip;
@@ -273,7 +273,7 @@ namespace melv
         return cursor_character;
     }
 
-    bool Text_Field::render_text_field_texture(RenderContext& render, Font font, melv::Color color, bool wrapped)
+    bool Text_Field::render_text_field_texture(RenderContext& render, Font font, bolt::Color color, bool wrapped)
     {
         render.destroy_texture(m_texture);  // old texture
         m_texture = {};
@@ -351,36 +351,36 @@ namespace melv
         m_selection_point = m_cursor;
     }
 
-    melv::Rectangle ResizeInfo::calculate_new_area(melv::vec2 mouse_position, int min, int max) const
+    bolt::Rectangle ResizeInfo::calculate_new_area(bolt::vec2 mouse_position, int min, int max) const
     {
-        melv::Rectangle area = initialArea;
-        melv::vec2 p = area.get_point_at_direction(direction);
-        melv::vec2 d = mouse_position - p;
+        bolt::Rectangle area = initialArea;
+        bolt::vec2 p = area.get_point_at_direction(direction);
+        bolt::vec2 d = mouse_position - p;
 
-        if (direction & melv::DirEast)
+        if (direction & bolt::DirEast)
         {
             area.x += d.x / 2;
             area.w += d.x;
         }
-        else if (direction & melv::DirWest)
+        else if (direction & bolt::DirWest)
         {
             area.x += d.x / 2;
             area.w -= d.x;
         }
 
-        if (direction & melv::DirNorth)
+        if (direction & bolt::DirNorth)
         {
             area.y += d.y / 2;
             area.h += d.y;
         }
-        else if (direction & melv::DirSouth)
+        else if (direction & bolt::DirSouth)
         {
             area.y += d.y / 2;
             area.h -= d.y;
         }
 
-        area.w = melv::clamp(min, max, area.w);
-        area.h = melv::clamp(min, max, area.h);
+        area.w = bolt::clamp(min, max, area.w);
+        area.h = bolt::clamp(min, max, area.h);
 
         return area;
     }
@@ -463,12 +463,12 @@ namespace melv
         return nullptr;
     }
 
-    void UiState::update_state(melv::vec2 window_size, RenderContext& render, const AssetCatalog& catalog) {
+    void UiState::update_state(bolt::vec2 window_size, RenderContext& render, const AssetCatalog& catalog) {
         float y_factor = window_size.y / assumed_window_size.y;
         float x_factor = window_size.x / assumed_window_size.x;
 
         for (auto& ed : editor) {
-            ed.rescale(melv::vec2(x_factor, y_factor), render, catalog);
+            ed.rescale(bolt::vec2(x_factor, y_factor), render, catalog);
         }
 
         for (auto& field : text_field) {
@@ -571,7 +571,7 @@ namespace melv
         return true;
     }
 
-    void TextEditor::rescale(melv::vec2 scale, RenderContext& render, const AssetCatalog& catalog)
+    void TextEditor::rescale(bolt::vec2 scale, RenderContext& render, const AssetCatalog& catalog)
     {
         Font font = catalog.get_font(field.fontId);
 
@@ -733,28 +733,28 @@ namespace melv
         return nullptr;
     }
 
-    melv::Rectangle Panel::get_title_area() const
+    bolt::Rectangle Panel::get_title_area() const
     {
-        return melv::Rectangle(area.x, area.y - (area.h + title_height) / 2, area.w, title_height);
+        return bolt::Rectangle(area.x, area.y - (area.h + title_height) / 2, area.w, title_height);
     }
 
-    melv::Rectangle Panel::get_icon_area(int index) const {
+    bolt::Rectangle Panel::get_icon_area(int index) const {
         ASSERT(index < tabs.get(activeTab).icons.size());
 
         float length_per_icon = iconSize + iconMargin;
-        int rowCount = melv::max(area.h / length_per_icon, 1);
+        int rowCount = bolt::max(area.h / length_per_icon, 1);
         int row = index % rowCount;
         int column = index / rowCount;
-        return melv::Rectangle(area.get_top_left() + melv::vec2(column, row) * length_per_icon, melv::vec2(iconSize));
+        return bolt::Rectangle(area.get_top_left() + bolt::vec2(column, row) * length_per_icon, bolt::vec2(iconSize));
     }
 
-    melv::Rectangle Panel::get_tab_header_area(int index) const {
+    bolt::Rectangle Panel::get_tab_header_area(int index) const {
         ASSERT(index < tabs.size());
 
-        int rowCount = melv::max(area.h / (tabHeaderSize * 2), 1);
+        int rowCount = bolt::max(area.h / (tabHeaderSize * 2), 1);
         int row = index % rowCount;
         int column = index / rowCount;
-        return melv::Rectangle(area.x + area.w / 2 + tabHeaderSize / 2 + column * tabHeaderSize,
+        return bolt::Rectangle(area.x + area.w / 2 + tabHeaderSize / 2 + column * tabHeaderSize,
                          area.y - area.h / 2 + tabHeaderSize / 2 + row * tabHeaderSize * 2,
                          tabHeaderSize, tabHeaderSize);
     }
@@ -801,28 +801,28 @@ namespace melv
         activeTab = tabIndex;
     }
 
-    melv::Rectangle ValuePanel::get_field_title_area(RenderContext& render, int tabIndex, int fieldIndex) const
+    bolt::Rectangle ValuePanel::get_field_title_area(RenderContext& render, int tabIndex, int fieldIndex) const
     {
         ValuePanelTab& tab = tabs.get_ref(tabIndex);
         ValueField& field = tab.fields.get_ref(fieldIndex);
 
         GPUTexture tex = render.get_texture(field.name.texture);
-        melv::vec2 text_scale = { float(tex.width), float(tex.height) };
+        bolt::vec2 text_scale = { float(tex.width), float(tex.height) };
         float factor = fieldSize / text_scale.y;
         text_scale.x *= factor;
         text_scale.y = fieldSize;
-        melv::vec2 text_position (area.x, area.y - area.h / 2 + text_scale.y / 2);
-        return melv::Rectangle(text_position, text_scale);
+        bolt::vec2 text_position (area.x, area.y - area.h / 2 + text_scale.y / 2);
+        return bolt::Rectangle(text_position, text_scale);
     }
 
-    melv::Rectangle ValuePanel::get_field_area(int tabIndex, int fieldIndex, const UiState* ui) const
+    bolt::Rectangle ValuePanel::get_field_area(int tabIndex, int fieldIndex, const UiState* ui) const
     {
         ValuePanelTab& tab = tabs.get_ref(tabIndex);
         ValueField& field = tab.fields.get_ref(fieldIndex);
 
         float width = get_field_width();
 
-        melv::vec2 top_left = area.get_top_left();
+        bolt::vec2 top_left = area.get_top_left();
 
         switch (field.type)
         {
@@ -837,81 +837,81 @@ namespace melv
                 int line_count = text_field.m_line_count;
                 float font_size = text_field.m_font_size;
                 float tf_height = (line_count == 0) ? font_size : font_size * line_count;
-                melv::vec2 tf_scale = melv::vec2(width, tf_height);
-                melv::vec2 tf_pos = melv::vec2(area.x, top_left.y + tf_height / 2);
-                return melv::Rectangle(tf_pos, tf_scale);
+                bolt::vec2 tf_scale = bolt::vec2(width, tf_height);
+                bolt::vec2 tf_pos = bolt::vec2(area.x, top_left.y + tf_height / 2);
+                return bolt::Rectangle(tf_pos, tf_scale);
             }
             case ValueSelection: {
                 ButtonGroup& group = ui->button_group.get_ref(field.ui_element);
-                melv::vec2 scale = melv::vec2(width, group.button_scale.y * group.buttons.size());
-                melv::vec2 position = melv::vec2(area.x, top_left.y + group.scale.y / 2);
-                return melv::Rectangle(position, scale);
+                bolt::vec2 scale = bolt::vec2(width, group.button_scale.y * group.buttons.size());
+                bolt::vec2 position = bolt::vec2(area.x, top_left.y + group.scale.y / 2);
+                return bolt::Rectangle(position, scale);
             }
             case ValueLabel: // fallthrough
             case ValueButton: {
-                return melv::Rectangle();
+                return bolt::Rectangle();
             }
             default: {
-                return melv::Rectangle();
+                return bolt::Rectangle();
             }
         }
     }
 
-    melv::Rectangle ValuePanel::get_tab_header_area(int index) const
+    bolt::Rectangle ValuePanel::get_tab_header_area(int index) const
     {
         ASSERT(index < tabs.size());
 
-        if (direction & melv::DirWest || direction & melv::DirEast)
+        if (direction & bolt::DirWest || direction & bolt::DirEast)
         {
-            int rowCount = melv::max(area.h / (tabHeaderSize * 2), 1);
+            int rowCount = bolt::max(area.h / (tabHeaderSize * 2), 1);
             int row = index % rowCount;
             int column = index / rowCount;
-            float x = area.x + area.w / 2 * (direction & melv::DirEast ? 1 : -1) + (tabHeaderSize / 2 + column * tabHeaderSize) * (direction & melv::DirEast ? 1 : -1);
+            float x = area.x + area.w / 2 * (direction & bolt::DirEast ? 1 : -1) + (tabHeaderSize / 2 + column * tabHeaderSize) * (direction & bolt::DirEast ? 1 : -1);
             float y = area.y - area.h / 2 + tabHeaderSize / 2 + row * tabHeaderSize * 2;
-            return melv::Rectangle(x, y,
+            return bolt::Rectangle(x, y,
                              tabHeaderSize, tabHeaderSize);
         }
-        else if (direction & melv::DirNorth || direction & melv::DirSouth)
+        else if (direction & bolt::DirNorth || direction & bolt::DirSouth)
         {
-            int columnCount = melv::max(area.w / (tabHeaderSize * 2), 1);
+            int columnCount = bolt::max(area.w / (tabHeaderSize * 2), 1);
             int column = index % columnCount;
             int row = index / columnCount;
             float x = area.x + tabHeaderSize / 2 + column * tabHeaderSize * 2;
-            float y = area.y + (direction & melv::DirSouth ? area.h : 0) + (tabHeaderSize / 2 + row * tabHeaderSize) * (direction & melv::DirSouth ? 1 : -1);
-            return melv::Rectangle(x, y,
+            float y = area.y + (direction & bolt::DirSouth ? area.h : 0) + (tabHeaderSize / 2 + row * tabHeaderSize) * (direction & bolt::DirSouth ? 1 : -1);
+            return bolt::Rectangle(x, y,
                              tabHeaderSize, tabHeaderSize);
         }
         else {
-            return melv::Rectangle();
+            return bolt::Rectangle();
         }
     }
 
-    melv::Rectangle DiscreteSlider::get_bounds() const
+    bolt::Rectangle DiscreteSlider::get_bounds() const
     {
         float elem = vertical ? element_scale.y : element_scale.x;
         float long_axis = element_count * (elem + element_gap);
-        melv::vec2 scale = vertical ? melv::vec2(element_scale.x, long_axis) : melv::vec2(long_axis, element_scale.y);
-        return melv::Rectangle(position - scale / 2, scale);
+        bolt::vec2 scale = vertical ? bolt::vec2(element_scale.x, long_axis) : bolt::vec2(long_axis, element_scale.y);
+        return bolt::Rectangle(position - scale / 2, scale);
     }
 
-    melv::vec2 DiscreteSlider::get_start() const
+    bolt::vec2 DiscreteSlider::get_start() const
     {
         float elem = vertical ? element_scale.y + element_gap : element_scale.x + element_gap;
-        melv::vec2 step = vertical ? melv::vec2(0, elem) : melv::vec2(elem, 0);
+        bolt::vec2 step = vertical ? bolt::vec2(0, elem) : bolt::vec2(elem, 0);
         float long_axis = element_count * elem;
-        melv::vec2 offset = vertical ? melv::vec2(0, long_axis / 2) : melv::vec2(long_axis / 2, 0);
+        bolt::vec2 offset = vertical ? bolt::vec2(0, long_axis / 2) : bolt::vec2(long_axis / 2, 0);
         return position - offset + step / 2;
     }
 
-    melv::vec2 DiscreteSlider::get_step() const
+    bolt::vec2 DiscreteSlider::get_step() const
     {
         float elem = vertical ? element_scale.y + element_gap : element_scale.x + element_gap;
-        return vertical ? melv::vec2(0, elem) : melv::vec2(elem, 0);
+        return vertical ? bolt::vec2(0, elem) : bolt::vec2(elem, 0);
     }
 
-    melv::vec2 DiscreteSlider::get_button_scale() const
+    bolt::vec2 DiscreteSlider::get_button_scale() const
     {
-        melv::vec2 extraButtonSpace = vertical ? melv::vec2(0, element_gap) : melv::vec2(element_gap, 0);
+        bolt::vec2 extraButtonSpace = vertical ? bolt::vec2(0, element_gap) : bolt::vec2(element_gap, 0);
         return element_scale + extraButtonSpace;
     }
 

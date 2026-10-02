@@ -6,7 +6,7 @@
 #include "util/common.hpp"
 #include "util/template.hpp"
 
-namespace melv
+namespace bolt
 {
 
     // a track which can be set to play different audio sources one at a time

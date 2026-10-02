@@ -3,30 +3,35 @@
 
 #include "common.hpp"
 
-struct Xor32
+namespace bolt
 {
-    u32 state = 0;
 
-    Xor32() {}
-    Xor32(u32 seed)
-        : state(seed)
-    {}
-    void init(u32 seed)
+    struct Xor32
     {
-        state = seed;
-    }
-    u32 next();
-};
-u32 xor32(u32 x);
+        u32 state = 0;
 
-struct PCG
-{
-    u64 state = 0;
+        Xor32() {}
+        Xor32(u32 seed)
+            : state(seed)
+        {}
+        void init(u32 seed)
+        {
+            state = seed;
+        }
+        u32 next();
+    };
+    u32 xor32(u32 x);
 
-    void init(u64 seed);
-    u32 next();
-};
+    struct PCG
+    {
+        u64 state = 0;
 
-int random_within_range(Xor32* x, int low, int high);
+        void init(u64 seed);
+        u32 next();
+    };
+
+    int random_within_range(Xor32* x, int low, int high);
+
+} // namespace
 
 #endif // RNG_HPP

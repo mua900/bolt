@@ -2,7 +2,7 @@
 
 #include "util/file_util.hpp"
 
-namespace melv {
+namespace bolt {
 
     const u32 Magic = 0xDEFC;
     const u32 VersionNumber = 1;

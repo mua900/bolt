@@ -4,7 +4,7 @@
 #include "util/hash_table.hpp"
 #include "util/value.hpp"
 
-namespace melv
+namespace bolt
 {
 
     // generic serialization for relatively simple state

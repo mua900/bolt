@@ -4,7 +4,7 @@
 #include <SDL3/SDL.h>
 #include "util/common.hpp"
 
-namespace melv {
+namespace bolt {
 
     struct Texture
     {

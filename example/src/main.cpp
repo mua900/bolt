@@ -4,7 +4,7 @@
 #include <random>
 #include <time.h>
 
-using namespace melv;
+using namespace bolt;
 
 struct State
 {
@@ -45,7 +45,7 @@ bool initialize(void *userdata, Application *app)
 
 	ASSERT(texture.is_valid());
 
-	melv::DrawGroupId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024 * 4);
+	bolt::DrawGroupId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024 * 4);
 	if (!id.is_valid())
 	{
 		return false;
@@ -155,7 +155,7 @@ bool initialize(void *userdata, Application *app)
 	PointLight light = {
 		100, 100, 0,
 		100, 1,
-		melv::colorToHex(Colorf(1,1,1,1))
+		bolt::colorToHex(Colorf(1,1,1,1))
 	};
 
 	add_point_light(app->render, light);
@@ -181,11 +181,11 @@ void draw(void *userdata, Application *app)
 	MeshDraw draw = {};
 	draw.mesh = state->references.get(0);
 
-	melv::queue_draw_mesh(app->render, draw);
+	bolt::queue_draw_mesh(app->render, draw);
 
 	draw.mesh = state->references.get(1);
 	draw.texture = state->texture;
-	melv::queue_draw_mesh(app->render, draw);
+	bolt::queue_draw_mesh(app->render, draw);
 
 	vec2 offset = vec2(0, 0);
 	vec2 scale = vec2(1,1);
@@ -200,7 +200,7 @@ void draw(void *userdata, Application *app)
 	q.y = 100;
 	q.z = 0;
 	q.rotation = 0;
-	q.scale = melv::pack_scale(qscale);
+	q.scale = bolt::pack_scale(qscale);
 	q.color = 0xFFFFFFFF;
 
 	auto p = q;
@@ -209,19 +209,19 @@ void draw(void *userdata, Application *app)
 	p.color = 0xff0000ff;
 	p.z = 1;
 
-	melv::queue_draw_group(app->render, p, state->group);
-	melv::queue_draw_group(app->render, q, state->group);
+	bolt::queue_draw_group(app->render, p, state->group);
+	bolt::queue_draw_group(app->render, q, state->group);
 
 	q.y += 200;
-	melv::queue_draw_group(app->render, q, state->group);
+	bolt::queue_draw_group(app->render, q, state->group);
 	q.x += 200;
 	q.y += 150;
-	melv::queue_draw_group(app->render, q, state->group);
+	bolt::queue_draw_group(app->render, q, state->group);
 	q.x += 200;
-	q.color = melv::colorToHex(Colorf(1,0,0));
+	q.color = bolt::colorToHex(Colorf(1,0,0));
 	q.rotation = pack_rotation(CONSTANT_PI);
 	q.flags |= INSTANCE_FLAG_FLIP_HORIZONTAL;
-	melv::queue_draw_group(app->render, q, state->group);
+	bolt::queue_draw_group(app->render, q, state->group);
 	q.flags &= ~INSTANCE_FLAG_FLIP_HORIZONTAL;
 	q.color = 0xffffffff;
 
@@ -229,11 +229,11 @@ void draw(void *userdata, Application *app)
 	{
 		q.x = state->position[i].x;
 		q.y = state->position[i].y;
-		melv::queue_draw_group(app->render, q, state->group);
+		bolt::queue_draw_group(app->render, q, state->group);
 	}
 
 	InstanceData frame = state->animation.get_frame(vec3(-100, 100, 0.2), 0, vec2(100, 100));
-	melv::queue_draw_group(app->render, frame, state->group);
+	bolt::queue_draw_group(app->render, frame, state->group);
 }
 
 bool handleEvent(SDL_Event event, void *userdata, Application* app)
@@ -269,7 +269,7 @@ bool handleEvent(SDL_Event event, void *userdata, Application* app)
 
 		app->active_camera.zoom += zoom * 0.1f;
 
-		app->active_camera.zoom = melv::clamp(0.1, 10, app->active_camera.zoom);
+		app->active_camera.zoom = bolt::clamp(0.1, 10, app->active_camera.zoom);
 	}
 
 	return false;
@@ -314,7 +314,7 @@ void fixedUpdate(void *userdata, Application *app)
 
 int main()
 {
-	melv::Application app;
+	bolt::Application app;
 
 	State state = {};
 
@@ -330,7 +330,7 @@ int main()
 	app.user.input = handleInput;
 	app.user.update_state = &update;
 
-	InitConfiguration conf = melv::get_default_init_configuration();
+	InitConfiguration conf = bolt::get_default_init_configuration();
 	conf.render.gpuDebug = true;
 	conf.render.doLights = false;
 

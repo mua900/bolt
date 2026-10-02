@@ -1,43 +1,48 @@
 #include "rng.hpp"
 
-// https://stackoverflow.com/questions/2509679/how-to-generate-a-random-integer-number-from-within-a-range
-int random_within_range(Xor32* x, int low, int high)
+namespace bolt
 {
-    // ASSERT(high >= low);
 
-    u32 max = 0xffffffff;
+    // https://stackoverflow.com/questions/2509679/how-to-generate-a-random-integer-number-from-within-a-range
+    int random_within_range(Xor32* x, int low, int high)
+    {
+        // ASSERT(high >= low);
 
-    u32 range = 1 + high - low;
-    u32 buckets = max / range;
-    u32 limit = buckets * range;
+        u32 max = 0xffffffff;
 
-    int result = 0;
+        u32 range = 1 + high - low;
+        u32 buckets = max / range;
+        u32 limit = buckets * range;
 
-    do {
-        result = x->next();
-    } while(result >= limit);
+        int result = 0;
 
-    result /= buckets;
-    return result + low;
-}
+        do {
+            result = x->next();
+        } while(result >= limit);
 
-u32 Xor32::next()
-{
-    state ^= state << 13;
-    state ^= state >> 17;
-    state ^= state << 5;
-    return state;
-}
+        result /= buckets;
+        return result + low;
+    }
 
-// https://en.wikipedia.org/wiki/Permuted_congruential_generator
-static const u64 PCGMultiplier = 6364136223846793005u;
+    u32 Xor32::next()
+    {
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        return state;
+    }
 
-u32 PCG::next()
-{
-    u64 x = state;
-    u32 count = (u32)(x >> 61);
+    // https://en.wikipedia.org/wiki/Permuted_congruential_generator
+    static const u64 PCGMultiplier = 6364136223846793005u;
 
-    state = x * PCGMultiplier;
-    x ^= x >> 22;
-    return (u32) (x >> (22 + count));
-}
+    u32 PCG::next()
+    {
+        u64 x = state;
+        u32 count = (u32)(x >> 61);
+
+        state = x * PCGMultiplier;
+        x ^= x >> 22;
+        return (u32) (x >> (22 + count));
+    }
+
+} // namespace

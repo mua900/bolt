@@ -13,7 +13,7 @@
 #include "util/template.hpp"
 #include "util/math_util.hpp"
 
-namespace melv
+namespace bolt
 {
 
     class Application;
@@ -146,7 +146,7 @@ namespace melv
     	void user_update();
 
         void timeout();
-        void update_ui_state(melv::vec2 window_size);
+        void update_ui_state(bolt::vec2 window_size);
         void update_ui_pos();
 
         void draw_ui_state(UiState& state);
@@ -156,7 +156,7 @@ namespace melv
         void on_mouse_move();
         void mouse_move_ui(UiState& ui);
 
-        void set_text_editor_cursor(melv::Rectangle text_area, melv::Direction dir);
+        void set_text_editor_cursor(bolt::Rectangle text_area, bolt::Direction dir);
 
     	bool mouse_input_common();
 
@@ -172,12 +172,12 @@ namespace melv
 
         bool read_asset_catalog(String_Builder& path, AssetInitConfig asset_config);
 
-        void render_rectangle_outline(melv::Rectangle rect, melv::Color color, bool center = true) const;
-        void render_rectangle(melv::Rectangle rect, melv::Color color, bool center = true) const;
+        void render_rectangle_outline(bolt::Rectangle rect, bolt::Color color, bool center = true) const;
+        void render_rectangle(bolt::Rectangle rect, bolt::Color color, bool center = true) const;
 
-        Icon create_icon(AssetId image, melv::Color background);
+        Icon create_icon(AssetId image, bolt::Color background);
 
-        void render_slider(melv::Rectangle area, melv::vec2 knob_scale, float value, melv::Color slider_color, melv::Color knob_color, const Text& text) const;
+        void render_slider(bolt::Rectangle area, bolt::vec2 knob_scale, float value, bolt::Color slider_color, bolt::Color knob_color, const Text& text) const;
         void render_text_field(Text_Field& text_field) const;
         void render_text_editor(TextEditor& editor) const;
         void render_dropdown(const Drop_Down_List& list) const;
@@ -189,7 +189,7 @@ namespace melv
         bool is_minimized() const;
         bool is_maximized() const;
         bool is_fullscreen() const;
-        melv::vec2 get_window_size() const;
+        bolt::vec2 get_window_size() const;
     };
 
     void get_base_path(String_Builder& builder);

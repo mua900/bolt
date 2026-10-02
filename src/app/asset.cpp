@@ -7,7 +7,7 @@
 
 #include "config.hpp"
 
-namespace melv
+namespace bolt
 {
 
     AssetLoadResult load_asset_helper(int index, AssetCatalog& catalog);

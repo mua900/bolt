@@ -9,7 +9,7 @@
 
 #include <SDL3_image/SDL_image.h>
 
-namespace melv
+namespace bolt
 {
 
     static_assert(sizeof(Vertex) == 32);
@@ -407,10 +407,10 @@ namespace melv
         SDL_GetWindowSize(window, &render_size_x, &render_size_y);
 
         render->device = device;
-        render->render_size = melv::vec2(render_size_x, render_size_y);
+        render->render_size = bolt::vec2(render_size_x, render_size_y);
 
-        melv::mat4x4 orthographic = melv::orthographic_projection_matrix(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-        melv::mat4x4 camera = melv::camera_matrix(melv::vec2(0, 0), melv::vec2(1,1));
+        bolt::mat4x4 orthographic = bolt::orthographic_projection_matrix(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+        bolt::mat4x4 camera = bolt::camera_matrix(bolt::vec2(0, 0), bolt::vec2(1,1));
         mat4mul(&render->mvp, &orthographic, &camera);
 
         return true;
@@ -1045,41 +1045,41 @@ namespace melv
             {
                 float half_width = RenderTargetWidth/2;
                 float half_height = RenderTargetHeight/2;
-                melv::mat4x4 orthographic = melv::orthographic_projection_matrix(-half_width, half_width,
+                bolt::mat4x4 orthographic = bolt::orthographic_projection_matrix(-half_width, half_width,
                                                                                  -half_height, half_height,
                                                                                   0, 1);
 
                 vec2 cpos = camera ? camera->position : vec2(0,0);
                 vec2 cscale = camera ? vec2(camera->zoom, camera->zoom) : vec2(1,1);
 
-                melv::mat4x4 cameraMatrix = melv::camera_matrix(cpos, cscale);
+                bolt::mat4x4 cameraMatrix = bolt::camera_matrix(cpos, cscale);
                 mat4mul(&mvp, &orthographic, &cameraMatrix);
 
-                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, &mvp, sizeof(melv::mat4x4));
+                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, &mvp, sizeof(bolt::mat4x4));
                 break;
             }
             case MatrixIsModel:
             {
                 float half_width = RenderTargetWidth/2;
                 float half_height = RenderTargetHeight/2;
-                melv::mat4x4 orthographic = melv::orthographic_projection_matrix(-half_width, half_width,
+                bolt::mat4x4 orthographic = bolt::orthographic_projection_matrix(-half_width, half_width,
                                                                                  -half_height, half_height,
                                                                                   0, 1);
 
                 vec2 cpos = camera ? camera->position : vec2(0,0);
                 vec2 cscale = camera ? vec2(camera->zoom, camera->zoom) : vec2(1,1);
 
-                melv::mat4x4 cameraMatrix = melv::camera_matrix(cpos, cscale);
+                bolt::mat4x4 cameraMatrix = bolt::camera_matrix(cpos, cscale);
                 mat4mul(&mvp, &orthographic, &cameraMatrix);
 
                 mat4mul(&mvp, mat, &mvp);
 
-                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, &mvp, sizeof(melv::mat4x4));
+                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, &mvp, sizeof(bolt::mat4x4));
                 break;
             }
             case MatrixIsMVP:
             {
-                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, mat, sizeof(melv::mat4x4));
+                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, mat, sizeof(bolt::mat4x4));
                 break;
             }
         }
@@ -1923,7 +1923,7 @@ namespace melv
         }
     }
 
-    melv::vec2 RenderContext::transformWorld(melv::vec2 p) const
+    bolt::vec2 RenderContext::transformWorld(bolt::vec2 p) const
     {
         if (space == CoordinateSpace::World)
         {
@@ -1935,7 +1935,7 @@ namespace melv
         }
     }
 
-    melv::vec2 RenderContext::transformScreen(melv::vec2 p) const
+    bolt::vec2 RenderContext::transformScreen(bolt::vec2 p) const
     {
         if (space == CoordinateSpace::World)
         {
@@ -1947,11 +1947,11 @@ namespace melv
         }
     }
 
-    melv::Rectangle RenderContext::transform_rectangle(melv::Rectangle r) const
+    bolt::Rectangle RenderContext::transform_rectangle(bolt::Rectangle r) const
     {
-        melv::vec2 t = transformWorld(r.get_position());
-        melv::vec2 s = (space == CoordinateSpace::World) ? r.get_scale() * camera->zoom : r.get_scale();
-        return melv::Rectangle(t,s);
+        bolt::vec2 t = transformWorld(r.get_position());
+        bolt::vec2 s = (space == CoordinateSpace::World) ? r.get_scale() * camera->zoom : r.get_scale();
+        return bolt::Rectangle(t,s);
     }
 
     void RenderContext::set_viewport(Viewport viewport)
@@ -1959,7 +1959,7 @@ namespace melv
         SDL_SetGPUViewport(frame.render_pass, &viewport);
     }
 
-    Texture render_text(RenderContext& render, String text, Font font, melv::Color color) {
+    Texture render_text(RenderContext& render, String text, Font font, bolt::Color color) {
         SDL_Color sdl_color = { color.r, color.g, color.b, color.a };
         SDL_Surface* surface = TTF_RenderText_Solid(font.font, text.data, text.size, sdl_color);
 
@@ -1977,7 +1977,7 @@ namespace melv
         return TEXTURE_INVALID;
     }
 
-    Text create_text(RenderContext& render, String text, Font font, melv::Color color)
+    Text create_text(RenderContext& render, String text, Font font, bolt::Color color)
     {
         Texture texture = render_text(render, text, font, color);
         if (!texture.is_valid()) return Text();
@@ -2126,7 +2126,7 @@ namespace melv
 
     u16 pack_unorm16(float x, float range)
     {
-        x = melv::clamp(0, range, x);
+        x = bolt::clamp(0, range, x);
         x /= range;
         u16 rx = u16(x * float(0xffff) + 0.5f);
         return rx;
@@ -2140,8 +2140,8 @@ namespace melv
 
     u32 pack_unorm16x2(vec2 v)
     {
-        v.x = melv::clamp(0, 1, v.x);
-        v.y = melv::clamp(0, 1, v.y);
+        v.x = bolt::clamp(0, 1, v.x);
+        v.y = bolt::clamp(0, 1, v.y);
         u32 rx = u32(v.x * float(0xFFFF) + 0.5f) & 0xffff;
         u32 ry = u32(v.y * float(0xFFFF) + 0.5f) << 16;
 

@@ -5,74 +5,78 @@
 
 #include <cstdio>
 
-void log_info(const char* format, ...)
+namespace bolt
 {
-    va_list args;
-    va_start(args, format);
 
-    char buffer[256];
+    void log_info(const char* format, ...)
+    {
+        va_list args;
+        va_start(args, format);
 
-    va_list forward_args;
-    va_copy(forward_args, args);
+        char buffer[256];
 
-    int written = snprintf(buffer, 256, "INFO: ");
-    vsnprintf(buffer + written, 256 - written, format, forward_args);
+        va_list forward_args;
+        va_copy(forward_args, args);
 
-    fprintf(stderr, "%s\n", buffer);
+        int written = snprintf(buffer, 256, "INFO: ");
+        vsnprintf(buffer + written, 256 - written, format, forward_args);
 
-    va_end(args);
-}
+        fprintf(stderr, "%s\n", buffer);
 
-void log_warning(const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
+        va_end(args);
+    }
 
-    char buffer[256];
+    void log_warning(const char* format, ...)
+    {
+        va_list args;
+        va_start(args, format);
 
-    va_list forward_args;
-    va_copy(forward_args, args);
+        char buffer[256];
 
-    int written = snprintf(buffer, 256, "WARNING: ");
-    vsnprintf(buffer + written, 256 - written, format, forward_args);
+        va_list forward_args;
+        va_copy(forward_args, args);
 
-    fprintf(stderr, "%s\n", buffer);
+        int written = snprintf(buffer, 256, "WARNING: ");
+        vsnprintf(buffer + written, 256 - written, format, forward_args);
 
-    va_end(args);
-}
+        fprintf(stderr, "%s\n", buffer);
 
-void log_error(const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
+        va_end(args);
+    }
 
-    char buffer[256];
+    void log_error(const char* format, ...)
+    {
+        va_list args;
+        va_start(args, format);
 
-    va_list forward_args;
-    va_copy(forward_args, args);
+        char buffer[256];
 
-    int written = snprintf(buffer, 256, "ERROR: ");
-    vsnprintf(buffer + written, 256 - written, format, forward_args);
+        va_list forward_args;
+        va_copy(forward_args, args);
 
-    fprintf(stderr, "%s\n", buffer);
+        int written = snprintf(buffer, 256, "ERROR: ");
+        vsnprintf(buffer + written, 256 - written, format, forward_args);
 
-    va_end(args);
-}
+        fprintf(stderr, "%s\n", buffer);
 
-void log_debug(const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
+        va_end(args);
+    }
 
-    char buffer[256];
+    void log_debug(const char* format, ...)
+    {
+        va_list args;
+        va_start(args, format);
 
-    va_list forward_args;
-    va_copy(forward_args, args);
+        char buffer[256];
 
-    int written = snprintf(buffer, 256, "DEBUG: ");
-    vsnprintf(buffer + written, 256 - written, format, forward_args);
+        va_list forward_args;
+        va_copy(forward_args, args);
 
-    fprintf(stderr, "%s\n", buffer);
+        int written = snprintf(buffer, 256, "DEBUG: ");
+        vsnprintf(buffer + written, 256 - written, format, forward_args);
 
-    va_end(args);
-}
+        fprintf(stderr, "%s\n", buffer);
+
+        va_end(args);
+    }
+} // namespace

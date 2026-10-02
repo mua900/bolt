@@ -1,6 +1,6 @@
 #include "animation.hpp"
 
-namespace melv {
+namespace bolt {
 
     void SpriteAnimation::step(float delta)
     {

@@ -3,7 +3,7 @@
 
 #include "draw.hpp"
 
-namespace melv {
+namespace bolt {
 
 	enum AnimationFlags {
 		AnimationZero = 0,

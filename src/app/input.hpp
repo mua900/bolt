@@ -6,7 +6,7 @@
 
 #include <SDL3/SDL.h>
 
-namespace melv
+namespace bolt
 {
 
     using MouseButton = SDL_MouseButtonFlags;
@@ -59,13 +59,13 @@ namespace melv
     };
 
     struct MouseState {
-        melv::vec2 pos = {};
-        melv::vec2 wheel = {};
+        bolt::vec2 pos = {};
+        bolt::vec2 wheel = {};
         SDL_MouseButtonFlags buttonFlags = {};
         MouseCursor cursor = {};
         bool down = false;
 
-        melv::vec2 dragPosition = {};
+        bolt::vec2 dragPosition = {};
         bool drag = false;
     };
 

@@ -3,43 +3,48 @@
 
 #include "common.hpp"
 
-template<int Size = 8>
-struct Bitset
+namespace bolt
 {
-    u8 bits[Size];
 
-    bool in_bounds(int index)
+    template<int Size = 8>
+    struct Bitset
     {
-        return (index > 0) && (index < Size * 8);
-    }
+        u8 bits[Size];
 
-    void set_bit(int index, bool value)
-    {
-        if (!in_bounds(index))
+        bool in_bounds(int index)
         {
-            panic("Out of bounds access to bitset");
+            return (index > 0) && (index < Size * 8);
         }
 
-        int mod = index % 8;
-        if (value)
+        void set_bit(int index, bool value)
         {
-            bits[index / 8] |= BIT(mod);
-        }
-        else
-        {
-            bits[index / 8] &= ~BIT(mod);
-        }
-    }
+            if (!in_bounds(index))
+            {
+                panic("Out of bounds access to bitset");
+            }
 
-    bool read_bit(int index)
-    {
-        if (!in_bounds(index))
-        {
-            panic("Out of bounds access to bitset");
+            int mod = index % 8;
+            if (value)
+            {
+                bits[index / 8] |= BIT(mod);
+            }
+            else
+            {
+                bits[index / 8] &= ~BIT(mod);
+            }
         }
 
-        return bool(bits[(index / 8)] & BIT(index % 8));
-    }
-};
+        bool read_bit(int index)
+        {
+            if (!in_bounds(index))
+            {
+                panic("Out of bounds access to bitset");
+            }
+
+            return bool(bits[(index / 8)] & BIT(index % 8));
+        }
+    };
+
+} // namespace
 
 #endif // BITSET_HPP

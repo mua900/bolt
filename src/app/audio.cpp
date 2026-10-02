@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-namespace melv
+namespace bolt
 {
 
     bool AudioPlayer::initialize() {

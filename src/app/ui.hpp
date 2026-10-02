@@ -10,7 +10,7 @@
 #include "util/template.hpp"
 #include "util/math_util.hpp"
 
-namespace melv
+namespace bolt
 {
 
     struct Window {
@@ -30,28 +30,28 @@ namespace melv
     };
 
     struct DragInfo {
-        melv::vec2 start = {};
+        bolt::vec2 start = {};
         bool drag = false;
     };
 
     struct ResizeInfo {
-        melv::vec2 start = {};
-        melv::Rectangle initialArea = {};
-        melv::Direction direction = {};
+        bolt::vec2 start = {};
+        bolt::Rectangle initialArea = {};
+        bolt::Direction direction = {};
         bool resize = false;
 
-        melv::Rectangle calculate_new_area(melv::vec2 mouse_position, int min, int max) const;
+        bolt::Rectangle calculate_new_area(bolt::vec2 mouse_position, int min, int max) const;
     };
 
     struct Label {
         UiElementId id = {};
         Text text = {};
-        melv::vec2 position = {};  // center
-        melv::vec2 scale = {};
-        melv::Color background = {};
+        bolt::vec2 position = {};  // center
+        bolt::vec2 scale = {};
+        bolt::Color background = {};
 
         Label() {}
-        Label(Text p_text, melv::vec2 pos, melv::vec2 sca, melv::Color back) : text(p_text), position(pos), scale(sca), background(back) {}
+        Label(Text p_text, bolt::vec2 pos, bolt::vec2 sca, bolt::Color back) : text(p_text), position(pos), scale(sca), background(back) {}
     };
 
     struct TextButton {
@@ -59,12 +59,12 @@ namespace melv
         UiElementInfo info = {};
         UiUserData data = {};
         Text text = {};
-        melv::vec2 position = {};
-        melv::vec2 scale = {};
-        melv::Color background = {};
+        bolt::vec2 position = {};
+        bolt::vec2 scale = {};
+        bolt::Color background = {};
 
         TextButton() {}
-        TextButton(Text p_text, melv::vec2 pos, melv::vec2 sca, melv::Color back, bool visible = true) : info(visible), text(p_text), position(pos), scale(sca), background(back) {}
+        TextButton(Text p_text, bolt::vec2 pos, bolt::vec2 sca, bolt::Color back, bool visible = true) : info(visible), text(p_text), position(pos), scale(sca), background(back) {}
     };
 
     struct ImageButton {
@@ -72,12 +72,12 @@ namespace melv
         UiElementInfo info = {};
         UiUserData data = {};
         Texture image = {};
-        melv::vec2 position = {};
-        melv::vec2 scale = {};
-        melv::Color background = {};
+        bolt::vec2 position = {};
+        bolt::vec2 scale = {};
+        bolt::Color background = {};
 
         ImageButton() {}
-        ImageButton(Texture image, melv::vec2 pos, melv::vec2 sca, melv::Color back, bool visible = true) : info(visible), image(image), position(pos), scale(sca), background(back) {}
+        ImageButton(Texture image, bolt::vec2 pos, bolt::vec2 sca, bolt::Color back, bool visible = true) : info(visible), image(image), position(pos), scale(sca), background(back) {}
     };
 
     struct ButtonGroup {
@@ -85,13 +85,13 @@ namespace melv
         UiElementInfo info = {};
         UiUserData user = {};
         DArray<Texture> buttons = {};
-        melv::vec2 button_scale = {};
-        melv::vec2 position = {};
-        melv::vec2 scale = {};
-        melv::Color background = {};
+        bolt::vec2 button_scale = {};
+        bolt::vec2 position = {};
+        bolt::vec2 scale = {};
+        bolt::Color background = {};
 
         ButtonGroup() {}
-        ButtonGroup(UiElementId ident, melv::vec2 pos, melv::vec2 sca, melv::Color back) : id(ident), position(pos), scale(sca), background(back) {}
+        ButtonGroup(UiElementId ident, bolt::vec2 pos, bolt::vec2 sca, bolt::Color back) : id(ident), position(pos), scale(sca), background(back) {}
     };
 
     struct GapBuffer {
@@ -153,7 +153,7 @@ namespace melv
         NO_TARGET,
     };
 
-    constexpr melv::Color TextCursorColor (0x33, 0x56, 0x74, 0xDD);
+    constexpr bolt::Color TextCursorColor (0x33, 0x56, 0x74, 0xDD);
 
     struct TextSelection
     {
@@ -173,9 +173,9 @@ namespace melv
         UiElementInfo info = {};
         bool editable = false;
 
-        melv::Rectangle m_area = {};
-        melv::Color background = {};
-        melv::Color text_color = {};
+        bolt::Rectangle m_area = {};
+        bolt::Color background = {};
+        bolt::Color text_color = {};
 
         GapBuffer m_buffer = {};
         String_Builder m_text = {};
@@ -199,7 +199,7 @@ namespace melv
         Text_Field() {}
 
         // height -> empty height
-        Text_Field(AssetId font, float height, melv::Color background_color, melv::Color textColor, bool visible = true, bool is_editable = true, bool active = true)
+        Text_Field(AssetId font, float height, bolt::Color background_color, bolt::Color textColor, bool visible = true, bool is_editable = true, bool active = true)
         {
             m_font_size = height;
             fontId = font;
@@ -210,7 +210,7 @@ namespace melv
             editable = is_editable;
         }
 
-        Text_Field(melv::Rectangle area, AssetId font, melv::Color background_color, melv::Color textColor, bool visible = true, bool is_editable = true, bool active = true)
+        Text_Field(bolt::Rectangle area, AssetId font, bolt::Color background_color, bolt::Color textColor, bool visible = true, bool is_editable = true, bool active = true)
         {
             fontId = font;
             background = background_color;
@@ -221,7 +221,7 @@ namespace melv
             editable = is_editable;
         }
 
-        Text_Field(melv::Rectangle area, AssetId font, melv::Color background_color, melv::Color textColor, UiElementId ident, bool visible = true, bool is_editable = true, bool active = true)
+        Text_Field(bolt::Rectangle area, AssetId font, bolt::Color background_color, bolt::Color textColor, UiElementId ident, bool visible = true, bool is_editable = true, bool active = true)
             : id(ident)
         {
             fontId = font;
@@ -384,12 +384,12 @@ namespace melv
         }
 
         CursorScreenPosition get_cursor_from_selection(int cursor, String string, Font font, bool wrapped);
-        size_t get_cursor_from_mouse(melv::vec2 mouse_position, String string, Font font, bool wrapped);
+        size_t get_cursor_from_mouse(bolt::vec2 mouse_position, String string, Font font, bool wrapped);
 
         void calculate_cursor_from_selection(String string, Font font, bool wrapped);
-        size_t calculate_cursor_from_mouse(melv::vec2 mouse_position, String string, Font font, bool wrapped);
+        size_t calculate_cursor_from_mouse(bolt::vec2 mouse_position, String string, Font font, bool wrapped);
 
-        bool render_text_field_texture(RenderContext& render, Font font, melv::Color color, bool wrapped);
+        bool render_text_field_texture(RenderContext& render, Font font, bolt::Color color, bool wrapped);
     };
 
     struct TextEditor {
@@ -397,8 +397,8 @@ namespace melv
         MutableString name = {};
         Texture title_texture = {};  // rendered name or something else
         float title_height = 0;
-        melv::Color title_color = melv::Color();  // color of the title text
-        melv::Color title_bar_color = melv::Color();
+        bolt::Color title_color = bolt::Color();  // color of the title text
+        bolt::Color title_bar_color = bolt::Color();
 
         Icon icon1 = {};
         Icon icon2 = {};
@@ -410,7 +410,7 @@ namespace melv
         UiUserData user = {};
 
         TextEditor() {}
-        TextEditor(melv::Rectangle area, AssetId font, melv::Color background_color, melv::Color textColor, melv::Color titleColor, melv::Color titleBarColor, String editor_name, float title_height)
+        TextEditor(bolt::Rectangle area, AssetId font, bolt::Color background_color, bolt::Color textColor, bolt::Color titleColor, bolt::Color titleBarColor, String editor_name, float title_height)
             :
             field(area, font, background_color, textColor),
             name(editor_name),
@@ -418,7 +418,7 @@ namespace melv
             title_color(titleColor),
             title_bar_color(titleBarColor)
         {}
-        TextEditor(UiElementId ident, melv::Rectangle area, AssetId font, melv::Color background_color, melv::Color textColor, melv::Color titleColor, melv::Color titleBarColor, String editor_name, float title_height)
+        TextEditor(UiElementId ident, bolt::Rectangle area, AssetId font, bolt::Color background_color, bolt::Color textColor, bolt::Color titleColor, bolt::Color titleBarColor, String editor_name, float title_height)
             :
             field(area, font, background_color, textColor, ident),
             name(editor_name),
@@ -427,30 +427,30 @@ namespace melv
             title_bar_color(titleBarColor)
         {}
 
-        void rescale(melv::vec2 scale, RenderContext& render, const AssetCatalog& catalog);
+        void rescale(bolt::vec2 scale, RenderContext& render, const AssetCatalog& catalog);
 
-        melv::Rectangle get_title_area() const {
-            return melv::Rectangle(field.m_area.x, field.m_area.y - (field.m_area.h + title_height) / 2, field.m_area.w, title_height);
+        bolt::Rectangle get_title_area() const {
+            return bolt::Rectangle(field.m_area.x, field.m_area.y - (field.m_area.h + title_height) / 2, field.m_area.w, title_height);
         }
 
-        melv::Rectangle get_text_area() const {
+        bolt::Rectangle get_text_area() const {
             return field.m_area;
         }
 
-        melv::Rectangle get_icon1_area() const {
+        bolt::Rectangle get_icon1_area() const {
             float iconScale = title_height;
-            return melv::Rectangle(get_title_area().get_position() + melv::vec2(get_title_area().w / 2, 0) - melv::vec2(iconScale, 0) * 1, melv::vec2(iconScale));
+            return bolt::Rectangle(get_title_area().get_position() + bolt::vec2(get_title_area().w / 2, 0) - bolt::vec2(iconScale, 0) * 1, bolt::vec2(iconScale));
         }
-        melv::Rectangle get_icon2_area() const {
+        bolt::Rectangle get_icon2_area() const {
             float iconScale = title_height;
-            return melv::Rectangle(get_title_area().get_position() + melv::vec2(get_title_area().w / 2, 0) - melv::vec2(iconScale, 0) * 3, melv::vec2(iconScale));
+            return bolt::Rectangle(get_title_area().get_position() + bolt::vec2(get_title_area().w / 2, 0) - bolt::vec2(iconScale, 0) * 3, bolt::vec2(iconScale));
         }
-        melv::Rectangle get_icon3_area() const {
+        bolt::Rectangle get_icon3_area() const {
             float iconScale = title_height;
-            return melv::Rectangle(get_title_area().get_position() + melv::vec2(get_title_area().w / 2, 0) - melv::vec2(iconScale, 0) * 5, melv::vec2(iconScale));
+            return bolt::Rectangle(get_title_area().get_position() + bolt::vec2(get_title_area().w / 2, 0) - bolt::vec2(iconScale, 0) * 5, bolt::vec2(iconScale));
         }
 
-        void set_position(melv::vec2 pos) {
+        void set_position(bolt::vec2 pos) {
             field.m_area.x = pos.x;
             field.m_area.y = pos.y;
         }
@@ -476,21 +476,21 @@ namespace melv
 
         UiElementId id = {};
 
-        melv::vec2 pos = {};
-        melv::vec2 scale = {};
+        bolt::vec2 pos = {};
+        bolt::vec2 scale = {};
         int selected = DROP_DOWN_LIST_SELECTED_SENTINEL;
         Text title = {};
         DArray<Entry> options = {};
-        melv::Color title_color = {};
-        melv::Color option_color = {};
-    	melv::Color text_color = {};
+        bolt::Color title_color = {};
+        bolt::Color option_color = {};
+    	bolt::Color text_color = {};
         bool open = false;
 
         void toggle() {
             open = !open;
         }
 
-        void set_area(melv::vec2 p_pos, melv::vec2 p_scale) {
+        void set_area(bolt::vec2 p_pos, bolt::vec2 p_scale) {
             pos = p_pos; scale = p_scale;
         }
 
@@ -531,19 +531,19 @@ namespace melv
             return options.get(index).index;
         }
 
-        melv::Rectangle get_area() const
+        bolt::Rectangle get_area() const
         {
             if (open) {
                 int count = options.size();
-                return melv::Rectangle(pos.x, pos.y + (float(count) / 2) * scale.y, scale.x, scale.y * count);
+                return bolt::Rectangle(pos.x, pos.y + (float(count) / 2) * scale.y, scale.x, scale.y * count);
             }
             else {
-                return melv::Rectangle(pos, scale);
+                return bolt::Rectangle(pos, scale);
             }
         }
 
-        melv::Rectangle get_option_area(int i) const {
-            return melv::Rectangle(pos.x, pos.y + scale.y * (i+1), scale.x, scale.y);
+        bolt::Rectangle get_option_area(int i) const {
+            return bolt::Rectangle(pos.x, pos.y + scale.y * (i+1), scale.x, scale.y);
         }
 
         void remove_option(int index, RenderContext& render) {
@@ -565,7 +565,7 @@ namespace melv
         }
 
         Drop_Down_List() {}
-        Drop_Down_List(melv::vec2 p_pos, melv::vec2 p_scale) : pos(p_pos), scale(p_scale) {}
+        Drop_Down_List(bolt::vec2 p_pos, bolt::vec2 p_scale) : pos(p_pos), scale(p_scale) {}
 
         void reset() {
             title.clear();
@@ -580,19 +580,19 @@ namespace melv
     struct PanelTab {
         Icon tabIcon = {};
         DArray<IconButton> icons = {};
-        melv::Color color = {};
+        bolt::Color color = {};
 
         PanelTab() {}
-        PanelTab(Icon tab, DArray<IconButton> icons, melv::Color color) : tabIcon(tab), icons(icons), color(color) {}
+        PanelTab(Icon tab, DArray<IconButton> icons, bolt::Color color) : tabIcon(tab), icons(icons), color(color) {}
     };
 
     struct Panel {
         UiElementId id = {};
         DragInfo drag = {};
         ResizeInfo resize = {};
-        melv::Rectangle area = {};
+        bolt::Rectangle area = {};
         float title_height = 0;
-        melv::Color title_bar_color = melv::Color();
+        bolt::Color title_bar_color = bolt::Color();
         int activeTab = 0;
         float tabHeaderSize = 0;
         float iconSize = 0;
@@ -600,12 +600,12 @@ namespace melv
         DArray<PanelTab> tabs = {};
 
         Panel() {}
-        Panel(UiElementId id, melv::Rectangle area, float headerSize, float icoSize, float margin) : id(id), area(area), tabHeaderSize(headerSize), iconSize(icoSize), iconMargin(margin) {}
+        Panel(UiElementId id, bolt::Rectangle area, float headerSize, float icoSize, float margin) : id(id), area(area), tabHeaderSize(headerSize), iconSize(icoSize), iconMargin(margin) {}
 
-        melv::Rectangle get_title_area() const;
+        bolt::Rectangle get_title_area() const;
 
-        melv::Rectangle get_icon_area(int index) const;
-        melv::Rectangle get_tab_header_area(int index) const;
+        bolt::Rectangle get_icon_area(int index) const;
+        bolt::Rectangle get_tab_header_area(int index) const;
     };
 
     enum UiValueType {
@@ -636,7 +636,7 @@ namespace melv
 
     struct ValuePanelTab {
         Icon tabIcon = {};
-        melv::Color color = {};
+        bolt::Color color = {};
         float field_height = 0;
         float field_margin = 0;
         DArray<ValueField> fields = {};
@@ -644,16 +644,16 @@ namespace melv
 
     struct ValuePanel {
         UiElementId id = {};
-        melv::Rectangle area = {};
+        bolt::Rectangle area = {};
         bool showTabs = false;
         int activeTab = 0;
         float fieldSize = 0;
         float tabHeaderSize = 0;
-        melv::Direction direction = {};
+        bolt::Direction direction = {};
         DArray<ValuePanelTab> tabs = {};
 
         ValuePanel() {}
-        ValuePanel(UiElementId ident, melv::Rectangle area, float field_size, float tab_header_size, melv::Direction dir, bool show_tabs = true)
+        ValuePanel(UiElementId ident, bolt::Rectangle area, float field_size, float tab_header_size, bolt::Direction dir, bool show_tabs = true)
             :
             id(ident),
             area(area),
@@ -666,30 +666,30 @@ namespace melv
         ValuePanelTab& get_active_tab() const;
         void switch_tabs(UiState& ui, int tabIndex);
 
-        melv::Rectangle get_tab_header_area(int index) const;
+        bolt::Rectangle get_tab_header_area(int index) const;
         float get_field_width() const { return area.w * 0.95; }
-        melv::Rectangle get_field_area(int tab, int field, const UiState* ui) const;
-        melv::Rectangle get_field_title_area(RenderContext& render, int tab, int field) const;
+        bolt::Rectangle get_field_area(int tab, int field, const UiState* ui) const;
+        bolt::Rectangle get_field_title_area(RenderContext& render, int tab, int field) const;
     };
 
     struct DiscreteSlider {
         UiElementId id = {};
 
-        melv::vec2 position = melv::vec2();
-        melv::vec2 element_scale = {};
+        bolt::vec2 position = bolt::vec2();
+        bolt::vec2 element_scale = {};
         int element_count = 0;
         int selected = 0;
         float element_gap = 0;
         bool vertical = false;
         Texture texture = {};
-        melv::Colorf outlineColor = {};
-        melv::Colorf buttonColor = {};
-        melv::Colorf inactiveColor = {};
-        melv::Colorf startColor = {};
-        melv::Colorf endColor = {};
+        bolt::Colorf outlineColor = {};
+        bolt::Colorf buttonColor = {};
+        bolt::Colorf inactiveColor = {};
+        bolt::Colorf startColor = {};
+        bolt::Colorf endColor = {};
 
         DiscreteSlider() {}
-        DiscreteSlider(UiElementId ident, melv::vec2 pos, melv::vec2 elem_scale, int elem_count, float elem_gap, bool vert, melv::Colorf outline_color, melv::Colorf button_color, melv::Colorf inactive_color, melv::Colorf start_color, melv::Colorf end_color)
+        DiscreteSlider(UiElementId ident, bolt::vec2 pos, bolt::vec2 elem_scale, int elem_count, float elem_gap, bool vert, bolt::Colorf outline_color, bolt::Colorf button_color, bolt::Colorf inactive_color, bolt::Colorf start_color, bolt::Colorf end_color)
             :
             id(ident),
             position(pos),
@@ -704,15 +704,15 @@ namespace melv
             endColor(end_color)
         {}
 
-        melv::Rectangle get_bounds() const;
-        melv::vec2 get_start() const;
-        melv::vec2 get_step() const;
-        melv::vec2 get_button_scale() const;
+        bolt::Rectangle get_bounds() const;
+        bolt::vec2 get_start() const;
+        bolt::vec2 get_step() const;
+        bolt::vec2 get_button_scale() const;
     };
 
     struct TextBox {
         Text text = {};
-        melv::Colorf background = {};
+        bolt::Colorf background = {};
     };
 
     #define TEXT_INPUT_TARGET_IS_VALID     BIT(0)
@@ -738,11 +738,11 @@ namespace melv
         TextBox hoverText = {};
 
         TextInputTarget text_input_target = {};
-        melv::vec2 assumed_window_size = {};
+        bolt::vec2 assumed_window_size = {};
 
         void reinit_text(RenderContext& render, Font font);
 
-        void update_state(melv::vec2 window_size, RenderContext& render, const AssetCatalog& catalog);
+        void update_state(bolt::vec2 window_size, RenderContext& render, const AssetCatalog& catalog);
 
         Text_Field* get_selected_text_field();
 

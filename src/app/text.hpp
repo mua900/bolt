@@ -7,7 +7,7 @@
 
 #include "draw_types.hpp"
 
-namespace melv
+namespace bolt
 {
 
     struct Font {
@@ -26,10 +26,10 @@ namespace melv
     struct Text {
         Texture texture = {};
         String string = {};
-        melv::Color color = {};
+        bolt::Color color = {};
 
         Text() {}
-        Text(Texture p_texture, String p_string, melv::Color col)
+        Text(Texture p_texture, String p_string, bolt::Color col)
             : texture(p_texture), string(p_string), color(col)
         {}
 
@@ -46,10 +46,10 @@ namespace melv
 
     struct Icon {
         Texture texture = {};
-        melv::Color background = {};
+        bolt::Color background = {};
 
         Icon () {}
-        Icon (Texture tex, melv::Color bground) : texture(tex), background(bground) {}
+        Icon (Texture tex, bolt::Color bground) : texture(tex), background(bground) {}
     };
 
     struct IconButton {
@@ -57,11 +57,11 @@ namespace melv
         UiUserData data = {};
 
         IconButton() {}
-        IconButton(Texture tex, melv::Color background) : icon(tex, background) {}
-        IconButton(Texture tex, melv::Color background, s64 n) : icon(tex, background) {
+        IconButton(Texture tex, bolt::Color background) : icon(tex, background) {}
+        IconButton(Texture tex, bolt::Color background, s64 n) : icon(tex, background) {
             data.number = n;
         }
-        IconButton(Texture tex, melv::Color background, void* ptr) : icon(tex, background) {
+        IconButton(Texture tex, bolt::Color background, void* ptr) : icon(tex, background) {
             data.ptr = ptr;
         }
     };

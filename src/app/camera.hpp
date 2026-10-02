@@ -4,18 +4,18 @@
 #include "util/common.hpp"
 #include "util/math_util.hpp"
 
-namespace melv
+namespace bolt
 {
 
     using CameraId = u32;
 
     struct Camera {
-        melv::vec2 position = {};
+        bolt::vec2 position = {};
         float zoom = {};
         float rotation = 0;
 
-        melv::vec2 world_to_screen(melv::vec2 p) const;
-        melv::vec2 screen_to_world(melv::vec2 p) const;
+        bolt::vec2 world_to_screen(bolt::vec2 p) const;
+        bolt::vec2 screen_to_world(bolt::vec2 p) const;
     };
 
     // get an camera with identity transform

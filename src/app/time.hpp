@@ -3,7 +3,7 @@
 
 #include "util/common.hpp"
 
-namespace melv
+namespace bolt
 {
 
     struct TimeInfo {
