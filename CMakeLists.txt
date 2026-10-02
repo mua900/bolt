@@ -129,7 +129,16 @@ set(SDLIMAGE_PNG  ON)
 set(SDLIMAGE_SVG  ON)
 add_subdirectory(vendor/SDL_image EXCLUDE_FROM_ALL)
 
+set(SDLMIXER_GME OFF)
+set(SDLMIXER_MOD OFF)
+set(SDLMIXER_MIDI OFF)
+set(SDLMIXER_WAVPACK OFF)
+set(SDLMIXER_OPUS OFF)
+set(SDLMIXER_OGG ON)
+set(SDLMIXER_MP3 ON)
+set(SDLMIXER_FLAC ON)
 add_subdirectory(vendor/SDL_mixer EXCLUDE_FROM_ALL)
+
 add_subdirectory(vendor/SDL_ttf EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/SDL_net EXCLUDE_FROM_ALL)
 
