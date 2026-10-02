@@ -42,6 +42,10 @@ def compile_shaders(shaders : List[str], shader_stage : str, directory : Path):
         command_dxil : str
         command_msl : str
 
+        # these two paths do different things for dxil
+        # shadercross compiles to spirv and later uses spirv-cross to convert spirv to dxil
+        # whereas if you have dxc installed it is used to directly output dxil
+
         if shader_cross_available:
             command_spv = ["shadercross", shader, "-s", "HLSL", "-d", "SPIRV", "-e", "main", "-t", shader_stage, "-o", spv_out]
             command_dxil = ["shadercross", shader, "-s", "HLSL", "-d", "DXIL", "-e", "main", "-t", shader_stage, "-o", dxil_out]

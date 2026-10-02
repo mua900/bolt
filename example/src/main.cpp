@@ -187,8 +187,8 @@ void draw(void *userdata, Application *app)
 	draw.texture = state->texture;
 	melv::queue_draw_mesh(app->render, draw);
 
-	vec2 offset = vec2(0.5, 0.2);
-	vec2 scale = vec2(1, 1);
+	vec2 offset = vec2(0, 0);
+	vec2 scale = vec2(1,1);
 
 	vec2 qscale = vec2(100, 100);
 
@@ -198,7 +198,7 @@ void draw(void *userdata, Application *app)
 
 	q.x = 100;
 	q.y = 100;
-	q.z = 1;
+	q.z = 0;
 	q.rotation = 0;
 	q.scale = melv::pack_scale(qscale);
 	q.color = 0xFFFFFFFF;
@@ -207,7 +207,7 @@ void draw(void *userdata, Application *app)
 	p.x += 10;
 	p.y += 10;
 	p.color = 0xff0000ff;
-	p.z = 0;
+	p.z = 1;
 
 	melv::queue_draw_group(app->render, p, state->group);
 	melv::queue_draw_group(app->render, q, state->group);
@@ -219,7 +219,10 @@ void draw(void *userdata, Application *app)
 	melv::queue_draw_group(app->render, q, state->group);
 	q.x += 200;
 	q.color = melv::colorToHex(Colorf(1,0,0));
+	q.rotation = pack_rotation(CONSTANT_PI);
+	q.flags |= INSTANCE_FLAG_FLIP_HORIZONTAL;
 	melv::queue_draw_group(app->render, q, state->group);
+	q.flags &= ~INSTANCE_FLAG_FLIP_HORIZONTAL;
 	q.color = 0xffffffff;
 
 	for (int i = 0; i < 1; i++)

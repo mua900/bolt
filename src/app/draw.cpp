@@ -488,10 +488,10 @@ namespace melv
             vertex_attributes[2].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
             vertex_attributes[2].offset = 0;
 
-            // rotation
+            // rotation and flags
             vertex_attributes[3].location = 3;
             vertex_attributes[3].buffer_slot = 1;
-            vertex_attributes[3].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT;
+            vertex_attributes[3].format = SDL_GPU_VERTEXELEMENTFORMAT_USHORT2;
             vertex_attributes[3].offset = OFFSETOF(InstanceData, rotation);
 
             // scale
@@ -1744,11 +1744,13 @@ namespace melv
         data.x = d.position.x;
         data.y = d.position.y;
         data.z = d.position.z;
-        data.rotation = d.rotation;
+        data.rotation = pack_rotation(d.rotation);
         data.scale = pack_scale(d.scale);
         data.color = colorToHex(d.color);
         data.sourceOffset = pack_unorm16x2(d.sourceOffset);
         data.sourceScale = pack_unorm16x2(d.sourceScale);
+        data.flags = d.flip;
+
         return queue_draw_group(render, data, groupId);
     }
 
@@ -2166,6 +2168,19 @@ namespace melv
         float x = unpack_unorm16(v & 0xffff, MaxInstanceScale);
         float y = unpack_unorm16(v >> 16, MaxInstanceScale);
         return vec2(x, y);
+    }
+
+    u16 pack_rotation(float rot)
+    {
+        rot = std::fmodf(rot, CONSTANT_TAU);
+        u16 x = (u16)((rot / CONSTANT_TAU) * float(0xFFFF));
+        return x;
+    }
+
+    float unpack_rotation(u16 rot)
+    {
+        float x = ((float) rot / float(0xFFFF)) * CONSTANT_TAU;
+        return x;
     }
 
 } // namespace

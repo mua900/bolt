@@ -43,6 +43,13 @@ namespace melv
 
     using Viewport = SDL_GPUViewport;
 
+    enum Flip {
+        FlipNone = SDL_FLIP_NONE,
+        FlipHorizontal = SDL_FLIP_HORIZONTAL,
+        FlipVertical = SDL_FLIP_VERTICAL,
+        FlipHorizontalAndVertical = SDL_FLIP_HORIZONTAL_AND_VERTICAL,
+    };
+
     enum DrawMatrixUsage
     {
         MatrixDontUse = 0, // only use view and projection matrices (default)
@@ -109,20 +116,25 @@ namespace melv
         {}
     };
 
+// must be the same in the shader
+// @todo a better way to do this
+// a common include between shaders and source or a way to automatically generate shader versions
+#define INSTANCE_FLAG_FLIP_HORIZONTAL BIT(0)
+#define INSTANCE_FLAG_FLIP_VERTICAL   BIT(1)
+
     struct InstanceData
     {
         float x = 0;
         float y = 0;
         float z = 0;
 
-        float rotation = 0;
+        u16 rotation = 0;
+        u16 flags = 0;
 
-        // x, y
         u32 scale = 0;
 
         // rgba
         u32 color = 0;
-
         // uv = vertex_uv * source_scale + source_offset
         u32 sourceOffset = 0; // x, y
         u32 sourceScale = 0;  // x, y
@@ -171,6 +183,9 @@ namespace melv
         Colorf color = {};
         vec2 sourceOffset = {};
         vec2 sourceScale = {};
+
+        // additional
+        Flip flip = FlipNone; // just negates the source scale per axis if set to flip for that axis
     };
 
     enum VertexInputType
@@ -490,13 +505,6 @@ namespace melv
         }
     };
 
-    enum Flip {
-        FlipNone = SDL_FLIP_NONE,
-        FlipHorizontal = SDL_FLIP_HORIZONTAL,
-        FlipVertical = SDL_FLIP_VERTICAL,
-        FlipHorizontalAndVertical = SDL_FLIP_HORIZONTAL_AND_VERTICAL,
-    };
-
     struct TextureAtlas
     {
         Texture texture = {};
@@ -599,6 +607,9 @@ namespace melv
 
     u32 pack_scale(vec2 v);
     vec2 unpack_scale(u32 v);
+
+    u16 pack_rotation(float rot);
+    float unpack_rotation(u16 rot);
 
 } // namespace
 
