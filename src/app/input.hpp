@@ -34,6 +34,7 @@ namespace bolt
     #define KEY_DOWN    SDL_SCANCODE_DOWN
     #define KEY_RIGHT   SDL_SCANCODE_RIGHT
     #define KEY_LEFT    SDL_SCANCODE_LEFT
+    #define KEY_ESCAPE  SDL_SCANCODE_ESCAPE
 
     #define KEYMOD_LEFT_SHIFT SDL_KMOD_LSHIFT
 

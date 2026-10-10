@@ -1,11 +1,11 @@
-#include "config.hpp"
-#include "draw.hpp"
-#include "util/math_util.hpp"
-#include "util/common.hpp"
-#include "util/log.hpp"
-#include "util/file_util.hpp"
+#include <app/config.hpp>
+#include <app/draw.hpp>
+#include <util/math_util.hpp>
+#include <util/common.hpp>
+#include <util/log.hpp>
+#include <util/file_util.hpp>
 
-#include "bundle/bundle_shaders.h"
+#include <bundle/bundle_shaders.h>
 
 #include <SDL3_image/SDL_image.h>
 

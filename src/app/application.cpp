@@ -347,13 +347,16 @@ namespace bolt
                     String input_text = make_string(text.text);
 
                     UiState* ui = get_active_ui();
-                    Text_Field* text_field = ui->get_selected_text_field();
-                    if (text_field)
+                    if (ui)
                     {
-                        Font editorFont = catalog.get_font(editor_font);
+                        Text_Field* text_field = ui->get_selected_text_field();
+                        if (text_field)
+                        {
+                            Font editorFont = catalog.get_font(editor_font);
 
-                        text_field->append_string(input_text);
-                        text_field->update_text(render, editorFont, true);
+                            text_field->append_string(input_text);
+                            text_field->update_text(render, editorFont, true);
+                        }
                     }
                     break;
                 }
@@ -688,6 +691,11 @@ namespace bolt
     bool Application::on_mouse_down()
     {
         UiState* ui = get_active_ui();
+
+        if (!ui)
+        {
+            return false;
+        }
 
     	if (mouse_input_common())
     	{

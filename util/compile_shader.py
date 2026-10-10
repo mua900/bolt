@@ -13,8 +13,10 @@ def to_spirv_cross_stage_name(stage_name : str) -> str:
         return "frag"
     elif stage_name == "compute":
         return "comp"
+    else:
+        return "invalid" # spirv-cross will produce an error
 
-def compile_shaders(shaders : List[str], shader_stage : str, directory : Path):
+def compile_shaders(shaders : List[str], shader_stage : str, directory : Path) -> bool:
     stage_argument = ""
     if shader_stage == "vertex":
         stage_argument = "vs"
@@ -22,7 +24,7 @@ def compile_shaders(shaders : List[str], shader_stage : str, directory : Path):
         stage_argument = "ps"
     else:
         print(f"Invalid shader stage argument {stage_argument}")
-        return # invalid
+        return False
 
     shader_model = "_6_0"
     target = stage_argument + shader_model
@@ -65,6 +67,8 @@ def compile_shaders(shaders : List[str], shader_stage : str, directory : Path):
 
         if shader_cross_available or (dxc_available and spirv_cross_available):
             subprocess.run(command_msl, check=True)
+
+    return True
 
 def main():
     parser = argparse.ArgumentParser()

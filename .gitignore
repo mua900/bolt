@@ -8,6 +8,7 @@ imgui.ini
 tmp/
 *.pch
 *.gch
+__pycache__
 
 run_tree/lib
 run_tree/melv

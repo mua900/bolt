@@ -118,9 +118,9 @@ namespace bolt
 
 // must be the same in the shader
 // @todo a better way to do this
-// a common include between shaders and source or a way to automatically generate shader versions
-#define INSTANCE_FLAG_FLIP_HORIZONTAL BIT(0)
-#define INSTANCE_FLAG_FLIP_VERTICAL   BIT(1)
+// a common include between shaders and source or a way to automatically generate shader versions of these
+#define INSTANCE_FLAG_FLIP_HORIZONTAL 1
+#define INSTANCE_FLAG_FLIP_VERTICAL   2
 
     struct InstanceData
     {

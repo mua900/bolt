@@ -2,8 +2,8 @@ from pathlib import Path
 import argparse
 import os.path
 
-def dump_header(contents : bytes, variable_name : str, file_name : str, directory : str):
-    with open(directory + file_name, "w") as f:
+def dump_header(contents : bytes, variable_name : str, file_name : str, directory : Path):
+    with open(directory / file_name, "w") as f:
         f.write("unsigned char " + variable_name + "[] = {\n")
         fullLines : int = len(contents) // 8
         for line in range(fullLines):
@@ -18,6 +18,24 @@ def dump_header(contents : bytes, variable_name : str, file_name : str, director
         f.write("};\n")
         f.write("unsigned int " + variable_name + "_len" + f" = {len(contents)};\n")
 
+def generate_header(file : str, var : str):
+    # output
+    directory : Path = Path(os.path.normpath(__file__)).parent.parent / "src/bundle"
+    var_name : str = None
+    if var:
+        var_name = var
+    else:
+        path = Path(file)
+        var_name = path.stem + "_" + path.suffix[1:]
+
+    print(var_name)
+
+    data : bytes
+    with open(file, "rb") as f:
+        data = f.read()
+
+    dump_header(data, var_name, var_name + ".h", directory)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-var', type=str)
@@ -25,22 +43,7 @@ def main():
 
     args = parser.parse_args()
 
-    # output
-    directory : str = os.path.dirname(os.path.normpath(__file__)) + "/../src/bundle/"
-    var_name : str
-    if args.var:
-        var_name = args.var
-    else:
-        path = Path(args.file)
-        var_name = path.stem + "_" + path.suffix[1:]
-
-    print(var_name)
-
-    data : bytes
-    with open(args.file, "rb") as f:
-        data = f.read()
-
-    dump_header(data, var_name, var_name + ".h", directory)
+    generate_header(args.file, args.var)
 
 if __name__ == "__main__":
     main()

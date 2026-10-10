@@ -16,6 +16,18 @@ void draw(void *user, bolt::Application *app)
 
 bool handleEvent(SDL_Event event, void* user, bolt::Application *app)
 {
+	if (event.type == SDL_EVENT_KEY_DOWN)
+	{
+		switch (event.key.scancode)
+		{
+			case KEY_ESCAPE:
+			{
+				app->quit = true;
+				return true;
+			}
+		}
+	}
+
 	return false;
 }
 
