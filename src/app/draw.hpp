@@ -116,20 +116,13 @@ namespace bolt
         {}
     };
 
-// must be the same in the shader
-// @todo a better way to do this
-// a common include between shaders and source or a way to automatically generate shader versions of these
-#define INSTANCE_FLAG_FLIP_HORIZONTAL 1
-#define INSTANCE_FLAG_FLIP_VERTICAL   2
-
     struct InstanceData
     {
         float x = 0;
         float y = 0;
         float z = 0;
 
-        u16 rotation = 0;
-        u16 flags = 0;
+        float rotation = 0;
 
         u32 scale = 0;
 

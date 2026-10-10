@@ -219,10 +219,8 @@ void draw(void *userdata, Application *app)
 	bolt::queue_draw_group(app->render, q, state->group);
 	q.x += 200;
 	q.color = bolt::colorToHex(Colorf(1,0,0));
-	q.rotation = pack_rotation(CONSTANT_PI);
-	q.flags |= INSTANCE_FLAG_FLIP_HORIZONTAL;
+	q.rotation = CONSTANT_PI;
 	bolt::queue_draw_group(app->render, q, state->group);
-	q.flags &= ~INSTANCE_FLAG_FLIP_HORIZONTAL;
 	q.color = 0xffffffff;
 
 	for (int i = 0; i < 1; i++)

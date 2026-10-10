@@ -491,7 +491,7 @@ namespace bolt
             // rotation and flags
             vertex_attributes[3].location = 3;
             vertex_attributes[3].buffer_slot = 1;
-            vertex_attributes[3].format = SDL_GPU_VERTEXELEMENTFORMAT_USHORT2;
+            vertex_attributes[3].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT;
             vertex_attributes[3].offset = OFFSETOF(InstanceData, rotation);
 
             // scale
@@ -1744,12 +1744,12 @@ namespace bolt
         data.x = d.position.x;
         data.y = d.position.y;
         data.z = d.position.z;
-        data.rotation = pack_rotation(d.rotation);
+        data.rotation = d.rotation;
         data.scale = pack_scale(d.scale);
         data.color = colorToHex(d.color);
         data.sourceOffset = pack_unorm16x2(d.sourceOffset);
         data.sourceScale = pack_unorm16x2(d.sourceScale);
-        data.flags = d.flip;
+        //data.flags = d.flip;
 
         return queue_draw_group(render, data, groupId);
     }
