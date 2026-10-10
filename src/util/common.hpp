@@ -10,6 +10,10 @@
 #include <cstdarg>
 #include <cstddef>
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 // C++
 #include <utility>
 
@@ -38,8 +42,6 @@ namespace bolt
     u64 pop_count(u64 x);
 
     #ifdef _MSC_VER
-
-    #include <intrin.h>
 
     #define NORETURN __declspec(noreturn)
 
@@ -135,41 +137,6 @@ namespace bolt
         static const char* PathSeparator = "/";
         static const char* NewLine = "\n";
     #endif
-
-    static inline bool is_digit(char c)
-    {
-        return c >= '0' && c <= '9';
-    }
-
-    static inline bool is_alpha_lower(char c)
-    {
-        return c >= 'a' && c <= 'z';
-    }
-
-    static inline bool is_alpha_upper(char c)
-    {
-        return c >= 'A' && c <= 'Z';
-    }
-
-    static inline bool is_alpha(char c)
-    {
-        return is_alpha_lower(c) || is_alpha_upper(c);
-    }
-
-    static inline bool is_space(char c)
-    {
-        return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-    }
-
-    static inline char to_lower_ascii(char c)
-    {
-        return is_alpha_upper(c) ? (c - 'A' + 'a') : (c);
-    }
-
-    static inline char to_upper_ascii(char c)
-    {
-        return is_alpha_lower(c) ? (c - 'a' + 'A') : (c);
-    }
 
 } // namespace
 

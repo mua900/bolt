@@ -8,6 +8,7 @@
 #include "time.hpp"
 #include "camera.hpp"
 #include "action_set.hpp"
+#include "editor.hpp"
 
 #include "util/common.hpp"
 #include "util/template.hpp"
@@ -23,6 +24,7 @@ namespace bolt
         bool active = false;
     };
 
+    // userdata is included in the Application but maybe this is convenient
     typedef bool (*InitCallback)(void *userdata, Application* app);
     typedef bool (*EventCallback)(SDL_Event event, void *userdata, Application* app);
     typedef void (*InputCallback)(void *userdata, Application* app);
@@ -33,7 +35,8 @@ namespace bolt
     typedef void (*UpdateFunction)(void *userdata, Application* app);
     typedef void (*FixedUpdateFunction)(void *userdata, Application* app);
 
-    struct UpdateState {
+    struct UpdateState
+    {
         UpdateFunction update = nullptr;
         FixedUpdateFunction fixedUpdate = nullptr;
         s64 ticks = 0;
@@ -48,7 +51,7 @@ namespace bolt
     // user code can set them however it wants
     struct UserData {
     	// passed to every single user function
-    	void* userdata = nullptr;
+    	void *userdata = nullptr;
 
     	UpdateState* update_state = {};
 
@@ -56,10 +59,10 @@ namespace bolt
     	InitCallback init = nullptr;
     	// called with an event before application tries to process it itself
     	// use this to react to one time events
-    	// if this returns true, the application will consider that event consumed and won't process it
+    	// if this returns true, the application will consider that event consumed and will not process it
     	EventCallback event = nullptr;
     	// called after all events are processed.
-    	// you can read a snapshot of the input state as it is recorded in application
+    	// you can read a snapshot of the input state as it is recorded
     	InputCallback input = nullptr;
     	// called with user data in draw()
     	DrawCallback draw = nullptr;
@@ -89,11 +92,12 @@ namespace bolt
     // you shouldn't rely on default initializers and call this to get default values
     InitConfiguration get_default_init_configuration();
 
+    typedef u32 UiStateId;
+
     class Application {
     public:
     	// you can directly access everything here
     	// maybe be careful with doing_text_input
-    	// also if you set render context's coordinate space to be world, you need to give it a camera pointer
 
         Window window = {};
         RenderContext render = {};
@@ -101,9 +105,12 @@ namespace bolt
         InputState input = {};
         AssetCatalog catalog = {};
 
+        EditorState editor = {};
+
         ActionSet actions = {};
 
         DArray<UiState> uiStates = {};
+        UiStateId active_ui_state = 0;
 
         TimeInfo timeInfo = {};
 

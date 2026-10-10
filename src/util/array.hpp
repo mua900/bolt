@@ -110,22 +110,27 @@ namespace bolt
 		}
 
 		T get(int index) const {
-			if (index >= m_size) panic("Out of bounds array access");
+			if (!in_bounds(index)) panic("Out of bounds array access");
 			return m_data[index];
 		}
 
 		T get_or_default(int index) const {
-			if (index >= m_size) return T();
+			if (!in_bounds(index)) return T();
 			return m_data[index];
 		}
 
 		T& get_ref(int index) const {
-			if (index >= m_size) panic("Out of bounds array access");
+			if (!in_bounds(index)) panic("Out of bounds array access");
 			return m_data[index];
 		}
 
 		T* get_ptr(int index) const {
-			if (index >= m_size) panic("Out of bounds array access");
+			if (!in_bounds(index)) panic("Out of bounds array access");
+			return &m_data[index];
+		}
+
+		T* get_ptr_or_null(int index) const {
+			if (!in_bounds(index)) return nullptr;
 			return &m_data[index];
 		}
 
@@ -197,7 +202,7 @@ namespace bolt
 
 			m_size -= 1;
 
-			m_data[index] = m_data[m_size-1];
+			m_data[index] = m_data[m_size];
 		}
 
 		void replace(T elem, int index)
@@ -211,7 +216,11 @@ namespace bolt
 
 		void insert(T elem, int index)
 		{
-			if (m_size + 1 >= m_cap)
+			if (!in_bounds(index)) {
+				panic("Out of bounds array access");
+			}
+
+			if (m_size + 1 > m_cap)
 			{
 				grow();
 			}

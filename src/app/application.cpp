@@ -76,7 +76,8 @@ namespace bolt
 
         // window
         {
-            float scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+            // @todo use this
+            // float scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
 
             SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE |
                                     SDL_WINDOW_HIDDEN;  // show the window after the initialization is complete
@@ -261,8 +262,7 @@ namespace bolt
 
     UiState* Application::get_active_ui()
     {
-        // @todo ask the game
-        return nullptr;
+        return uiStates.get_ptr_or_null(active_ui_state);
     }
 
     void Application::handle_events()
@@ -274,10 +274,12 @@ namespace bolt
     		{
     			if (user.event(e, user.userdata, this))
     			{
-    				// continue;
+    				continue;
     			}
     		}
 
+            // @todo
+            // other device added/removed events
             switch (e.type)
             {
                 case SDL_EVENT_QUIT:
@@ -363,7 +365,7 @@ namespace bolt
                         if (!gamepad)
                         {
                             log_error("Couldn't open gamepad: %s", SDL_GetError());
-                            return;
+                            break;
                         }
                         input.gamepads[input.gamepad_count].init(gamepad, input.gamepad_stick_epsilon);
                         input.gamepad_count += 1;
@@ -379,7 +381,7 @@ namespace bolt
                             SDL_CloseGamepad(input.gamepads[i].gamepad);
                             input.gamepads[i] = input.gamepads[input.gamepad_count];
                             input.gamepad_count -= 1;
-                            return;
+                            break;
                         }
                     }
                     break;

@@ -317,6 +317,7 @@ namespace bolt
         SDL_GPUCopyPass* copy_pass = nullptr;
     };
 
+    // @todo
     // you should set this to the correct value before drawing something
     // typically you would set this in the top draw loop to switch between things that you want to draw in the coordinate space you want
     // and also set it and back in place for exceptions

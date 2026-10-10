@@ -46,6 +46,7 @@ namespace bolt
 				delete[] m_data;
 				m_data = nullptr;
 				m_capacity = 0;
+				mark_empty();
 			}
 		}
 
@@ -70,6 +71,28 @@ namespace bolt
 
 			m_data = new_buffer;
 			m_capacity = size;
+		}
+
+		LinearBuffer() {}
+
+		LinearBuffer(LinearBuffer& buffer)
+		{
+			resize(buffer.m_capacity);
+			for (int i = 0; i < m_capacity; i++)
+			{
+				m_data[i] = buffer[m_data];
+			}
+
+			mark_full();
+		}
+
+		LinearBuffer(LinearBuffer&& buffer)
+		{
+			m_data = buffer.m_data;
+			m_capacity = buffer.m_capacity;
+			mark_full();
+
+			buffer.reset();
 		}
 
 		~LinearBuffer()

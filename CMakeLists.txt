@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 4.0)
+# you can change this to whatever suits you
+# there shouldn't be anything that actually requires a specific version if you aren't using a really old one
+cmake_minimum_required(VERSION 3.31)
 
 project(bolt)
 
@@ -44,6 +46,8 @@ add_library(bolt STATIC
 	src/app/net.cpp
 	src/app/action_set.hpp
 	src/app/action_set.cpp
+	src/app/editor.hpp
+	src/app/editor.cpp
 	src/app/config.hpp
 	src/app/platform.hpp
 	src/app/platform.cpp
@@ -69,9 +73,9 @@ add_library(bolt STATIC
 	src/bundle/fragment_light_msl.h
 )
 
-option(BUILD_EXAMPLE_PROGRAM "Build the example program" OFF)
+option(BUILD_EXAMPLE_PROGRAMS "Build the example programs" OFF)
 
-if (BUILD_EXAMPLE_PROGRAM)
+if (BUILD_EXAMPLE_PROGRAMS)
 	# For multi-config generators (Visual Studio, Xcode)
 	foreach(CONFIG ${CMAKE_CONFIGURATION_TYPES})
 	    string(TOUPPER ${CONFIG} CONFIG_UPPER)
@@ -86,8 +90,15 @@ if (BUILD_EXAMPLE_PROGRAM)
 		example/src/main.cpp
 	)
 
+	add_executable(
+		example_editor
+		example/src/example_editor.cpp
+	)
+
 	target_include_directories(example PRIVATE src)
+	target_include_directories(example_editor PRIVATE src)
 	target_link_libraries(example PUBLIC bolt)
+	target_link_libraries(example_editor PUBLIC bolt)
 
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT example)
 endif()
