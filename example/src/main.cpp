@@ -155,7 +155,7 @@ bool initialize(void *userdata, Application *app)
 	PointLight light = {
 		100, 100, 0,
 		100, 1,
-		bolt::colorToHex(Colorf(1,1,1,1))
+		bolt::colorToHex(Colorf(1,1,0,1))
 	};
 
 	add_point_light(app->render, light);
@@ -330,7 +330,7 @@ int main()
 
 	InitConfiguration conf = bolt::get_default_init_configuration();
 	conf.render.gpuDebug = true;
-	conf.render.doLights = false;
+	conf.render.doLights = true;
 
 	if (!app.initialize(conf))
 	{

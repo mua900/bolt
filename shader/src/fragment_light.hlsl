@@ -1,11 +1,19 @@
 struct PSInput {
     float4 position : SV_POSITION;
-    float radius : TEXCOORD0;
-    float brightness : TEXCOORD1;
-    float4 color : TEXCOORD2;
+    float2 local_position : TEXCOORD0;
+    float radius : TEXCOORD1;
+    float brightness : TEXCOORD2;
+    float4 color : TEXCOORD3;
 };
 
 void main(PSInput input, out float4 fragColor : SV_Target)
 {
-    fragColor = float4(1,1,1,1);//input.color * input.brightness;
+    float distance = length(input.local_position * 2.0);
+
+    clip(1.0 - distance);
+
+    float falloff = saturate(1.0 - distance);
+    falloff = pow(falloff, 0.7);
+    float4 color = float4(input.color.rgb * input.brightness, input.color.a) * falloff;
+    fragColor = color * falloff;
 }

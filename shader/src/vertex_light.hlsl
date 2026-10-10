@@ -13,17 +13,19 @@ struct VSInput {
 
 struct VSOutput {
     float4 position : SV_POSITION;
-    float radius : TEXCOORD0;
-    float brightness : TEXCOORD1;
-    float4 color : TEXCOORD2;
+    float2 local_position : TEXCOORD0;
+    float radius : TEXCOORD1;
+    float brightness : TEXCOORD2;
+    float4 color : TEXCOORD3;
 };
 
 VSOutput main(VSInput input)
 {
-    float3 position = input.light_position + float3(input.position * input.radius, 0);
+    float3 position = input.light_position + float3(input.position * input.radius * 2.0, 0);
 
     VSOutput output;
     output.position = mul(ModelViewProjection, float4(position, 1.0));
+    output.local_position = input.position;
     output.radius = input.radius;
     output.brightness = input.brightness;
     output.color = input.color;

@@ -1,10 +1,5 @@
 #include "utility.hlsli"
 
-// @todo a better way to do this
-// a common include between shaders and source or a way to automatically generate shader versions
-#define FLAG_FLIP_HORIZONTAL 1
-#define FLAG_FLIP_VERTICAL   2
-
 cbuffer buffer : register(b0, space1) {
     row_major float4x4 ModelViewProjection;
 }
