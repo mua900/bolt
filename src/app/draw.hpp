@@ -78,12 +78,14 @@ namespace bolt
     const int VBufferDescriptionCountVertex = 1;
     const int VBufferDescriptionCountInstance = 2;
     const int VBufferDescriptionCountLight = 2;
-    const int VBufferDescriptionCountMax = bolt::max(VBufferDescriptionCountLight, bolt::max(VBufferDescriptionCountVertex, VBufferDescriptionCountInstance));
+    const int VBufferDescriptionCountComposition = 1;
+    const int VBufferDescriptionCountMax = bolt::max(bolt::max(VBufferDescriptionCountLight, bolt::max(VBufferDescriptionCountVertex, VBufferDescriptionCountInstance)), VBufferDescriptionCountComposition);
 
     const int InputAttributeCountVertex = 3;
     const int InputAttributeCountInstance = 8;
     const int InputAttributeCountLight = 6;
-    const int InputAttributeCountMax = bolt::max(InputAttributeCountLight, bolt::max(InputAttributeCountVertex, InputAttributeCountInstance));
+    const int InputAttributeCountComposition = 2;
+    const int InputAttributeCountMax = bolt::max(bolt::max(InputAttributeCountLight, bolt::max(InputAttributeCountVertex, InputAttributeCountInstance)), InputAttributeCountComposition);
 
     struct Vertex {
         float x = 0;
@@ -200,9 +202,10 @@ namespace bolt
 
     enum VertexInputType
     {
-        InputVertex,   // Vertex
-        InputInstance, // VertexInstance + InstanceData
-        InputLight,    // VertexInstance + PointLight
+        InputVertex,      // Vertex
+        InputInstance,    // VertexInstance + InstanceData
+        InputLight,       // VertexInstance + PointLight
+        InputComposition, // VertexInstance
     };
 
     struct GraphicsPipelineParameters
@@ -349,6 +352,8 @@ namespace bolt
         SDL_GPUShader* fragmentTexture = {};
         SDL_GPUShader* vertexLight = {};
         SDL_GPUShader* fragmentLight = {};
+        SDL_GPUShader* vertexComposition = {};
+        SDL_GPUShader* fragmentComposition = {};
     };
 
     struct RenderContext {

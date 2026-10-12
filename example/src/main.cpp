@@ -26,6 +26,7 @@ bool initialize(void *userdata, Application *app)
 
 	State* state = (State*) userdata;
 	app->render.clear_color = Colorf(0.1, 0.2, 0.2);
+	app->render.light_clear_color = Colorf(0.6, 0.4, 0.3);
 
 	for (int i = 0; i < 64; i++)
 	{

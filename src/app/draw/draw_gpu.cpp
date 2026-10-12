@@ -145,20 +145,31 @@ namespace bolt
 
             context.copy_to_swapchain(context.light_target, swapchain, swapchain_width, swapchain_height);
 
-            if (false)
+            if (!context.start_composition_pass(swapchain))
             {
-                if (!context.start_composition_pass(swapchain))
-                {
-                    context.cancel_command_buffer();
-                    return;
-                }
-
-                GraphicsPipeline& pipelineComposition = context.graphics.get(context.graphics_composition);
-                SDL_BindGPUGraphicsPipeline(context.frame.composition_pass, pipelineComposition.pipeline);
-                // @todo
-
-                context.end_composition_pass();
+                context.cancel_command_buffer();
+                return;
             }
+
+            GraphicsPipeline& pipelineComposition = context.graphics.get(context.graphics_composition);
+            SDL_BindGPUGraphicsPipeline(context.frame.composition_pass, pipelineComposition.pipeline);
+
+            {
+                SDL_GPUBufferBinding composition_vertex_binding = {};
+                SDL_GPUBufferBinding composition_index_binding = {};
+
+                composition_vertex_binding.buffer = context.buffers[context.vertex_buffer].buffer;
+                composition_vertex_binding.offset = 0;
+
+                composition_index_binding.buffer = context.buffers[context.index_buffer].buffer;
+                composition_index_binding.offset = 0;
+
+                SDL_BindGPUVertexBuffers(context.frame.composition_pass, 0, &composition_vertex_binding, 1);
+                SDL_BindGPUIndexBuffer(context.frame.composition_pass, &composition_index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+                SDL_DrawGPUIndexedPrimitives(context.frame.composition_pass, 6, 1, 0, 0, 0);
+            }
+
+            context.end_composition_pass();
         }
         else
         {
@@ -310,8 +321,6 @@ namespace bolt
 
     bool RenderContext::start_composition_pass(SDL_GPUTexture *swapchain) {
         SDL_GPURenderPass* composition_pass = nullptr;
-
-        // @todo
 
         SDL_GPUColorTargetInfo color_targets[1] = {};
         color_targets[0].texture = swapchain;
@@ -580,6 +589,29 @@ namespace bolt
                 InputAttributeCountLight                          /**< The number of vertex attribute descriptions in the above array. */
             };
         }
+        else if (parameters->input == InputComposition)
+        {
+            vertex_buffer_description[0].slot = 0;                        /**< The binding slot of the vertex buffer. */
+            vertex_buffer_description[0].pitch = sizeof(VertexInstance);                       /**< The size of a single element + the offset between elements. */
+            vertex_buffer_description[0].input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;  /**< Whether attribute addressing is a function of the vertex index or instance index. */
+
+            vertex_attributes[0].location = 0;                    /**< The shader input location index. */
+            vertex_attributes[0].buffer_slot = 0;                 /**< The binding slot of the associated vertex buffer. */
+            vertex_attributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2;  /**< The size and type of the attribute data. */
+            vertex_attributes[0].offset = 0;                      /**< The byte offset of this attribute relative to the start of the vertex element. */
+
+            vertex_attributes[1].location = 1;                    /**< The shader input location index. */
+            vertex_attributes[1].buffer_slot = 0;                 /**< The binding slot of the associated vertex buffer. */
+            vertex_attributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2;  /**< The size and type of the attribute data. */
+            vertex_attributes[1].offset = sizeof(float) * 2;                      /**< The byte offset of this attribute relative to the start of the vertex element. */
+
+           vertex_input = {
+                vertex_buffer_description,  /**< A pointer to an array of vertex buffer descriptions. */
+                VBufferDescriptionCountComposition,                          /**< The number of vertex buffer descriptions in the above array. */
+                vertex_attributes,                   /**< A pointer to an array of vertex attribute descriptions. */
+                InputAttributeCountComposition                          /**< The number of vertex attribute descriptions in the above array. */
+            };
+        }
         else
         {
             panic("Invalid graphics pipeline vertex input format");
@@ -657,12 +689,15 @@ namespace bolt
         GraphicsPipelineParameters pipeline_parameters = get_default_graphics_pipeline_parameters();
         GraphicsPipelineParameters pipeline_parameters_instance = get_default_graphics_pipeline_parameters();
         GraphicsPipelineParameters pipeline_parameters_light = get_default_graphics_pipeline_parameters();
+        GraphicsPipelineParameters pipeline_parameters_composition = get_default_graphics_pipeline_parameters();
 
         pipeline_parameters.depth_format = DepthFormat;
         pipeline_parameters_instance.depth_format = DepthFormat;
 
         pipeline_parameters_instance.input = InputInstance;
         pipeline_parameters_light.input = InputLight;
+
+        pipeline_parameters_composition.input = InputComposition;
 
         SDL_GPUGraphicsPipeline* pipeline = create_gpu_graphics_pipeline(&pipeline_parameters, render, shaders.vertex, shaders.fragment);
         if (!pipeline) {
@@ -685,10 +720,18 @@ namespace bolt
         }
 
         SDL_GPUGraphicsPipeline* pipeline_light = nullptr;
+        SDL_GPUGraphicsPipeline* pipeline_composition = nullptr;
         if (conf->doLights)
         {
             pipeline_light = create_gpu_graphics_pipeline(&pipeline_parameters_light, render, shaders.vertexLight, shaders.fragmentLight);
             if (!pipeline_light)
+            {
+                log_error("Failed to create graphics pipeline: %s", SDL_GetError());
+                return false;
+            }
+
+            pipeline_composition = create_gpu_graphics_pipeline(&pipeline_parameters_composition, render, shaders.vertexComposition, shaders.fragmentComposition);
+            if (!pipeline_composition)
             {
                 log_error("Failed to create graphics pipeline: %s", SDL_GetError());
                 return false;
@@ -843,6 +886,7 @@ namespace bolt
         render->graphics_texture = render->graphics.add(GraphicsPipeline(pipeline_parameters, pipeline_texture, true, true));
         render->graphics_instance_texture = render->graphics.add(GraphicsPipeline(pipeline_parameters_instance, pipeline_instance_texture, true, true));
         render->graphics_light = render->graphics.add(GraphicsPipeline(pipeline_parameters_light, pipeline_light, true, true));
+        render->graphics_composition = render->graphics.add(GraphicsPipeline(pipeline_parameters_composition, pipeline_composition, true, false));
         render->vertex_buffer = render->buffers.add({ vertex_buffer, GPUBufferVertex, InitVertexBufferSize, 0 });
         render->index_buffer = render->buffers.add({ index_buffer, GPUBufferIndex, InitIndexBufferSize, 0 });
         render->instance_buffer = render->buffers.add({ instance_buffer, GPUBufferVertex, InitInstanceBufferSize, 0 });
@@ -872,23 +916,29 @@ namespace bolt
         SDL_GPUShaderCreateInfo vertexInfo = {};
         SDL_GPUShaderCreateInfo vertexInstanceInfo = {};
         SDL_GPUShaderCreateInfo vertexLightInfo = {};
+        SDL_GPUShaderCreateInfo vertexCompositionInfo = {};
         SDL_GPUShaderCreateInfo fragmentInfo = {};
         SDL_GPUShaderCreateInfo fragmentTextureInfo = {};
         SDL_GPUShaderCreateInfo fragmentLightInfo = {};
+        SDL_GPUShaderCreateInfo fragmentCompositionInfo = {};
 
         vertexInfo.stage = SDL_GPU_SHADERSTAGE_VERTEX;
         vertexInstanceInfo.stage = SDL_GPU_SHADERSTAGE_VERTEX;
         vertexLightInfo.stage = SDL_GPU_SHADERSTAGE_VERTEX;
+        vertexCompositionInfo.stage = SDL_GPU_SHADERSTAGE_VERTEX;
         fragmentInfo.stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
         fragmentTextureInfo.stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
         fragmentLightInfo.stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
+        fragmentCompositionInfo.stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
 
         vertexInfo.entrypoint = "main";
         vertexInstanceInfo.entrypoint = "main";
         vertexLightInfo.entrypoint = "main";
+        vertexCompositionInfo.entrypoint = "main";
         fragmentInfo.entrypoint = "main";
         fragmentTextureInfo.entrypoint = "main";
         fragmentLightInfo.entrypoint = "main";
+        fragmentCompositionInfo.entrypoint = "main";
 
         // mvp
         vertexInfo.num_uniform_buffers = 1;
@@ -898,7 +948,7 @@ namespace bolt
         fragmentTextureInfo.num_storage_textures = 1;
         fragmentTextureInfo.num_samplers = 1;
 
-        // @todo other shader formats
+        // @todo uniforms for composition fragment shader
 
         SDL_GPUShaderFormat shaderFormat = SDL_GetGPUShaderFormats(device);
         if (shaderFormat & SDL_GPU_SHADERFORMAT_DXIL)
@@ -906,9 +956,11 @@ namespace bolt
             vertexInfo.format = SDL_GPU_SHADERFORMAT_DXIL;
             vertexInstanceInfo.format = SDL_GPU_SHADERFORMAT_DXIL;
             vertexLightInfo.format = SDL_GPU_SHADERFORMAT_DXIL;
+            vertexCompositionInfo.format = SDL_GPU_SHADERFORMAT_DXIL;
             fragmentInfo.format = SDL_GPU_SHADERFORMAT_DXIL;
             fragmentTextureInfo.format = SDL_GPU_SHADERFORMAT_DXIL;
             fragmentLightInfo.format = SDL_GPU_SHADERFORMAT_DXIL;
+            fragmentCompositionInfo.format = SDL_GPU_SHADERFORMAT_DXIL;
 
             vertexInfo.code_size = vertex_dxil_len;
             vertexInfo.code = vertex_dxil;
@@ -916,21 +968,27 @@ namespace bolt
             vertexInstanceInfo.code = vertex_instance_dxil;
             vertexLightInfo.code_size = vertex_light_dxil_len;
             vertexLightInfo.code = vertex_light_dxil;
+            vertexCompositionInfo.code = vertex_composition_dxil;
+            vertexCompositionInfo.code_size = vertex_composition_dxil_len;
             fragmentInfo.code_size = fragment_dxil_len;
             fragmentInfo.code = fragment_dxil;
             fragmentTextureInfo.code_size = fragment_texture_dxil_len;
             fragmentTextureInfo.code = fragment_texture_dxil;
             fragmentLightInfo.code_size = fragment_light_dxil_len;
             fragmentLightInfo.code = fragment_light_dxil;
+            fragmentCompositionInfo.code = fragment_composition_dxil;
+            fragmentCompositionInfo.code_size = fragment_composition_dxil_len;
         }
         else if (shaderFormat & SDL_GPU_SHADERFORMAT_SPIRV)
         {
             vertexInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
             vertexInstanceInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
             vertexLightInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
+            vertexCompositionInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
             fragmentInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
             fragmentTextureInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
             fragmentLightInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
+            fragmentCompositionInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
 
             vertexInfo.code_size = vertex_spv_len;
             vertexInfo.code = vertex_spv;
@@ -938,21 +996,27 @@ namespace bolt
             vertexInstanceInfo.code = vertex_instance_spv;
             vertexLightInfo.code_size = vertex_light_spv_len;
             vertexLightInfo.code = vertex_light_spv;
+            vertexCompositionInfo.code = fragment_composition_spv;
+            vertexCompositionInfo.code_size = fragment_composition_spv_len;
             fragmentInfo.code_size = fragment_spv_len;
             fragmentInfo.code = fragment_spv;
             fragmentTextureInfo.code_size = fragment_texture_spv_len;
             fragmentTextureInfo.code = fragment_texture_spv;
             fragmentLightInfo.code_size = fragment_light_spv_len;
             fragmentLightInfo.code = fragment_light_spv;
+            fragmentCompositionInfo.code = fragment_composition_spv;
+            fragmentCompositionInfo.code_size = fragment_composition_spv_len;
         }
         else if (shaderFormat & SDL_GPU_SHADERFORMAT_MSL)
         {
             vertexInfo.format = SDL_GPU_SHADERFORMAT_MSL;
             vertexInstanceInfo.format = SDL_GPU_SHADERFORMAT_MSL;
             vertexLightInfo.format = SDL_GPU_SHADERFORMAT_MSL;
+            vertexCompositionInfo.format = SDL_GPU_SHADERFORMAT_MSL;
             fragmentInfo.format = SDL_GPU_SHADERFORMAT_MSL;
             fragmentTextureInfo.format = SDL_GPU_SHADERFORMAT_MSL;
             fragmentLightInfo.format = SDL_GPU_SHADERFORMAT_MSL;
+            fragmentCompositionInfo.format = SDL_GPU_SHADERFORMAT_MSL;
 
             vertexInfo.code_size = vertex_msl_len;
             vertexInfo.code = vertex_msl;
@@ -960,12 +1024,16 @@ namespace bolt
             vertexInstanceInfo.code = vertex_instance_msl;
             vertexLightInfo.code_size = vertex_light_msl_len;
             vertexLightInfo.code = vertex_light_msl;
+            vertexCompositionInfo.code = vertex_composition_msl;
+            vertexCompositionInfo.code_size = vertex_composition_msl_len;
             fragmentInfo.code_size = fragment_msl_len;
             fragmentInfo.code = fragment_msl;
             fragmentTextureInfo.code_size = fragment_texture_msl_len;
             fragmentTextureInfo.code = fragment_texture_msl;
             fragmentLightInfo.code_size = fragment_light_msl_len;
             fragmentLightInfo.code = fragment_light_msl;
+            fragmentCompositionInfo.code = fragment_composition_msl;
+            fragmentCompositionInfo.code_size = fragment_composition_msl_len;
         }
         else
         {
@@ -976,11 +1044,13 @@ namespace bolt
         SDL_GPUShader *vertex = SDL_CreateGPUShader(device, &vertexInfo);
         SDL_GPUShader *vertex_instance = SDL_CreateGPUShader(device, &vertexInstanceInfo);
         SDL_GPUShader *vertex_light = SDL_CreateGPUShader(device, &vertexLightInfo);
+        SDL_GPUShader* vertex_composition = SDL_CreateGPUShader(device, &vertexCompositionInfo);
         SDL_GPUShader *fragment = SDL_CreateGPUShader(device, &fragmentInfo);
         SDL_GPUShader *fragment_texture = SDL_CreateGPUShader(device, &fragmentTextureInfo);
         SDL_GPUShader *fragment_light = SDL_CreateGPUShader(device, &fragmentLightInfo);
+        SDL_GPUShader* fragment_composition = SDL_CreateGPUShader(device, &fragmentCompositionInfo);
 
-        if (!(vertex && vertex_instance && fragment && fragment_texture && vertex_light && fragment_light))
+        if (!(vertex && vertex_instance && fragment && fragment_texture && vertex_light && fragment_light && vertex_composition && fragment_composition))
         {
             log_error("%s", SDL_GetError());
             return false;
@@ -992,6 +1062,8 @@ namespace bolt
         shaders->fragmentTexture = fragment_texture;
         shaders->vertexLight = vertex_light;
         shaders->fragmentLight = fragment_light;
+        shaders->vertexComposition = vertex_composition;
+        shaders->fragmentComposition = fragment_composition;
 
         return true;
     }

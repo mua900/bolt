@@ -57,6 +57,9 @@ add_library(bolt STATIC
 	src/bundle/vertex_spv.h
 	src/bundle/vertex_dxil.h
 	src/bundle/vertex_msl.h
+	src/bundle/vertex_composition_spv.h
+	src/bundle/vertex_composition_dxil.h
+	src/bundle/vertex_composition_msl.h
 	src/bundle/vertex_instance_spv.h
 	src/bundle/vertex_instance_dxil.h
 	src/bundle/vertex_instance_msl.h
@@ -66,6 +69,9 @@ add_library(bolt STATIC
 	src/bundle/fragment_spv.h
 	src/bundle/fragment_dxil.h
 	src/bundle/fragment_msl.h
+	src/bundle/fragment_composition_spv.h
+	src/bundle/fragment_composition_dxil.h
+	src/bundle/fragment_composition_msl.h
 	src/bundle/fragment_texture_spv.h
 	src/bundle/fragment_texture_dxil.h
 	src/bundle/fragment_texture_msl.h
