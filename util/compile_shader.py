@@ -16,7 +16,7 @@ def to_spirv_cross_stage_name(stage_name : str) -> str:
     else:
         return "invalid" # spirv-cross will produce an error
 
-def compile_shaders(shaders : List[str], shader_stage : str, directory : Path) -> bool:
+def compile_shaders(shaders : List[str], shader_stage : str, directory : Path, reflect_dir : Path) -> bool:
     stage_argument = ""
     if shader_stage == "vertex":
         stage_argument = "vs"
@@ -40,9 +40,12 @@ def compile_shaders(shaders : List[str], shader_stage : str, directory : Path) -
         dxil_out : Path = directory / f"{path}.dxil"
         msl_out : Path = directory / f"{path}.msl"
 
+        reflect_out : Path = reflect_dir / f"{path}.json" if reflect_dir else None
+
         command_spv : str
         command_dxil : str
         command_msl : str
+        command_reflect : str
 
         # these two paths do different things for dxil
         # shadercross compiles to spirv and later uses spirv-cross to convert spirv to dxil
@@ -52,15 +55,21 @@ def compile_shaders(shaders : List[str], shader_stage : str, directory : Path) -
             command_spv = ["shadercross", shader, "-s", "HLSL", "-d", "SPIRV", "-e", "main", "-t", shader_stage, "-o", spv_out]
             command_dxil = ["shadercross", shader, "-s", "HLSL", "-d", "DXIL", "-e", "main", "-t", shader_stage, "-o", dxil_out]
             command_msl = ["shadercross", shader, "-s", "HLSL", "-d", "MSL", "-e", "main", "-t", shader_stage, "-o", msl_out]
+            if spirv_cross_available and reflect_out:
+                command_reflect = ["spirv-cross", spv_out, "--reflect", "--output", reflect_out]
         elif dxc_available:
             command_spv = ["dxc", "-spirv", "-T", target, "-E", "main", shader, "-Fo", spv_out]
             command_dxil = ["dxc", "-T", target, "-E", "main", shader, "-Fo", dxil_out]
             if spirv_cross_available:
                 command_msl = ["spirv-cross", "--msl", spv_out, "--stage", to_spirv_cross_stage_name(shader_stage), "--output", msl_out]
+                if reflect_out:
+                    command_reflect = ["spirv-cross", spv_out, "--reflect", "--output", reflect_out]
+
 
         print(command_spv)
         print(command_dxil)
         print(command_msl)
+        print(command_reflect)
 
         subprocess.run(command_dxil, check=True)
         subprocess.run(command_spv, check=True)
@@ -68,11 +77,15 @@ def compile_shaders(shaders : List[str], shader_stage : str, directory : Path) -
         if shader_cross_available or (dxc_available and spirv_cross_available):
             subprocess.run(command_msl, check=True)
 
+        if spirv_cross_available and reflect_out:
+            subprocess.run(command_reflect, check=True)
+
     return True
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('directory')
+    parser.add_arguemnt('-reflect_dir')
     parser.add_argument('-vertex', action="append")
     parser.add_argument('-fragment', action="append")
 
@@ -85,9 +98,9 @@ def main():
     directory : Path = Path(args.directory)
 
     if args.vertex:
-        compile_shaders(args.vertex, "vertex", directory)
+        compile_shaders(args.vertex, "vertex", directory, args.reflect_dir)
     if args.fragment:
-        compile_shaders(args.fragment, "fragment", directory)
+        compile_shaders(args.fragment, "fragment", directory, args.reflect_dir)
 
     if not (args.vertex or args.fragment):
         print("Please provide shaders to compile")

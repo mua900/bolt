@@ -170,6 +170,11 @@ namespace bolt
                 SDL_BindGPUFragmentStorageTextures(context.frame.composition_pass, 0, textures, 2);
                 SDL_BindGPUFragmentSamplers(context.frame.composition_pass, 0, sampler_bindings, 2);
 
+                vec4 ambient = {
+                    0.1,0.1,0.1,1
+                };
+                SDL_PushGPUFragmentUniformData(context.frame.command_buffer, 0, &ambient, sizeof(vec4));
+
                 SDL_BindGPUVertexBuffers(context.frame.composition_pass, 0, &composition_vertex_binding, 1);
                 SDL_BindGPUIndexBuffer(context.frame.composition_pass, &composition_index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
                 SDL_DrawGPUIndexedPrimitives(context.frame.composition_pass, 6, 1, 0, 0, 0);
@@ -972,6 +977,7 @@ namespace bolt
         fragmentTextureInfo.num_storage_textures = 1;
         fragmentTextureInfo.num_samplers = 1;
 
+        fragmentCompositionInfo.num_uniform_buffers = 1;
         fragmentCompositionInfo.num_storage_textures = 2;
         fragmentCompositionInfo.num_samplers = 2;
 

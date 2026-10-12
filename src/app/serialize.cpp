@@ -4,6 +4,7 @@
 
 namespace bolt {
 
+    // @todo for later binary formats
     const u32 Magic = 0xDEFC;
     const u32 VersionNumber = 1;
 
@@ -137,77 +138,6 @@ namespace bolt {
 
             // invalid value
             return false;
-        }
-
-        return true;
-    }
-
-    bool serialize_binary(const char* outputName, SerializeState& state)
-    {
-        String_Builder builder = {};
-
-        builder.append_integer(Magic);
-        builder.append_integer(VersionNumber);
-        builder.append_integer(state.values.count);
-
-        // @todo
-
-        size_t written = write_to_file(outputName, builder, "w");
-        // return written == builder.cursor;
-        return false;
-    }
-
-    bool readback_binary(const char* fileName, SerializeState* state)
-    {
-        return false;
-        BinaryData data;
-        if (!load_file(fileName, data))
-        {
-            return false;
-        }
-
-        return readback_binary_mem(data.data, data.size, state);
-    }
-
-    bool readback_binary_mem(const u8* data, size_t size, SerializeState* state)
-    {
-        return false;
-        size_t cursor = 0;
-
-        // magic
-        // version
-        // entry count
-
-        const int headerSize = 12;
-        if (size < headerSize)
-        {
-            return false;
-        }
-
-        u32* data_int = (u32*) data;
-        if (data_int[0] != Magic)
-        {
-            return false;
-        }
-
-        if (data_int[1] != VersionNumber)
-        {
-            return false;
-        }
-
-        u32 entry_count = data_int[2];
-        if (entry_count > 10'000)
-        {
-            return false;
-        }
-
-        cursor = headerSize;
-
-        *state = SerializeState(entry_count);
-
-        for (int i = 0; i < entry_count; i++)
-        {
-            // @todo
         }
 
         return true;

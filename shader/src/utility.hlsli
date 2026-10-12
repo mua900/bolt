@@ -1,4 +1,5 @@
 #ifndef UTILITY_HLSLI
+#define UTILITY_HLSLI
 
 #define CONSTANT_HALF_PI          1.57079632679
 #define CONSTANT_PI               3.14159265359

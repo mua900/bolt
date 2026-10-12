@@ -17,8 +17,9 @@ def guess_stage(filename : str) -> str:
     return None
 
 def main():
-    out_dir : Path = Path(os.path.normpath(__file__)).parent / "src/bundle"
-    out_shader : Path = Path(os.path.normpath(__file__)).parent.parent / "shader/binary"
+    parent : Path = Path(os.path.normpath(__file__)).parent.parent
+    out_shader : Path = parent / "shader" / "binary"
+    out_reflect : Path = parent / "shader" / "reflection"
 
     parser = argparse.ArgumentParser(description="Compile the provided shader and generate it's header files")
     parser.add_argument("shader", type=str, help="Path to shader source")
@@ -40,7 +41,7 @@ def main():
 
     print(f"shader stage: {stage}")
 
-    if not compile_shader.compile_shaders([str(shader_path)], stage, out_shader):
+    if not compile_shader.compile_shaders([str(shader_path)], stage, out_shader, out_reflect):
         print("Couldn't compile shader")
         return
 

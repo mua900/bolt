@@ -329,6 +329,7 @@ namespace bolt
                 case SDL_EVENT_MOUSE_MOTION:
                 {
                     input.mouse.buttonFlags = SDL_GetMouseState(&input.mouse.pos.x, &input.mouse.pos.y);
+                    SDL_GetRelativeMouseState(&input.mouse.motion.x, &input.mouse.motion.y);
                     on_mouse_move();
                     break;
                 }
@@ -679,8 +680,6 @@ namespace bolt
 
     void Application::on_mouse_move()
     {
-        bolt::vec2 mouse_pos = input.mouse.pos;
-
         UiState* ui = get_active_ui();
         if (ui)
         {

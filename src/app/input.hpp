@@ -61,6 +61,7 @@ namespace bolt
 
     struct MouseState {
         bolt::vec2 pos = {};
+        bolt::vec2 motion = {};
         bolt::vec2 wheel = {};
         SDL_MouseButtonFlags buttonFlags = {};
         MouseCursor cursor = {};

@@ -63,6 +63,11 @@ namespace bolt {
 					}
 					break;
 				}
+				case InputMouseMotion:
+				{
+					out = Value(state.mouse.motion);
+					return true;
+				}
 				case InputMouseWheel:
 				{
 					vec2 wheel = state.mouse.wheel;

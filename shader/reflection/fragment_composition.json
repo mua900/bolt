@@ -1,0 +1,71 @@
+{
+    "entryPoints" : [
+        {
+            "name" : "main",
+            "mode" : "frag"
+        }
+    ],
+    "types" : {
+        "_10" : {
+            "name" : "type.Composition",
+            "members" : [
+                {
+                    "name" : "ambient",
+                    "type" : "vec4",
+                    "offset" : 0
+                }
+            ]
+        }
+    },
+    "inputs" : [
+        {
+            "type" : "vec2",
+            "name" : "in.var.TEXCOORD0",
+            "location" : 0
+        }
+    ],
+    "outputs" : [
+        {
+            "type" : "vec4",
+            "name" : "out.var.SV_Target",
+            "location" : 0
+        }
+    ],
+    "separate_images" : [
+        {
+            "type" : "texture2D",
+            "name" : "colorTexture",
+            "set" : 2,
+            "binding" : 0
+        },
+        {
+            "type" : "texture2D",
+            "name" : "lightTexture",
+            "set" : 2,
+            "binding" : 1
+        }
+    ],
+    "separate_samplers" : [
+        {
+            "type" : "sampler",
+            "name" : "colorSampler",
+            "set" : 2,
+            "binding" : 0
+        },
+        {
+            "type" : "sampler",
+            "name" : "lightSampler",
+            "set" : 2,
+            "binding" : 1
+        }
+    ],
+    "ubos" : [
+        {
+            "type" : "_10",
+            "name" : "type.Composition",
+            "block_size" : 16,
+            "set" : 3,
+            "binding" : 0
+        }
+    ]
+}
