@@ -57,6 +57,22 @@ namespace bolt
         MatrixIsMVP   = 2, // override mvp
     };
 
+    enum Shape
+    {
+        ShapeQuad,
+        ShapeCircle,
+        ShapeCount
+    };
+
+    struct ShapeLocation
+    {
+        int index_count = 0;
+        int index_offset = 0;
+        int vertex_offset = 0;
+    };
+
+    ShapeLocation get_shape_location(Shape shape);
+
     const float MaxInstanceScale = 256;
 
     const int VBufferDescriptionCountVertex = 1;
@@ -160,6 +176,7 @@ namespace bolt
     struct DrawGroup
     {
         Texture texture = {};
+        Shape shape = {};
         int offset = 0;
         int capacity = 0;
         int used = 0;  // reset every frame
@@ -332,13 +349,6 @@ namespace bolt
         SDL_GPUShader* fragmentTexture = {};
         SDL_GPUShader* vertexLight = {};
         SDL_GPUShader* fragmentLight = {};
-    };
-
-    enum Shape
-    {
-        ShapeQuad,
-        ShapeCircle,
-        ShapeCount
     };
 
     struct RenderContext {

@@ -22,7 +22,7 @@ namespace bolt
     void draw_mesh_texture_buffers(RenderContext& render, MeshDraw& draw, GPUBuffer& vertex_buffer, GPUBuffer& index_buffer);
     void draw_generic(RenderContext& render, GraphicsPipeline& pipeline);
 
-    void draw_shape();
+    void draw_shape(RenderContext& render, DrawGroup& group, SDL_GPURenderPass *pass, int instance_buffer);
 
     // to draw quads or point lights
     void draw_quads(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer);
@@ -104,7 +104,7 @@ namespace bolt
         for (GraphicsPipeline& pipeline : context.graphics)
         {
             SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipeline.pipeline);
-            // draw_generic(context, pipeline);
+            // draw_generic(context, pipeline); @todo
         }
 
         context.end_render_pass();
@@ -130,6 +130,7 @@ namespace bolt
 
             DrawGroup lightGroup = {
                 TEXTURE_INVALID,
+                ShapeQuad,
                 0,
                 context.lights.size(),
                 context.lights.size(),
@@ -153,7 +154,7 @@ namespace bolt
                 }
 
                 GraphicsPipeline& pipelineComposition = context.graphics.get(context.graphics_composition);
-                SDL_BindGPUGraphicsPipeline(context.frame.light_pass, pipelineComposition.pipeline);
+                SDL_BindGPUGraphicsPipeline(context.frame.composition_pass, pipelineComposition.pipeline);
                 // @todo
 
                 context.end_composition_pass();
@@ -1813,6 +1814,14 @@ namespace bolt
         SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, draw.mesh.index_count, 1, 0, 0, 0);
     }
 
+    void draw_shape(RenderContext& render, DrawGroup& group, SDL_GPURenderPass *pass, int instance_buffer)
+    {
+        ASSERT(pass);
+
+        render.set_mvp(group.matrix, group.matrix_usage);
+
+    }
+
     void draw_quads(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer)
     {
         ASSERT(pass);
@@ -1826,14 +1835,16 @@ namespace bolt
         vertex_bindings[0].offset = 0;
 
         vertex_bindings[1].buffer = render.buffers[instance_buffer].buffer;
-        vertex_bindings[1].offset  = 0;
+        vertex_bindings[1].offset = 0;
 
         index_binding.buffer = render.buffers[render.index_buffer].buffer;
         index_binding.offset = 0;
 
+        ShapeLocation location = get_shape_location(group.shape);
+
         SDL_BindGPUVertexBuffers(pass, 0, vertex_bindings, 2);
         SDL_BindGPUIndexBuffer(pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SDL_DrawGPUIndexedPrimitives(pass, 6, group.used, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(pass, location.index_count, group.used, location.index_offset, location.vertex_offset, 0);
     }
 
     void draw_quads_texture(RenderContext& render, DrawGroup& group)
@@ -1854,9 +1865,6 @@ namespace bolt
         SDL_GPUBufferBinding vertex_bindings[2] = {};
         SDL_GPUBufferBinding index_binding = {};
 
-        // @Hardcode
-        // quad is at the start of the buffer
-
         vertex_bindings[0].buffer = render.buffers[render.vertex_buffer].buffer;
         vertex_bindings[0].offset = 0;
 
@@ -1866,9 +1874,11 @@ namespace bolt
         index_binding.buffer = render.buffers[render.index_buffer].buffer;
         index_binding.offset = 0;
 
+        ShapeLocation location = get_shape_location(group.shape);
+
         SDL_BindGPUVertexBuffers(render.frame.render_pass, 0, vertex_bindings, 2);
         SDL_BindGPUIndexBuffer(render.frame.render_pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, 6, group.used, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, location.index_count, group.used, location.index_offset, location.vertex_offset, 0);
     }
 
     void draw_generic(RenderContext& render, GraphicsPipeline& pipeline)
@@ -1890,9 +1900,6 @@ namespace bolt
 
             SDL_GPUBufferBinding vertex_bindings[2] = {};
             SDL_GPUBufferBinding index_binding = {};
-
-            // @Hardcode
-            // quad is at the start of the buffer
 
             if (pipeline.use_predefined_buffers)
             {
@@ -1917,9 +1924,11 @@ namespace bolt
                 index_binding.offset = 0;
             }
 
+            ShapeLocation location = get_shape_location(group.shape);
+
             SDL_BindGPUVertexBuffers(render.frame.render_pass, 0, vertex_bindings, 2);
             SDL_BindGPUIndexBuffer(render.frame.render_pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-            SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, 6, group.used, 0, 0, 0);
+            SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, location.index_count, group.used, location.index_offset, location.vertex_offset, 0);
         }
     }
 
@@ -2004,6 +2013,7 @@ namespace bolt
         return true;
     }
 
+    // @todo maybe move these to a seperate source file like mesh.cpp or something
     void generate_quad_mesh(DArray<VertexInstance>& out_vertex, DArray<u16>& out_index)
     {
         out_vertex = DArray<VertexInstance> (4, true);
@@ -2022,24 +2032,23 @@ namespace bolt
         out_index[5] = 2;
     }
 
+    constexpr int N_CIRCLE_VERTICES = 32;
     void generate_circle_mesh(DArray<VertexInstance>& out_vertex, DArray<u16>& out_index)
     {
-        constexpr int NVERTICES = 32;
-
-        out_vertex = DArray<VertexInstance> (NVERTICES + 1);
-        out_index = DArray<u16> (NVERTICES * 3);
+        out_vertex = DArray<VertexInstance> (N_CIRCLE_VERTICES + 1);
+        out_index = DArray<u16> (N_CIRCLE_VERTICES * 3);
 
         VertexInstance center = VertexInstance (0, 0, 0.5, 0.5);
         out_vertex[0] = center;
 
         // the angle between vertices and it's sin and cos
-        const float angle = CONSTANT_TAU / float(NVERTICES);
+        const float angle = CONSTANT_TAU / float(N_CIRCLE_VERTICES);
         const float c = std::cosf(angle);
         const float s = std::sinf(angle);
 
         float xcomp = 1.0;
         float ycomp = 0.0;
-        for (int i = 1; i <= NVERTICES; i++)
+        for (int i = 1; i <= N_CIRCLE_VERTICES; i++)
         {
             float px = center.x + xcomp;
             float py = center.y + ycomp;
@@ -2054,16 +2063,41 @@ namespace bolt
             ycomp = n_ycomp;
         }
 
-        for (int i = 0; i < NVERTICES - 1; i++)
+        for (int i = 0; i < N_CIRCLE_VERTICES - 1; i++)
         {
             out_index[i * 3 + 0] = 0;
             out_index[i * 3 + 1] = i + 1;
             out_index[i * 3 + 2] = i + 2;
         }
 
-        out_index[(NVERTICES - 1) * 3 + 0] = 0;
-        out_index[(NVERTICES - 1) * 3 + 1] = NVERTICES;
-        out_index[(NVERTICES - 1) * 3 + 2] = 1;
+        out_index[(N_CIRCLE_VERTICES - 1) * 3 + 0] = 0;
+        out_index[(N_CIRCLE_VERTICES - 1) * 3 + 1] = N_CIRCLE_VERTICES;
+        out_index[(N_CIRCLE_VERTICES - 1) * 3 + 2] = 1;
+    }
+
+    ShapeLocation get_shape_location(Shape shape)
+    {
+        ShapeLocation location;
+        switch (shape)
+        {
+            case ShapeQuad:
+            {
+                location.index_count = 6;
+                location.index_offset = 0;
+                location.vertex_offset = 0;
+                break;
+            }
+            case ShapeCircle:
+            {
+                location.index_count = N_CIRCLE_VERTICES * 3;
+                location.index_offset = 6;
+                location.vertex_offset = 4;
+                break;
+            }
+            default: panic("Invalid shape");
+        }
+
+        return location;
     }
 
     void unloadShader(RenderContext& context, Shader& shader)
