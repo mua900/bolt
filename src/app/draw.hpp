@@ -378,8 +378,8 @@ namespace bolt
         int active_vertex_buffer = 0;
         int active_index_buffer = 0;
 
-        // @todo user
         SDL_GPUSampler* sampler = nullptr;
+        SDL_GPUSampler* light_sampler = nullptr;
 
         // the intention here is to provide something that does the basic things you could want to do
         // but still provide hooks to lower level things if the user wants them
@@ -528,7 +528,7 @@ namespace bolt
             texture(tex), sprite_width(sp_width), sprite_height(sp_height), columns(col), rows(row)
         {}
 
-        void set_texture(RenderContext* render, Texture tex, int row, int col)
+        void set_texture(RenderContext* render, Texture tex, int col, int row)
         {
             if (tex.is_valid())
             {
@@ -571,8 +571,6 @@ namespace bolt
 
     void render_present(RenderContext& context, SDL_Window* window);
 
-    GPUBuffer allocate_gpu_buffer(RenderContext& context);
-
     TransferData add_to_transfer_buffer(RenderContext& context, DArray<MeshData>& data);
 
     DArray<MeshReference> upload_mesh_data(RenderContext& context, TransferData& data);
@@ -595,8 +593,6 @@ namespace bolt
 
     ShaderLoadResult loadShader(RenderContext& context, Shader& shader, const char* path);
     void unloadShader(RenderContext& context, Shader& shader);
-
-    void destroy_texture(GPUTexture *texture);
 
     bool create_default_shaders(SDL_GPUDevice* device, DefaultShaders* shaders);
     void destroy_default_shaders(SDL_GPUDevice* device, DefaultShaders* shaders);

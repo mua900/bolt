@@ -101,12 +101,6 @@ namespace bolt
             draw_quads_texture(context, group);
         }
 
-        for (GraphicsPipeline& pipeline : context.graphics)
-        {
-            SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipeline.pipeline);
-            // draw_generic(context, pipeline); @todo
-        }
-
         context.end_render_pass();
 
         SDL_GPUTexture* swapchain = nullptr;
@@ -164,6 +158,18 @@ namespace bolt
                 composition_index_binding.buffer = context.buffers[context.index_buffer].buffer;
                 composition_index_binding.offset = 0;
 
+                SDL_GPUTexture* textures [2] = {
+                    context.render_target,
+                    context.light_target
+                };
+                SDL_GPUTextureSamplerBinding sampler_bindings [2] = {
+                    { context.render_target, context.sampler },
+                    { context.light_target, context.light_sampler }
+                };
+
+                SDL_BindGPUFragmentStorageTextures(context.frame.composition_pass, 0, textures, 2);
+                SDL_BindGPUFragmentSamplers(context.frame.composition_pass, 0, sampler_bindings, 2);
+
                 SDL_BindGPUVertexBuffers(context.frame.composition_pass, 0, &composition_vertex_binding, 1);
                 SDL_BindGPUIndexBuffer(context.frame.composition_pass, &composition_index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
                 SDL_DrawGPUIndexedPrimitives(context.frame.composition_pass, 6, 1, 0, 0, 0);
@@ -188,6 +194,7 @@ namespace bolt
         }
 
         context.frameMeshDraw.discard_data();
+        context.frameMeshDrawTex.discard_data();
         context.instanceData.mark_empty();
 
         for (GraphicsPipeline& pipeline : context.graphics)
@@ -763,6 +770,11 @@ namespace bolt
         if (conf->doLights)
         {
             light_buffer = SDL_CreateGPUBuffer(render->device, &lightBufferCI);
+            if (!light_buffer)
+            {
+                log_error("Couldn't create light buffer");
+                return false;
+            }
         }
 
         if (!(vertex_buffer && index_buffer && instance_buffer))
@@ -787,9 +799,20 @@ namespace bolt
         // samplerCI.enable_compare = false;                       /**< true to enable comparison against a reference value during lookups. */
         SDL_GPUSampler *sampler = SDL_CreateGPUSampler(render->device, &samplerCI);
 
-        if (!sampler)
+        SDL_GPUSamplerCreateInfo lightSamplerCI = {};
+        lightSamplerCI.min_filter = SDL_GPU_FILTER_LINEAR;                  /**< The minification filter to apply to lookups. */
+        lightSamplerCI.mag_filter = SDL_GPU_FILTER_LINEAR;                  /**< The magnification filter to apply to lookups. */
+        lightSamplerCI.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR;      /**< The mipmap filter to apply to lookups. */
+        lightSamplerCI.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;  /**< The addressing mode for U coordinates outside [0, 1). */
+        lightSamplerCI.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;  /**< The addressing mode for V coordinates outside [0, 1). */
+        lightSamplerCI.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;  /**< The addressing mode for W coordinates outside [0, 1). */
+        lightSamplerCI.min_lod = 0;                             /**< Clamps the minimum of the computed LOD value. */
+        lightSamplerCI.max_lod = 8;                             /**< Clamps the maximum of the computed LOD value. */
+        SDL_GPUSampler *light_sampler = SDL_CreateGPUSampler(render->device, &lightSamplerCI);
+
+        if (!(sampler && light_sampler))
         {
-            log_error("Couldn't create gpu sampler");
+            log_error("Couldn't create gpu sampler: %s", SDL_GetError());
             return false;
         }
 
@@ -895,6 +918,7 @@ namespace bolt
         render->light_target = light_target;
         render->depth_target = depth_target;
         render->sampler = sampler;
+        render->light_sampler = light_sampler;
         render->transfer_buffer = { transfer_buffer, transferInfo.size };
         render->group_transfer_buffer = { group_transfer_buffer, transferInfo.size };
         render->light_transfer_buffer = { light_transfer_buffer, transferInfo.size };
@@ -948,7 +972,8 @@ namespace bolt
         fragmentTextureInfo.num_storage_textures = 1;
         fragmentTextureInfo.num_samplers = 1;
 
-        // @todo uniforms for composition fragment shader
+        fragmentCompositionInfo.num_storage_textures = 2;
+        fragmentCompositionInfo.num_samplers = 2;
 
         SDL_GPUShaderFormat shaderFormat = SDL_GetGPUShaderFormats(device);
         if (shaderFormat & SDL_GPU_SHADERFORMAT_DXIL)
@@ -996,8 +1021,8 @@ namespace bolt
             vertexInstanceInfo.code = vertex_instance_spv;
             vertexLightInfo.code_size = vertex_light_spv_len;
             vertexLightInfo.code = vertex_light_spv;
-            vertexCompositionInfo.code = fragment_composition_spv;
-            vertexCompositionInfo.code_size = fragment_composition_spv_len;
+            vertexCompositionInfo.code = vertex_composition_spv;
+            vertexCompositionInfo.code_size = vertex_composition_spv_len;
             fragmentInfo.code_size = fragment_spv_len;
             fragmentInfo.code = fragment_spv;
             fragmentTextureInfo.code_size = fragment_texture_spv_len;
@@ -1072,8 +1097,12 @@ namespace bolt
     {
         SDL_ReleaseGPUShader(device, shaders->vertex);
         SDL_ReleaseGPUShader(device, shaders->vertexInstance);
+        SDL_ReleaseGPUShader(device, shaders->vertexLight);
+        SDL_ReleaseGPUShader(device, shaders->vertexComposition);
         SDL_ReleaseGPUShader(device, shaders->fragment);
         SDL_ReleaseGPUShader(device, shaders->fragmentTexture);
+        SDL_ReleaseGPUShader(device, shaders->fragmentLight);
+        SDL_ReleaseGPUShader(device, shaders->fragmentComposition);
     }
 
     bool RenderContext::set_vertex_buffer(u32 vb)
@@ -1173,7 +1202,7 @@ namespace bolt
 
         if (!buffer.buffer)
         {
-            return -1;
+            return u32(-1);
         }
 
         return buffers.add(buffer);
@@ -1508,10 +1537,12 @@ namespace bolt
                     {
                         memory[i] = render.instanceData[i];
                     }
+                    /*
                     for (int i = group.offset + group.used; i < group.offset + group.capacity; i++)
                     {
                         memory[i] = {};
                     }
+                    */
                 }
             }
         }
@@ -1941,7 +1972,7 @@ namespace bolt
         vertex_bindings[0].offset = 0;
 
         vertex_bindings[1].buffer = render.buffers[render.instance_buffer].buffer;
-        vertex_bindings[1].offset = group.offset;
+        vertex_bindings[1].offset = group.offset * sizeof(InstanceData);
 
         index_binding.buffer = render.buffers[render.index_buffer].buffer;
         index_binding.offset = 0;
