@@ -17,7 +17,12 @@ struct main0_in
 fragment main0_out main0(main0_in in [[stage_in]], texture2d<float> colorTexture [[texture(0)]], sampler colorSampler [[sampler(0)]])
 {
     main0_out out = {};
-    out.out_var_SV_Target = in.in_var_TEXCOORD1 * colorTexture.sample(colorSampler, in.in_var_TEXCOORD0);
+    float4 _28 = colorTexture.sample(colorSampler, in.in_var_TEXCOORD0);
+    if (_28.w == 0.0)
+    {
+        discard_fragment();
+    }
+    out.out_var_SV_Target = in.in_var_TEXCOORD1 * _28;
     return out;
 }
 

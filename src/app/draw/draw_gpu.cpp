@@ -22,10 +22,9 @@ namespace bolt
     void draw_mesh_texture_buffers(RenderContext& render, MeshDraw& draw, GPUBuffer& vertex_buffer, GPUBuffer& index_buffer);
     void draw_generic(RenderContext& render, GraphicsPipeline& pipeline);
 
-    void draw_shape(RenderContext& render, DrawGroup& group, SDL_GPURenderPass *pass, int instance_buffer);
-
+    // @todo this is no longer just quads
     // to draw quads or point lights
-    void draw_quads(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer);
+    void draw_quads(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size);
     void draw_quads_texture(RenderContext& render, DrawGroup& group);
 
     // failure if the size of the arrays don't match what's expected
@@ -94,11 +93,24 @@ namespace bolt
             draw_mesh_texture(context, draw);
         }
 
+        GraphicsPipeline& pipelineInstance = context.graphics.get(context.graphics_instance);
+        SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineInstance.pipeline);
+        for (DrawGroup& group : pipelineInstance.groups)
+        {
+            if (group.used > 0)
+            {
+                draw_quads(context, group, context.frame.render_pass, context.instance_buffer, sizeof(InstanceData));
+            }
+        }
+
         GraphicsPipeline& pipelineInstanceTexture = context.graphics.get(context.graphics_instance_texture);
         SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineInstanceTexture.pipeline);
         for (DrawGroup& group : pipelineInstanceTexture.groups)
         {
-            draw_quads_texture(context, group);
+            if (group.used > 0)
+            {
+                draw_quads_texture(context, group);
+            }
         }
 
         context.end_render_pass();
@@ -133,7 +145,7 @@ namespace bolt
             };
             GraphicsPipeline& pipelineLight = context.graphics.get(context.graphics_light);
             SDL_BindGPUGraphicsPipeline(context.frame.light_pass, pipelineLight.pipeline);
-            draw_quads(context, lightGroup, context.frame.light_pass, context.light_buffer);
+            draw_quads(context, lightGroup, context.frame.light_pass, context.light_buffer, sizeof(PointLight));
 
             context.end_light_pass();
 
@@ -170,10 +182,7 @@ namespace bolt
                 SDL_BindGPUFragmentStorageTextures(context.frame.composition_pass, 0, textures, 2);
                 SDL_BindGPUFragmentSamplers(context.frame.composition_pass, 0, sampler_bindings, 2);
 
-                vec4 ambient = {
-                    0.1,0.1,0.1,1
-                };
-                SDL_PushGPUFragmentUniformData(context.frame.command_buffer, 0, &ambient, sizeof(vec4));
+                SDL_PushGPUFragmentUniformData(context.frame.command_buffer, 0, &context.ambient_light, sizeof(vec4));
 
                 SDL_BindGPUVertexBuffers(context.frame.composition_pass, 0, &composition_vertex_binding, 1);
                 SDL_BindGPUIndexBuffer(context.frame.composition_pass, &composition_index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
@@ -709,6 +718,7 @@ namespace bolt
         pipeline_parameters_instance.input = InputInstance;
         pipeline_parameters_light.input = InputLight;
 
+        pipeline_parameters_composition.format = SDL_GetGPUSwapchainTextureFormat(render->device, window);
         pipeline_parameters_composition.input = InputComposition;
 
         SDL_GPUGraphicsPipeline* pipeline = create_gpu_graphics_pipeline(&pipeline_parameters, render, shaders.vertex, shaders.fragment);
@@ -719,6 +729,13 @@ namespace bolt
 
         SDL_GPUGraphicsPipeline* pipeline_texture = create_gpu_graphics_pipeline(&pipeline_parameters, render, shaders.vertex, shaders.fragmentTexture);
         if (!pipeline_texture)
+        {
+            log_error("Failed to create graphics pipeline: %s", SDL_GetError());
+            return false;
+        }
+
+        SDL_GPUGraphicsPipeline* pipeline_instance = create_gpu_graphics_pipeline(&pipeline_parameters_instance, render, shaders.vertexInstance, shaders.fragment);
+        if (!pipeline_instance)
         {
             log_error("Failed to create graphics pipeline: %s", SDL_GetError());
             return false;
@@ -912,6 +929,7 @@ namespace bolt
 
         render->graphics_default = render->graphics.add(GraphicsPipeline(pipeline_parameters, pipeline, true, true));
         render->graphics_texture = render->graphics.add(GraphicsPipeline(pipeline_parameters, pipeline_texture, true, true));
+        render->graphics_instance = render->graphics.add(GraphicsPipeline(pipeline_parameters_instance, pipeline_instance, true, true));
         render->graphics_instance_texture = render->graphics.add(GraphicsPipeline(pipeline_parameters_instance, pipeline_instance_texture, true, true));
         render->graphics_light = render->graphics.add(GraphicsPipeline(pipeline_parameters_light, pipeline_light, true, true));
         render->graphics_composition = render->graphics.add(GraphicsPipeline(pipeline_parameters_composition, pipeline_composition, true, false));
@@ -1923,15 +1941,7 @@ namespace bolt
         SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, draw.mesh.index_count, 1, 0, 0, 0);
     }
 
-    void draw_shape(RenderContext& render, DrawGroup& group, SDL_GPURenderPass *pass, int instance_buffer)
-    {
-        ASSERT(pass);
-
-        render.set_mvp(group.matrix, group.matrix_usage);
-
-    }
-
-    void draw_quads(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer)
+    void draw_quads(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size)
     {
         ASSERT(pass);
 
@@ -1944,7 +1954,7 @@ namespace bolt
         vertex_bindings[0].offset = 0;
 
         vertex_bindings[1].buffer = render.buffers[instance_buffer].buffer;
-        vertex_bindings[1].offset = 0;
+        vertex_bindings[1].offset = group.offset * instance_size;
 
         index_binding.buffer = render.buffers[render.index_buffer].buffer;
         index_binding.offset = 0;

@@ -10,5 +10,9 @@ struct PSInput {
 void main(PSInput input, out float4 fragColor : SV_Target)
 {
     float4 sampleColor = colorTexture.Sample(colorSampler, input.uv);
+    if (sampleColor.a == 0)
+    {
+        discard;
+    }
     fragColor = input.color * sampleColor;
 }

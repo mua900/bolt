@@ -1,2 +1,3 @@
 - stop preloading every asset by default (memory bloat)
 - split the example to subsystems like draw, animation, assets etc.
+- don't fail when not finding asset catalog

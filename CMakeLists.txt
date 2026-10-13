@@ -35,6 +35,7 @@ add_library(bolt STATIC
 	src/app/asset.hpp
 	src/app/asset.cpp
 	src/app/draw.hpp
+	src/app/draw_types.hpp
 	src/app/draw/draw_gpu.cpp
 	src/app/draw/draw_gl.cpp
 	src/app/camera.hpp
@@ -159,6 +160,16 @@ add_subdirectory(vendor/SDL_mixer EXCLUDE_FROM_ALL)
 
 add_subdirectory(vendor/SDL_ttf EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/SDL_net EXCLUDE_FROM_ALL)
+
+# you can set your projects output to the same place
+# this is useful in multiconfig generators that output stuff all over the place when you use this with add_subdirectory()
+foreach (SDL_TARGET SDL3 SDL3_image SDL3_mixer SDL3_ttf SDL3_net)
+	if (TARGET ${SDL_TARGET})
+		set_target_properties(${SDL_TARGET} PROPERTIES
+			RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+		)
+	endif()
+endforeach()
 
 target_link_libraries(
 	bolt

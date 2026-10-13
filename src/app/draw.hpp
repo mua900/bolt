@@ -16,7 +16,6 @@ namespace bolt
 
     // @todo
     // normal maps
-    // lighting
     // models (multiple meshes can make up a model)
 
     struct RenderContext;
@@ -364,7 +363,9 @@ namespace bolt
     	const Camera* camera = {};
 
         Colorf clear_color = {};
-        Colorf light_clear_color = {};  // take it for base or ambient light
+        Colorf light_clear_color = {};  // there is little reason to change it to something else but it's here
+
+        vec4 ambient_light = {};
 
         SDL_GPUDevice* device = nullptr;
 
@@ -385,14 +386,11 @@ namespace bolt
         // but still provide hooks to lower level things if the user wants them
 
         GraphicsPipelineId graphics_default = {};
-        // GraphicsPipelineId graphics_instance = {};
+        GraphicsPipelineId graphics_instance = {};
         GraphicsPipelineId graphics_texture = {};
         GraphicsPipelineId graphics_instance_texture = {};
-
-        // @@@ don't use
         GraphicsPipelineId graphics_light = {};
         GraphicsPipelineId graphics_composition = {};
-        //
 
         BucketList<GraphicsPipeline> graphics = {};
 
@@ -402,11 +400,8 @@ namespace bolt
         BufferHandle light_buffer = {};
 
         SDL_GPUTexture* render_target = nullptr;
-
-        // @@@ don't use
         SDL_GPUTexture* light_target = nullptr;
         SDL_GPUTexture* depth_target = nullptr;
-        //
 
         TransferBuffer transfer_buffer = {};
         TransferBuffer group_transfer_buffer = {};
@@ -533,6 +528,7 @@ namespace bolt
             if (tex.is_valid())
             {
                 GPUTexture& gpu_texture = render->get_texture(tex);
+                texture = tex;
                 sprite_width = gpu_texture.width / float(col);
                 sprite_height = gpu_texture.height / float(row);
                 rows = row;

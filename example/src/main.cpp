@@ -6,18 +6,21 @@
 
 using namespace bolt;
 
+#define NUM_RANDOM 8
+
 struct State
 {
 	float number = 0;
 	DArray<MeshReference> references = {};
 	Texture texture = {};
-	DrawGroupId group = {};
+	DrawGroupId group_solid = {};
+	DrawGroupId group_tex = {};
 
 	SpriteAnimation animation = {};
 
 	GraphicsPipelineId graphics = {};
 
-	vec2 position[64];
+	vec2 position[NUM_RANDOM];
 };
 
 bool initialize(void *userdata, Application *app)
@@ -25,7 +28,7 @@ bool initialize(void *userdata, Application *app)
 	srand(time(0));
 
 	State* state = (State*) userdata;
-	app->render.clear_color = Colorf(0.1, 0.2, 0.2);
+	app->render.clear_color = Colorf(0.5, 0.6, 0.8);
 	//app->render.light_clear_color = Colorf(0.6, 0.4, 0.3);
 
 	for (int i = 0; i < 64; i++)
@@ -46,8 +49,14 @@ bool initialize(void *userdata, Application *app)
 
 	ASSERT(texture.is_valid());
 
-	bolt::DrawGroupId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024 * 4);
+	bolt::DrawGroupId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024);
+	bolt::DrawGroupId id_solid = app->render.make_draw_group(app->render.graphics_instance, TEXTURE_INVALID, 1024);
 	if (!id.is_valid())
+	{
+		return false;
+	}
+
+	if (!id_solid.is_valid())
 	{
 		return false;
 	}
@@ -136,35 +145,29 @@ bool initialize(void *userdata, Application *app)
 							AnimationFlags::AnimationLoop
 							);
 
-	{
-		GraphicsPipelineParameters params = get_default_graphics_pipeline_parameters();;
-		params.input = InputInstance;
-		DefaultShaders shaders = {};
-		if (!create_default_shaders(app->render.device, &shaders))
-		{
-			return false;
-		}
-		GraphicsPipelineId graphics = app->render.make_graphics_pipeline(params, shaders.vertexInstance, shaders.fragment);
-		if (graphics == GRAPHICS_PIPELINE_INVALID)
-		{
-			return false;
-		}
-		state->graphics = graphics;
-		destroy_default_shaders(app->render.device, &shaders);
-	}
-
 	PointLight light = {
 		100, 100, 0,
 		100, 1,
 		bolt::colorToHex(Colorf(1,0,0,1))
 	};
+	PointLight light2 = {
+		-100, -100, 0,
+		256, 1,
+		bolt::colorToHex(Colorf(1,1,0,1))
+	};
 
 	add_point_light(app->render, light);
+	add_point_light(app->render, light2);
+
+	app->render.ambient_light = {
+		0.8,0.8,0.8,1
+	};
 
 	state->references = upload_mesh_data(app->render, memory);
 	state->texture = texture;
 	state->animation = anim;
-	state->group = id;
+	state->group_tex = id;
+	state->group_solid = id_solid;
 
 	app->render.end_copy_pass();
 	app->render.submit_command_buffer();
@@ -210,29 +213,45 @@ void draw(void *userdata, Application *app)
 	p.color = 0xff0000ff;
 	p.z = 1;
 
-	bolt::queue_draw_group(app->render, p, state->group);
-	bolt::queue_draw_group(app->render, q, state->group);
+	bolt::queue_draw_group(app->render, p, state->group_tex);
+	bolt::queue_draw_group(app->render, q, state->group_tex);
 
 	q.y += 200;
-	bolt::queue_draw_group(app->render, q, state->group);
+	bolt::queue_draw_group(app->render, q, state->group_tex);
 	q.x += 200;
 	q.y += 150;
-	bolt::queue_draw_group(app->render, q, state->group);
+	bolt::queue_draw_group(app->render, q, state->group_tex);
 	q.x += 200;
 	q.color = bolt::colorToHex(Colorf(1,0,0));
-	q.rotation = CONSTANT_PI;
-	bolt::queue_draw_group(app->render, q, state->group);
+	q.rotation = CONSTANT_PI * (4.0f / 3.0f);
+	bolt::queue_draw_group(app->render, q, state->group_tex);
 	q.color = 0xffffffff;
 
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < NUM_RANDOM; i++)
 	{
 		q.x = state->position[i].x;
 		q.y = state->position[i].y;
-		bolt::queue_draw_group(app->render, q, state->group);
+		bolt::queue_draw_group(app->render, q, state->group_tex);
 	}
 
-	InstanceData frame = state->animation.get_frame(vec3(-100, 100, 0.2), 0, vec2(100, 100));
-	bolt::queue_draw_group(app->render, frame, state->group);
+	bolt::InstanceData solid = bolt::InstanceData {
+		0,
+		100,
+		0,
+		0,
+		pack_scale(bolt::vec2(128, 128)),
+		bolt::colorToHex(bolt::Colorf(0.4, 0.4, 0.4)),
+	};
+	bolt::InstanceData solid2 = bolt::InstanceData{
+		300, 300, 0, 0,
+		pack_scale(bolt::vec2(256, 256)),
+		bolt::colorToHex(bolt::Colorf(0.8, 0.4, 0.6))
+	};
+	bolt::queue_draw_group(app->render, solid, state->group_solid);
+	bolt::queue_draw_group(app->render, solid2, state->group_solid);
+
+	bolt::InstanceData frame = state->animation.get_frame(vec3(-100, 100, 0.2), 0, vec2(100, 100));
+	bolt::queue_draw_group(app->render, frame, state->group_tex);
 }
 
 bool handleEvent(SDL_Event event, void *userdata, Application* app)
