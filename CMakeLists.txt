@@ -36,6 +36,8 @@ add_library(bolt STATIC
 	src/app/asset.cpp
 	src/app/draw.hpp
 	src/app/draw_types.hpp
+	src/app/shape.hpp
+	src/app/shape.cpp
 	src/app/draw/draw_gpu.cpp
 	src/app/draw/draw_gl.cpp
 	src/app/camera.hpp
