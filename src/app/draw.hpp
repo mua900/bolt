@@ -17,6 +17,7 @@ namespace bolt
     // @todo
     // normal maps
     // models (multiple meshes can make up a model)
+    // merge mesh and predefined graphics pipeline paths. You should be able to define additional geometry and refer to it and then choose how to draw it or what sort of pipeline to use etc.
 
     struct RenderContext;
 
@@ -62,15 +63,6 @@ namespace bolt
         ShapeCircle,
         ShapeCount
     };
-
-    struct ShapeLocation
-    {
-        int index_count = 0;
-        int index_offset = 0;
-        int vertex_offset = 0;
-    };
-
-    ShapeLocation get_shape_location(Shape shape);
 
     const float MaxInstanceScale = 256;
 
@@ -207,9 +199,17 @@ namespace bolt
         InputComposition, // VertexInstance
     };
 
+    // find a better name
+    enum DrawType
+    {
+        DrawGeometry = 0,
+        DrawLight    = 1,
+    };
+
     struct GraphicsPipelineParameters
     {
         VertexInputType input = {};
+        DrawType draw_type = DrawGeometry;
         SDL_GPUTextureFormat format = {};
         SDL_GPUTextureFormat depth_format = {};
     };

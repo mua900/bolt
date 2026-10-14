@@ -39,6 +39,15 @@ namespace bolt
     const int RenderTargetWidth = 1440;
     const int RenderTargetHeight = 810;
 
+    struct ShapeLocation
+    {
+        int index_count = 0;
+        int index_offset = 0;
+        int vertex_offset = 0;
+    };
+
+    ShapeLocation get_shape_location(Shape shape);
+
     void render_present(RenderContext& context, SDL_Window* window) {
         if (!copy_frame_instance_data(context))
         {
@@ -148,8 +157,6 @@ namespace bolt
             draw_quads(context, lightGroup, context.frame.light_pass, context.light_buffer, sizeof(PointLight));
 
             context.end_light_pass();
-
-            context.copy_to_swapchain(context.light_target, swapchain, swapchain_width, swapchain_height);
 
             if (!context.start_composition_pass(swapchain))
             {
@@ -663,15 +670,29 @@ namespace bolt
         stencil.enable_stencil_test = false;                   /**< true enables the stencil test. */
 
         SDL_GPUColorTargetBlendState blend_state = {};
-        blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;     /**< The value to be multiplied by the source RGB value. */
-        blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;     /**< The value to be multiplied by the destination RGB value. */
-        blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;                /**< The blend operation for the RGB components. */
-        blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;     /**< The value to be multiplied by the source alpha. */
-        blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;     /**< The value to be multiplied by the destination alpha. */
-        blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;                /**< The blend operation for the alpha component. */
-        // blend_state.color_write_mask = 0;  /**< A bitmask specifying which of the RGBA components are enabled for writing. Writes to all channels if enable_color_write_mask is false. */
-        blend_state.enable_blend = true;                            /**< Whether blending is enabled for the color target. */
-        blend_state.enable_color_write_mask = false;                 /**< Whether the color write mask is enabled. */
+        if (parameters->draw_type == DrawGeometry)
+        {
+            blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;     /**< The value to be multiplied by the source RGB value. */
+            blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;     /**< The value to be multiplied by the destination RGB value. */
+            blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;                /**< The blend operation for the RGB components. */
+            blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;     /**< The value to be multiplied by the source alpha. */
+            blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;     /**< The value to be multiplied by the destination alpha. */
+            blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;                /**< The blend operation for the alpha component. */
+            // blend_state.color_write_mask = 0;  /**< A bitmask specifying which of the RGBA components are enabled for writing. Writes to all channels if enable_color_write_mask is false. */
+            blend_state.enable_blend = true;                            /**< Whether blending is enabled for the color target. */
+            blend_state.enable_color_write_mask = false;                 /**< Whether the color write mask is enabled. */
+        }
+        else if (parameters->draw_type == DrawLight)
+        {
+            blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+            blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+            blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
+            blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+            blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+            blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
+            blend_state.enable_blend = true;
+            blend_state.enable_color_write_mask = false;
+        }
 
         SDL_GPUColorTargetDescription color_target_description[1] = {};
 
@@ -714,9 +735,10 @@ namespace bolt
 
         pipeline_parameters.depth_format = DepthFormat;
         pipeline_parameters_instance.depth_format = DepthFormat;
-
         pipeline_parameters_instance.input = InputInstance;
+
         pipeline_parameters_light.input = InputLight;
+        pipeline_parameters_light.draw_type = DrawLight;
 
         pipeline_parameters_composition.format = SDL_GetGPUSwapchainTextureFormat(render->device, window);
         pipeline_parameters_composition.input = InputComposition;
