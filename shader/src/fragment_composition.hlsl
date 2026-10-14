@@ -5,6 +5,7 @@ SamplerState lightSampler : register(s1, space2);
 
 cbuffer Composition : register(b0, space3)
 {
+    // ambient light color (rgb) + brightness (a)
     float4 ambient;
 };
 
@@ -19,6 +20,6 @@ void main(PSInput input, out float4 fragColor : SV_Target)
     float4 albedo = colorTexture.Sample(colorSampler, input.uv);
     float4 light = lightTexture.Sample(lightSampler, input.uv);
 
-    float3 color = albedo.rgb * (light.rgb + ambient.rgb);
+    float3 color = albedo.rgb * (light.rgb + ambient.rgb) * ambient.a;
     fragColor = float4(color, albedo.a);
 }

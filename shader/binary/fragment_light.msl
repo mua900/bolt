@@ -23,8 +23,7 @@ fragment main0_out main0(main0_in in [[stage_in]])
     {
         discard_fragment();
     }
-    float _33 = powr(fast::clamp(_28, 0.0, 1.0), 0.699999988079071044921875);
-    out.out_var_SV_Target = (float4(in.in_var_TEXCOORD3.xyz * in.in_var_TEXCOORD2, in.in_var_TEXCOORD3.w) * _33) * _33;
+    out.out_var_SV_Target = float4(in.in_var_TEXCOORD3.xyz * in.in_var_TEXCOORD2, in.in_var_TEXCOORD3.w) * powr(fast::clamp(_28, 0.0, 1.0), 1.39999997615814208984375);
     return out;
 }
 

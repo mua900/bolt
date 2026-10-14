@@ -22,9 +22,7 @@ namespace bolt
     void draw_mesh_texture_buffers(RenderContext& render, MeshDraw& draw, GPUBuffer& vertex_buffer, GPUBuffer& index_buffer);
     void draw_generic(RenderContext& render, GraphicsPipeline& pipeline);
 
-    // @todo this is no longer just quads
-    // to draw quads or point lights
-    void draw_quads(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size);
+    void draw_shapes(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size);
     void draw_quads_texture(RenderContext& render, DrawGroup& group);
 
     // failure if the size of the arrays don't match what's expected
@@ -108,7 +106,7 @@ namespace bolt
         {
             if (group.used > 0)
             {
-                draw_quads(context, group, context.frame.render_pass, context.instance_buffer, sizeof(InstanceData));
+                draw_shapes(context, group, context.frame.render_pass, context.instance_buffer, sizeof(InstanceData));
             }
         }
 
@@ -154,7 +152,7 @@ namespace bolt
             };
             GraphicsPipeline& pipelineLight = context.graphics.get(context.graphics_light);
             SDL_BindGPUGraphicsPipeline(context.frame.light_pass, pipelineLight.pipeline);
-            draw_quads(context, lightGroup, context.frame.light_pass, context.light_buffer, sizeof(PointLight));
+            draw_shapes(context, lightGroup, context.frame.light_pass, context.light_buffer, sizeof(PointLight));
 
             context.end_light_pass();
 
@@ -1963,7 +1961,7 @@ namespace bolt
         SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, draw.mesh.index_count, 1, 0, 0, 0);
     }
 
-    void draw_quads(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size)
+    void draw_shapes(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size)
     {
         ASSERT(pass);
 

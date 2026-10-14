@@ -21,8 +21,8 @@ struct main0_in
 fragment main0_out main0(main0_in in [[stage_in]], constant type_Composition& Composition [[buffer(0)]], texture2d<float> colorTexture [[texture(0)]], texture2d<float> lightTexture [[texture(1)]], sampler colorSampler [[sampler(0)]], sampler lightSampler [[sampler(1)]])
 {
     main0_out out = {};
-    float4 _32 = colorTexture.sample(colorSampler, in.in_var_TEXCOORD0);
-    out.out_var_SV_Target = float4(_32.xyz * (lightTexture.sample(lightSampler, in.in_var_TEXCOORD0).xyz + Composition.ambient.xyz), _32.w);
+    float4 _34 = colorTexture.sample(colorSampler, in.in_var_TEXCOORD0);
+    out.out_var_SV_Target = float4((_34.xyz * (lightTexture.sample(lightSampler, in.in_var_TEXCOORD0).xyz + Composition.ambient.xyz)) * Composition.ambient.w, _34.w);
     return out;
 }
 

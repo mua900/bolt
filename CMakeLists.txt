@@ -46,6 +46,8 @@ add_library(bolt STATIC
 	src/app/animation.cpp
 	src/app/serialize.hpp
 	src/app/serialize.cpp
+	src/app/physics.hpp
+	src/app/physics.cpp
 	src/app/net.hpp
 	src/app/net.cpp
 	src/app/action_set.hpp

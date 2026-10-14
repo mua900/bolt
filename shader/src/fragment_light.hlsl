@@ -13,7 +13,7 @@ void main(PSInput input, out float4 fragColor : SV_Target)
     clip(1.0 - distance);
 
     float falloff = saturate(1.0 - distance);
-    falloff = pow(falloff, 0.7);
+    falloff = pow(falloff, 1.4);
     float4 color = float4(input.color.rgb * input.brightness, input.color.a) * falloff;
-    fragColor = color * falloff;
+    fragColor = color;
 }
