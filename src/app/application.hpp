@@ -9,6 +9,7 @@
 #include "camera.hpp"
 #include "action_set.hpp"
 #include "editor.hpp"
+#include "shape.hpp"
 
 #include "util/common.hpp"
 #include "util/template.hpp"
@@ -113,6 +114,8 @@ namespace bolt
         UiStateId active_ui_state = 0;
 
         TimeInfo timeInfo = {};
+
+        ShapeData shape_data = {};
 
         DArray<Event_Timeout> events = {};
 

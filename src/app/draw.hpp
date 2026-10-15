@@ -4,6 +4,7 @@
 #include "draw_types.hpp"
 #include "text.hpp"
 #include "camera.hpp"
+#include "shape.hpp"
 
 #include "config.hpp"
 
@@ -57,13 +58,7 @@ namespace bolt
         MatrixIsMVP   = 2, // override mvp
     };
 
-    enum Shape
-    {
-        ShapeQuad,
-        ShapeCircle,
-        ShapeCount
-    };
-
+    // effects resolution and maximum scale
     const float MaxInstanceScale = 256;
 
     const int VBufferDescriptionCountVertex = 1;
@@ -169,7 +164,7 @@ namespace bolt
     struct DrawGroup
     {
         Texture texture = {};
-        Shape shape = {};
+        ShapeId shape = {};
         int offset = 0;
         int capacity = 0;
         int used = 0;  // reset every frame
@@ -241,6 +236,12 @@ namespace bolt
     struct MeshData
     {
         DArray<Vertex> vertices;
+        DArray<u16> indices;
+    };
+
+    struct MeshInstanceData
+    {
+        DArray<VertexInstance> vertices;
         DArray<u16> indices;
     };
 
@@ -409,13 +410,11 @@ namespace bolt
 
         FrameContext frame = {};
 
-        // predefined mesh
-        MeshReference mesh_common[ShapeCount] = {};
+        // the first slots are reserved for predefined meshes
+        DArray<MeshReference> mesh_ref = {};
 
         DArray<MeshDraw> frameMeshDraw = {};
         DArray<MeshDraw> frameMeshDrawTex = {};
-
-        // @todo draw groups and instancing for user defined meshes
 
         LinearBuffer<InstanceData> instanceData = {};
         u32 next_offset = 0; // the offset after the allocated space for draw groups

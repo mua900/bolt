@@ -26,8 +26,8 @@ namespace bolt
     void draw_quads_texture(RenderContext& render, DrawGroup& group);
 
     // failure if the size of the arrays don't match what's expected
-    void generate_quad_mesh(DArray<VertexInstance>& out_vertex, DArray<u16>& out_index);
-    void generate_circle_mesh(DArray<VertexInstance>& out_vertex, DArray<u16>& out_index);
+    void generate_quad_mesh(MeshInstanceData& data, MeshReference* mesh);
+    void generate_circle_mesh(MeshInstanceData& data, MeshReference* mesh);
 
     bool copy_frame_instance_data(RenderContext& render);
     void upload_frame_instance_data(RenderContext& render);
@@ -36,15 +36,6 @@ namespace bolt
 
     const int RenderTargetWidth = 1440;
     const int RenderTargetHeight = 810;
-
-    struct ShapeLocation
-    {
-        int index_count = 0;
-        int index_offset = 0;
-        int vertex_offset = 0;
-    };
-
-    ShapeLocation get_shape_location(Shape shape);
 
     void render_present(RenderContext& context, SDL_Window* window) {
         if (!copy_frame_instance_data(context))
@@ -1254,20 +1245,15 @@ namespace bolt
 
     bool RenderContext::upload_common_mesh_data()
     {
-        DArray<VertexInstance> quad = {};
-        DArray<u16> quad_indices = {};
-        DArray<VertexInstance> circle = {};
-        DArray<u16> circle_indices = {};
+        mesh_ref.ensure_size(2);
+
+        MeshInstanceData quad_mesh = {};
+        MeshInstanceData circle_mesh = {};
 
         MeshReference mesh[ShapeCount] = {};
 
-        generate_quad_mesh(quad, quad_indices);
-        generate_circle_mesh(circle, circle_indices);
-
-        mesh[ShapeQuad].vertex_count = quad.size();
-        mesh[ShapeQuad].index_count = quad_indices.size();
-        mesh[ShapeCircle].vertex_count = circle.size();
-        mesh[ShapeCircle].index_count = circle_indices.size();
+        generate_quad_mesh(quad_mesh, &mesh[ShapeQuad]);
+        generate_circle_mesh(circle_mesh, &mesh[ShapeCircle]);
 
         size_t offset = 0;
         size_t vertex_offset = 0;
@@ -1276,27 +1262,27 @@ namespace bolt
 
         // vertex
         mesh[ShapeQuad].vertex_offset = vertex_offset;
-        auto size = sizeof(VertexInstance) * quad.size();
-        memcpy(memory + offset, quad.data(), size);
+        auto size = sizeof(VertexInstance) * quad_mesh.vertices.size();
+        memcpy(memory + offset, quad_mesh.vertices.data(), size);
         offset += size;
         vertex_offset += size;
 
         mesh[ShapeCircle].vertex_offset = vertex_offset;
-        size = sizeof(VertexInstance) * circle.size();
-        memcpy(memory + offset, circle.data(), size);
+        size = sizeof(VertexInstance) * circle_mesh.vertices.size();
+        memcpy(memory + offset, circle_mesh.vertices.data(), size);
         offset += size;
         vertex_offset += size;
 
         // index
         mesh[ShapeQuad].index_offset = index_offset;
-        size = sizeof(u16) * quad_indices.size();
-        memcpy(memory + offset, quad_indices.data(), size);
+        size = sizeof(u16) * quad_mesh.indices.size();
+        memcpy(memory + offset, quad_mesh.indices.data(), size);
         offset += size;
         index_offset += size;
 
         mesh[ShapeCircle].index_offset = index_offset;
-        size = sizeof(u16) * circle_indices.size();
-        memcpy(memory + offset, circle_indices.data(), size);
+        size = sizeof(u16) * circle_mesh.indices.size();
+        memcpy(memory + offset, circle_mesh.indices.data(), size);
         offset += size;
         index_offset += size;
 
@@ -1343,14 +1329,14 @@ namespace bolt
         end_copy_pass();
         submit_command_buffer();
 
-        quad.reset();
-        quad_indices.reset();
-        circle.reset();
-        circle_indices.reset();
+        quad_mesh.vertices.reset();
+        quad_mesh.indices.reset();
+        circle_mesh.vertices.reset();
+        circle_mesh.indices.reset();
 
         for (int i = 0; i < ShapeCount; i++)
         {
-            mesh_common[i] = mesh[i];
+            mesh_ref[i] = mesh[i];
         }
 
         return true;
@@ -1979,11 +1965,11 @@ namespace bolt
         index_binding.buffer = render.buffers[render.index_buffer].buffer;
         index_binding.offset = 0;
 
-        ShapeLocation location = get_shape_location(group.shape);
+        MeshReference reference = render.mesh_ref[group.shape];
 
         SDL_BindGPUVertexBuffers(pass, 0, vertex_bindings, 2);
         SDL_BindGPUIndexBuffer(pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SDL_DrawGPUIndexedPrimitives(pass, location.index_count, group.used, location.index_offset, location.vertex_offset, 0);
+        SDL_DrawGPUIndexedPrimitives(pass, reference.index_count, group.used, reference.index_offset, reference.vertex_offset, 0);
     }
 
     void draw_quads_texture(RenderContext& render, DrawGroup& group)
@@ -2013,11 +1999,11 @@ namespace bolt
         index_binding.buffer = render.buffers[render.index_buffer].buffer;
         index_binding.offset = 0;
 
-        ShapeLocation location = get_shape_location(group.shape);
+        MeshReference reference = render.mesh_ref[group.shape];
 
         SDL_BindGPUVertexBuffers(render.frame.render_pass, 0, vertex_bindings, 2);
         SDL_BindGPUIndexBuffer(render.frame.render_pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, location.index_count, group.used, location.index_offset, location.vertex_offset, 0);
+        SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, reference.index_count, group.used, reference.index_offset, reference.vertex_offset, 0);
     }
 
     void draw_generic(RenderContext& render, GraphicsPipeline& pipeline)
@@ -2063,11 +2049,11 @@ namespace bolt
                 index_binding.offset = 0;
             }
 
-            ShapeLocation location = get_shape_location(group.shape);
+            MeshReference reference = render.mesh_ref[group.shape];
 
             SDL_BindGPUVertexBuffers(render.frame.render_pass, 0, vertex_bindings, 2);
             SDL_BindGPUIndexBuffer(render.frame.render_pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-            SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, location.index_count, group.used, location.index_offset, location.vertex_offset, 0);
+            SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, reference.index_count, group.used, reference.index_offset, reference.vertex_offset, 0);
         }
     }
 
@@ -2152,33 +2138,35 @@ namespace bolt
         return true;
     }
 
-    // @todo maybe move these to a seperate source file like mesh.cpp or something
-    void generate_quad_mesh(DArray<VertexInstance>& out_vertex, DArray<u16>& out_index)
+    void generate_quad_mesh(MeshInstanceData& data, MeshReference *reference)
     {
-        out_vertex = DArray<VertexInstance> (4, true);
-        out_index = DArray<u16> (6, true);
+        data.vertices = DArray<VertexInstance> (4, true);
+        data.indices = DArray<u16> (6, true);
 
-        out_vertex[0] = VertexInstance(-0.5, -0.5, 0, 1);
-        out_vertex[1] = VertexInstance(0.5, -0.5, 1, 1);
-        out_vertex[2] = VertexInstance(-0.5, 0.5, 0, 0);
-        out_vertex[3] = VertexInstance(0.5, 0.5, 1, 0);
+        data.vertices[0] = VertexInstance(-0.5, -0.5, 0, 1);
+        data.vertices[1] = VertexInstance(0.5, -0.5, 1, 1);
+        data.vertices[2] = VertexInstance(-0.5, 0.5, 0, 0);
+        data.vertices[3] = VertexInstance(0.5, 0.5, 1, 0);
 
-        out_index[0] = 0;
-        out_index[1] = 1;
-        out_index[2] = 3;
-        out_index[3] = 0;
-        out_index[4] = 3;
-        out_index[5] = 2;
+        data.indices[0] = 0;
+        data.indices[1] = 1;
+        data.indices[2] = 3;
+        data.indices[3] = 0;
+        data.indices[4] = 3;
+        data.indices[5] = 2;
+
+        reference->vertex_count = data.vertices.size();
+        reference->index_count = data.indices.size();
     }
 
     constexpr int N_CIRCLE_VERTICES = 32;
-    void generate_circle_mesh(DArray<VertexInstance>& out_vertex, DArray<u16>& out_index)
+    void generate_circle_mesh(MeshInstanceData& data, MeshReference *reference)
     {
-        out_vertex = DArray<VertexInstance> (N_CIRCLE_VERTICES + 1);
-        out_index = DArray<u16> (N_CIRCLE_VERTICES * 3);
+        data.vertices = DArray<VertexInstance> (N_CIRCLE_VERTICES + 1);
+        data.indices = DArray<u16> (N_CIRCLE_VERTICES * 3);
 
         VertexInstance center = VertexInstance (0, 0, 0.5, 0.5);
-        out_vertex[0] = center;
+        data.vertices[0] = center;
 
         // the angle between vertices and it's sin and cos
         const float angle = CONSTANT_TAU / float(N_CIRCLE_VERTICES);
@@ -2193,7 +2181,7 @@ namespace bolt
             float py = center.y + ycomp;
             float u = (xcomp + 1.0f) * 0.5f;
             float v = (ycomp + 1.0f) * 0.5f;
-            out_vertex[i] = VertexInstance(px, py, u, v);
+            data.vertices[i] = VertexInstance(px, py, u, v);
 
             // rotate the vector
             float n_xcomp = xcomp * c - ycomp * s;
@@ -2204,39 +2192,17 @@ namespace bolt
 
         for (int i = 0; i < N_CIRCLE_VERTICES - 1; i++)
         {
-            out_index[i * 3 + 0] = 0;
-            out_index[i * 3 + 1] = i + 1;
-            out_index[i * 3 + 2] = i + 2;
+            data.indices[i * 3 + 0] = 0;
+            data.indices[i * 3 + 1] = i + 1;
+            data.indices[i * 3 + 2] = i + 2;
         }
 
-        out_index[(N_CIRCLE_VERTICES - 1) * 3 + 0] = 0;
-        out_index[(N_CIRCLE_VERTICES - 1) * 3 + 1] = N_CIRCLE_VERTICES;
-        out_index[(N_CIRCLE_VERTICES - 1) * 3 + 2] = 1;
-    }
+        data.indices[(N_CIRCLE_VERTICES - 1) * 3 + 0] = 0;
+        data.indices[(N_CIRCLE_VERTICES - 1) * 3 + 1] = N_CIRCLE_VERTICES;
+        data.indices[(N_CIRCLE_VERTICES - 1) * 3 + 2] = 1;
 
-    ShapeLocation get_shape_location(Shape shape)
-    {
-        ShapeLocation location;
-        switch (shape)
-        {
-            case ShapeQuad:
-            {
-                location.index_count = 6;
-                location.index_offset = 0;
-                location.vertex_offset = 0;
-                break;
-            }
-            case ShapeCircle:
-            {
-                location.index_count = N_CIRCLE_VERTICES * 3;
-                location.index_offset = 6;
-                location.vertex_offset = 4;
-                break;
-            }
-            default: panic("Invalid shape");
-        }
-
-        return location;
+        reference->vertex_count = data.vertices.size();
+        reference->index_count = data.indices.size();
     }
 
     void unloadShader(RenderContext& context, Shader& shader)
