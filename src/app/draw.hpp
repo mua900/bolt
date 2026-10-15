@@ -161,10 +161,61 @@ namespace bolt
         {}
     };
 
+    struct MeshData
+    {
+        DArray<Vertex> vertices;
+        DArray<u16> indices;
+    };
+
+    struct MeshInstanceData
+    {
+        DArray<VertexInstance> vertices;
+        DArray<u16> indices;
+    };
+
+    // index to RenderContext.mesh_ref
+    using MeshId = u32;
+
+    enum BuiltinMesh
+    {
+        MeshQuad = 0,
+        MeshCircle,
+        MeshCount,
+    };
+
+    struct MeshReference
+    {
+        int vertex_count = 0;
+        int index_count = 0;
+        int vertex_offset = 0;
+        int index_offset = 0;
+
+        int vertex_buffer = 0;
+        int index_buffer = 0;
+    };
+
+    struct MeshDraw
+    {
+        MeshReference mesh = {};
+        Texture texture = TEXTURE_INVALID;
+
+        mat4x4* matrix = {};
+        DrawMatrixUsage matrix_usage = {};
+    };
+
+    struct MeshDataSize
+    {
+        int vertex_count = 0;
+        int index_count = 0;
+
+        MeshDataSize() {}
+        MeshDataSize(int vc, int ic) : vertex_count(vc), index_count(ic) {}
+    };
+
     struct DrawGroup
     {
         Texture texture = {};
-        ShapeId shape = {};
+        MeshId mesh = {};
         int offset = 0;
         int capacity = 0;
         int used = 0;  // reset every frame
@@ -231,47 +282,6 @@ namespace bolt
         GraphicsPipeline(GraphicsPipelineParameters& params, SDL_GPUGraphicsPipeline* pline, u32 vb, u32 instance, u32 index)
             : parameters(params), pipeline(pline), vertex_buffer(vb), instance_buffer(instance), index_buffer(index)
         {}
-    };
-
-    struct MeshData
-    {
-        DArray<Vertex> vertices;
-        DArray<u16> indices;
-    };
-
-    struct MeshInstanceData
-    {
-        DArray<VertexInstance> vertices;
-        DArray<u16> indices;
-    };
-
-    struct MeshReference
-    {
-        int vertex_count = 0;
-        int index_count = 0;
-        int vertex_offset = 0;
-        int index_offset = 0;
-
-        int vertex_buffer = 0;
-        int index_buffer = 0;
-    };
-
-    struct MeshDraw
-    {
-        MeshReference mesh = {};
-        Texture texture = TEXTURE_INVALID;
-
-        mat4x4* matrix = {};
-        DrawMatrixUsage matrix_usage = {};
-    };
-
-    struct MeshDataSize
-    {
-        int vertex_count = 0;
-        int index_count = 0;
-
-        MeshDataSize() {}
-        MeshDataSize(int vc, int ic) : vertex_count(vc), index_count(ic) {}
     };
 
     struct TransferData {
@@ -410,7 +420,7 @@ namespace bolt
 
         FrameContext frame = {};
 
-        // the first slots are reserved for predefined meshes
+        // the first slots are filled for predefined meshes
         DArray<MeshReference> mesh_ref = {};
 
         DArray<MeshDraw> frameMeshDraw = {};

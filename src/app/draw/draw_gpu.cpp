@@ -22,7 +22,7 @@ namespace bolt
     void draw_mesh_texture_buffers(RenderContext& render, MeshDraw& draw, GPUBuffer& vertex_buffer, GPUBuffer& index_buffer);
     void draw_generic(RenderContext& render, GraphicsPipeline& pipeline);
 
-    void draw_shapes(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size);
+    void draw_mesh(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size);
     void draw_quads_texture(RenderContext& render, DrawGroup& group);
 
     // failure if the size of the arrays don't match what's expected
@@ -97,7 +97,7 @@ namespace bolt
         {
             if (group.used > 0)
             {
-                draw_shapes(context, group, context.frame.render_pass, context.instance_buffer, sizeof(InstanceData));
+                draw_mesh(context, group, context.frame.render_pass, context.instance_buffer, sizeof(InstanceData));
             }
         }
 
@@ -134,7 +134,7 @@ namespace bolt
 
             DrawGroup lightGroup = {
                 TEXTURE_INVALID,
-                ShapeQuad,
+                MeshQuad,
                 0,
                 context.lights.size(),
                 context.lights.size(),
@@ -143,7 +143,7 @@ namespace bolt
             };
             GraphicsPipeline& pipelineLight = context.graphics.get(context.graphics_light);
             SDL_BindGPUGraphicsPipeline(context.frame.light_pass, pipelineLight.pipeline);
-            draw_shapes(context, lightGroup, context.frame.light_pass, context.light_buffer, sizeof(PointLight));
+            draw_mesh(context, lightGroup, context.frame.light_pass, context.light_buffer, sizeof(PointLight));
 
             context.end_light_pass();
 
@@ -1250,10 +1250,10 @@ namespace bolt
         MeshInstanceData quad_mesh = {};
         MeshInstanceData circle_mesh = {};
 
-        MeshReference mesh[ShapeCount] = {};
+        MeshReference mesh[MeshCount] = {};
 
-        generate_quad_mesh(quad_mesh, &mesh[ShapeQuad]);
-        generate_circle_mesh(circle_mesh, &mesh[ShapeCircle]);
+        generate_quad_mesh(quad_mesh, &mesh[MeshQuad]);
+        generate_circle_mesh(circle_mesh, &mesh[MeshCircle]);
 
         size_t offset = 0;
         size_t vertex_offset = 0;
@@ -1261,26 +1261,26 @@ namespace bolt
         u8 *memory = (u8*) SDL_MapGPUTransferBuffer(device, transfer_buffer.buffer, false);
 
         // vertex
-        mesh[ShapeQuad].vertex_offset = vertex_offset;
+        mesh[MeshQuad].vertex_offset = vertex_offset;
         auto size = sizeof(VertexInstance) * quad_mesh.vertices.size();
         memcpy(memory + offset, quad_mesh.vertices.data(), size);
         offset += size;
         vertex_offset += size;
 
-        mesh[ShapeCircle].vertex_offset = vertex_offset;
+        mesh[MeshCircle].vertex_offset = vertex_offset;
         size = sizeof(VertexInstance) * circle_mesh.vertices.size();
         memcpy(memory + offset, circle_mesh.vertices.data(), size);
         offset += size;
         vertex_offset += size;
 
         // index
-        mesh[ShapeQuad].index_offset = index_offset;
+        mesh[MeshQuad].index_offset = index_offset;
         size = sizeof(u16) * quad_mesh.indices.size();
         memcpy(memory + offset, quad_mesh.indices.data(), size);
         offset += size;
         index_offset += size;
 
-        mesh[ShapeCircle].index_offset = index_offset;
+        mesh[MeshCircle].index_offset = index_offset;
         size = sizeof(u16) * circle_mesh.indices.size();
         memcpy(memory + offset, circle_mesh.indices.data(), size);
         offset += size;
@@ -1334,7 +1334,7 @@ namespace bolt
         circle_mesh.vertices.reset();
         circle_mesh.indices.reset();
 
-        for (int i = 0; i < ShapeCount; i++)
+        for (int i = 0; i < MeshCount; i++)
         {
             mesh_ref[i] = mesh[i];
         }
@@ -1947,7 +1947,7 @@ namespace bolt
         SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, draw.mesh.index_count, 1, 0, 0, 0);
     }
 
-    void draw_shapes(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size)
+    void draw_mesh(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size)
     {
         ASSERT(pass);
 
@@ -1965,7 +1965,7 @@ namespace bolt
         index_binding.buffer = render.buffers[render.index_buffer].buffer;
         index_binding.offset = 0;
 
-        MeshReference reference = render.mesh_ref[group.shape];
+        MeshReference reference = render.mesh_ref[group.mesh];
 
         SDL_BindGPUVertexBuffers(pass, 0, vertex_bindings, 2);
         SDL_BindGPUIndexBuffer(pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
@@ -1999,7 +1999,7 @@ namespace bolt
         index_binding.buffer = render.buffers[render.index_buffer].buffer;
         index_binding.offset = 0;
 
-        MeshReference reference = render.mesh_ref[group.shape];
+        MeshReference reference = render.mesh_ref[group.mesh];
 
         SDL_BindGPUVertexBuffers(render.frame.render_pass, 0, vertex_bindings, 2);
         SDL_BindGPUIndexBuffer(render.frame.render_pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
@@ -2049,7 +2049,7 @@ namespace bolt
                 index_binding.offset = 0;
             }
 
-            MeshReference reference = render.mesh_ref[group.shape];
+            MeshReference reference = render.mesh_ref[group.mesh];
 
             SDL_BindGPUVertexBuffers(render.frame.render_pass, 0, vertex_bindings, 2);
             SDL_BindGPUIndexBuffer(render.frame.render_pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
