@@ -177,6 +177,8 @@ namespace bolt
     // index to RenderContext.mesh_ref
     using MeshId = u32;
 
+    #define MESH_INVALID u32(-1)
+
     enum BuiltinMesh
     {
         MeshQuad = 0,
@@ -341,7 +343,7 @@ namespace bolt
         SDL_GPUCopyPass* copy_pass = nullptr;
     };
 
-    // @todo
+    // @todo return to this when doing ui
     // you should set this to the correct value before drawing something
     // typically you would set this in the top draw loop to switch between things that you want to draw in the coordinate space you want
     // and also set it and back in place for exceptions
@@ -423,6 +425,9 @@ namespace bolt
 
         // the first slots are filled for predefined meshes
         DArray<MeshReference> mesh_ref = {};
+        DArray<MeshReference> mesh_frame = {};
+        // takes ownership of it
+        DArray<MeshInstanceData> mesh_upload_frame = {};
 
         // different graphics pipelines so seperate in memory
         DArray<MeshDraw> frameMeshDraw = {};
@@ -478,6 +483,8 @@ namespace bolt
         DrawGroupId make_draw_group(GraphicsPipelineId id, Texture texture, int size);
         GraphicsPipelineId make_graphics_pipeline(GraphicsPipelineParameters& params, SDL_GPUShader* vertex, SDL_GPUShader* fragment); // -1 on fail
 
+        MeshId make_mesh(MeshInstanceData& mesh, SDL_GPUCopyPass* copy_pass);
+
         DrawGroup& get_draw_group(DrawGroupId id) const;
 
         bool upload_common_mesh_data();
@@ -492,6 +499,7 @@ namespace bolt
 
         void set_viewport(Viewport viewport);
 
+        // recreates the pipeline
         bool set_shaders(GraphicsPipeline* gp, SDL_GPUShader* vertex, SDL_GPUShader* fragment);
 
         void copy_to_swapchain(SDL_GPUTexture *texture, SDL_GPUTexture* swapchain, u32 swapchain_width, u32 swapchain_height);
@@ -579,8 +587,10 @@ namespace bolt
 
     void render_present(RenderContext& context, SDL_Window* window);
 
-    TransferData add_to_transfer_buffer(RenderContext& context, DArray<MeshData>& data);
+    TransferData add_to_transfer_buffer_array(RenderContext& context, DArray<MeshData>& data);
+    TransferData add_to_transfer_buffer(RenderContext& context, const MeshData *mesh, int num_mesh);
 
+    // resets the input transfer data
     DArray<MeshReference> upload_mesh_data(RenderContext& context, TransferData& data);
     DArray<MeshReference> upload_mesh_data_buffers(RenderContext& context, TransferData& data, GPUBuffer& vertex_buffer, GPUBuffer& index_buffer);
 

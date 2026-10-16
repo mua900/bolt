@@ -33,6 +33,8 @@ namespace bolt
     void upload_frame_instance_data(RenderContext& render);
     bool copy_frame_light_data(RenderContext& render);
     void upload_frame_light_data(RenderContext& render);
+    bool copy_frame_mesh_data(RenderContext& render);
+    void upload_frame_mesh_data(RenderContext& render);
 
     const int RenderTargetWidth = 1440;
     const int RenderTargetHeight = 810;
@@ -49,6 +51,11 @@ namespace bolt
             {
                 return;
             }
+        }
+
+        if (!copy_frame_mesh_data(context))
+        {
+            return;
         }
 
         if (!context.get_command_buffer())
@@ -68,6 +75,8 @@ namespace bolt
         {
             upload_frame_light_data(context);
         }
+
+        upload_frame_mesh_data(context);
 
         context.end_copy_pass();
 
@@ -205,6 +214,7 @@ namespace bolt
 
         context.frameMeshDraw.discard_data();
         context.frameMeshDrawTex.discard_data();
+        context.mesh_frame.discard_data();
         context.instanceData.mark_empty();
 
         for (GraphicsPipeline& pipeline : context.graphics)
@@ -214,17 +224,29 @@ namespace bolt
                 group.used = 0;
             }
         }
+
+        for (auto& upload : context.mesh_upload_frame)
+        {
+            upload.vertices.reset();
+            upload.indices.reset();
+        }
+        context.mesh_upload_frame.discard_data();
     }
 
     bool RenderContext::get_command_buffer()
     {
-        frame.command_buffer = nullptr;
+        if (frame.command_buffer)
+        {
+            log_warning("Already got a command buffer and trying to get a new one");
+            return false;
+        }
 
         SDL_GPUCommandBuffer* command_buffer = SDL_AcquireGPUCommandBuffer(device);
         frame.command_buffer = command_buffer;
         return command_buffer ? true : false;
     }
 
+    // @note consistent behaviour between these submit functions would be nice but it's okay since we don't use fences yet
     void RenderContext::submit_command_buffer()
     {
         if (frame.command_buffer)
@@ -1498,19 +1520,24 @@ namespace bolt
         return true;
     }
 
-    TransferData add_to_transfer_buffer(RenderContext& context, DArray<MeshData>& data)
+    TransferData add_to_transfer_buffer_array(RenderContext& context, DArray<MeshData>& data)
     {
-        if (data.size() == 0)
+        return add_to_transfer_buffer(context, data.data(), data.size());
+    }
+
+    TransferData add_to_transfer_buffer(RenderContext& context, const MeshData *mesh, int num_mesh)
+    {
+        if (num_mesh == 0)
         {
             return TransferData();
         }
 
         int vcount = 0;
         int icount = 0;
-        for (auto mesh : data)
+        for (int i = 0; i < num_mesh; i++)
         {
-            vcount += mesh.vertices.size();
-            icount += mesh.indices.size();
+            vcount += mesh[i].vertices.size();
+            icount += mesh[i].indices.size();
         }
 
         size_t total = vcount * sizeof(Vertex) + icount * sizeof(u16);
@@ -1527,18 +1554,18 @@ namespace bolt
 
         size_t offset = 0;
 
-        DArray<MeshDataSize> meshes = {};
+        DArray<MeshDataSize> meshes = DArray<MeshDataSize> (num_mesh);
 
-        for (auto mesh : data)
+        for (int i = 0; i < num_mesh; i++)
         {
-            int vertex_count = mesh.vertices.size();
-            int index_count = mesh.indices.size();
+            int vertex_count = mesh[i].vertices.size();
+            int index_count = mesh[i].indices.size();
 
             size_t vertex_byte = vertex_count * sizeof(Vertex);
             size_t index_byte = index_count * sizeof(u16);
-            memcpy(memory + offset, mesh.vertices.data(), vertex_byte);
+            memcpy(memory + offset, mesh[i].vertices.data(), vertex_byte);
             offset += vertex_byte;
-            memcpy(memory + offset, mesh.indices.data(), index_byte);
+            memcpy(memory + offset, mesh[i].indices.data(), index_byte);
             offset += index_byte;
 
             meshes.add(MeshDataSize(vertex_count, index_count));
@@ -1631,6 +1658,40 @@ namespace bolt
         }
     }
 
+    bool copy_frame_mesh_data(RenderContext& render)
+    {
+        u8 *buffer = (u8*) SDL_MapGPUTransferBuffer(render.device, render.transfer_buffer.buffer, false);
+        ASSERT(buffer);
+
+        size_t offset = 0;
+        for (MeshInstanceData& data : render.mesh_upload_frame)
+        {
+            size_t vertex_size = data.vertices.size() * sizeof(VertexInstance);
+            VertexInstance *vertices = (VertexInstance*) (buffer + offset);
+
+            memcpy(vertices, data.vertices.data(), vertex_size);
+
+            offset += vertex_size;
+        }
+
+        for (MeshInstanceData& data : render.mesh_upload_frame)
+        {
+            size_t index_size = data.indices.size() * sizeof(u16);
+            u16 *indices = (u16*) (buffer + offset);
+
+            memcpy(indices, data.indices.data(), index_size);
+
+            offset += index_size;
+        }
+
+        return true;
+    }
+
+    void upload_frame_mesh_data(RenderContext& render)
+    {
+        // @todo
+    }
+
     DArray<MeshReference> upload_mesh_data(RenderContext& context, TransferData& data)
     {
         return upload_mesh_data_buffers(context, data, context.buffers.get_ref(context.active_vertex_buffer), context.buffers.get_ref(context.active_index_buffer));
@@ -1687,6 +1748,8 @@ namespace bolt
 
             refs.add(reference);
         }
+
+        data.meshes.reset();
 
         return refs;
     }
@@ -1792,6 +1855,13 @@ namespace bolt
         GraphicsPipeline graphics_pipeline = GraphicsPipeline(params, pipeline, 0, 0, 0);
 
         return graphics.add(graphics_pipeline);
+    }
+
+    MeshId RenderContext::make_mesh(MeshInstanceData& data, SDL_GPUCopyPass *copy_pass)
+    {
+        MeshReference reference = {};
+
+        return mesh_frame.add(reference);
     }
 
     bool add_point_light(RenderContext& render, PointLight& light)

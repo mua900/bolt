@@ -94,10 +94,7 @@ bool initialize(void *userdata, Application *app)
 		qv[i].y *= scale;
 	}
 
-	DArray<MeshData> meshData(2);
-
-	meshData.add(MeshData());
-	meshData.add(MeshData());
+	MeshData meshData[2] = {};
 
 	meshData[0].vertices.add_array(vertices, 3);
 	meshData[0].indices.add_array(indices, 3);
@@ -105,9 +102,7 @@ bool initialize(void *userdata, Application *app)
 	meshData[1].vertices.add_array(qv, 4);
 	meshData[1].indices.add_array(qi, 6);
 
-	TransferData memory = add_to_transfer_buffer(app->render, meshData);
-
-	meshData.reset();
+	TransferData memory = add_to_transfer_buffer(app->render, meshData, 2);
 
 	int vertex_buffer = app->render.allocate_gpu_buffer(GPUBufferVertex, 1024);
 	int index_buffer = app->render.allocate_gpu_buffer(GPUBufferIndex, 1024);
@@ -130,6 +125,32 @@ bool initialize(void *userdata, Application *app)
 		log_error("Couldn't start copy pass");
 		app->render.submit_command_buffer();
 		return false;
+	}
+
+	{
+		float scale = 200;
+
+		// define persistent custom geometry
+
+		VertexInstance vertices[3] = {
+			{ 1,     0,     1, 0.5},
+			{ -0.5,  0.866, 0, 1},
+			{ -0.5, -0.866, 0, 0},
+		};
+		u16 indices[3] = {
+			0, 1, 2
+		};
+
+		for (int i = 0; i < 3; i++) {
+			vertices[i].x *= scale;
+			vertices[i].y *= scale;
+		}
+
+		MeshInstanceData mesh_data = {};
+		mesh_data.vertices.add_array(vertices, 3);
+		mesh_data.indices.add_array(indices, 3);
+
+		MeshId mesh = app->render.make_mesh(mesh_data, app->render.frame.copy_pass);
 	}
 
 	GPUTexture& gpu_tex = app->render.get_texture(texture);
