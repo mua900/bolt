@@ -51,15 +51,12 @@ bool initialize(void *userdata, Application *app)
 
 	bolt::DrawGroupId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024);
 	bolt::DrawGroupId id_solid = app->render.make_draw_group(app->render.graphics_instance, TEXTURE_INVALID, 1024);
-	if (!id.is_valid())
+	if (!(id.is_valid() && id_solid.is_valid()))
 	{
 		return false;
 	}
 
-	if (!id_solid.is_valid())
-	{
-		return false;
-	}
+	app->render.get_draw_group(id_solid).mesh = bolt::MeshCircle;
 
 	TransferData triangle, quad;
 

@@ -25,6 +25,7 @@ namespace bolt
     struct RenderInitConfig
     {
         bool doLights = false;
+        bool doShadows = false; // @todo not implemented
         bool gpuDebug = false;
     };
 
@@ -423,6 +424,7 @@ namespace bolt
         // the first slots are filled for predefined meshes
         DArray<MeshReference> mesh_ref = {};
 
+        // different graphics pipelines so seperate in memory
         DArray<MeshDraw> frameMeshDraw = {};
         DArray<MeshDraw> frameMeshDrawTex = {};
 
@@ -434,6 +436,7 @@ namespace bolt
         DArray<PointLight> lights = {};
 
         bool doLighting = false;
+        bool doShadows = false; // @todo
 
         // the sum of allocated buffers and textures
         size_t calculate_resource_video_memory_usage() const;

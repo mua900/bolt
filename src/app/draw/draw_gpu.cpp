@@ -957,6 +957,7 @@ namespace bolt
         render->group_transfer_buffer = { group_transfer_buffer, transferInfo.size };
         render->light_transfer_buffer = { light_transfer_buffer, transferInfo.size };
         render->doLighting = conf->doLights;
+        render->doShadows = conf->doShadows;
 
         if (!render->upload_common_mesh_data())
         {
@@ -1260,31 +1261,28 @@ namespace bolt
         size_t index_offset = 0;
         u8 *memory = (u8*) SDL_MapGPUTransferBuffer(device, transfer_buffer.buffer, false);
 
-        // vertex
-        mesh[MeshQuad].vertex_offset = vertex_offset;
-        auto size = sizeof(VertexInstance) * quad_mesh.vertices.size();
-        memcpy(memory + offset, quad_mesh.vertices.data(), size);
-        offset += size;
-        vertex_offset += size;
+        MeshInstanceData* mesh_data[MeshCount] = {
+            &quad_mesh,
+            &circle_mesh
+        };
 
-        mesh[MeshCircle].vertex_offset = vertex_offset;
-        size = sizeof(VertexInstance) * circle_mesh.vertices.size();
-        memcpy(memory + offset, circle_mesh.vertices.data(), size);
-        offset += size;
-        vertex_offset += size;
+        for (int i = 0; i < MeshCount; i++)
+        {
+            mesh[i].vertex_offset = vertex_offset;
+            size_t size = mesh_data[i]->vertices.size() * sizeof(VertexInstance);
+            memcpy(memory + offset, mesh_data[i]->vertices.data(), size);
+            offset += size;
+            vertex_offset += size;
+        }
 
-        // index
-        mesh[MeshQuad].index_offset = index_offset;
-        size = sizeof(u16) * quad_mesh.indices.size();
-        memcpy(memory + offset, quad_mesh.indices.data(), size);
-        offset += size;
-        index_offset += size;
-
-        mesh[MeshCircle].index_offset = index_offset;
-        size = sizeof(u16) * circle_mesh.indices.size();
-        memcpy(memory + offset, circle_mesh.indices.data(), size);
-        offset += size;
-        index_offset += size;
+        for (int i = 0; i < MeshCount; i++)
+        {
+            mesh[i].index_offset = index_offset;
+            size_t size = mesh_data[i]->indices.size() * sizeof(u16);
+            memcpy(memory + offset, mesh_data[i]->indices.data(), size);
+            offset += size;
+            index_offset += size;
+        }
 
         SDL_UnmapGPUTransferBuffer(device, transfer_buffer.buffer);
 
@@ -1329,13 +1327,11 @@ namespace bolt
         end_copy_pass();
         submit_command_buffer();
 
-        quad_mesh.vertices.reset();
-        quad_mesh.indices.reset();
-        circle_mesh.vertices.reset();
-        circle_mesh.indices.reset();
-
         for (int i = 0; i < MeshCount; i++)
         {
+            mesh_data[i]->vertices.reset();
+            mesh_data[i]->indices.reset();
+
             mesh_ref[i] = mesh[i];
         }
 
@@ -1956,20 +1952,20 @@ namespace bolt
         SDL_GPUBufferBinding vertex_bindings[2] = {};
         SDL_GPUBufferBinding index_binding = {};
 
+        MeshReference reference = render.mesh_ref[group.mesh];
+
         vertex_bindings[0].buffer = render.buffers[render.vertex_buffer].buffer;
-        vertex_bindings[0].offset = 0;
+        vertex_bindings[0].offset = reference.vertex_offset;
 
         vertex_bindings[1].buffer = render.buffers[instance_buffer].buffer;
         vertex_bindings[1].offset = group.offset * instance_size;
 
         index_binding.buffer = render.buffers[render.index_buffer].buffer;
-        index_binding.offset = 0;
-
-        MeshReference reference = render.mesh_ref[group.mesh];
+        index_binding.offset = reference.index_offset;
 
         SDL_BindGPUVertexBuffers(pass, 0, vertex_bindings, 2);
         SDL_BindGPUIndexBuffer(pass, &index_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-        SDL_DrawGPUIndexedPrimitives(pass, reference.index_count, group.used, reference.index_offset, reference.vertex_offset, 0);
+        SDL_DrawGPUIndexedPrimitives(pass, reference.index_count, group.used, 0, 0, 0);
     }
 
     void draw_quads_texture(RenderContext& render, DrawGroup& group)
@@ -2162,8 +2158,8 @@ namespace bolt
     constexpr int N_CIRCLE_VERTICES = 32;
     void generate_circle_mesh(MeshInstanceData& data, MeshReference *reference)
     {
-        data.vertices = DArray<VertexInstance> (N_CIRCLE_VERTICES + 1);
-        data.indices = DArray<u16> (N_CIRCLE_VERTICES * 3);
+        data.vertices = DArray<VertexInstance> (N_CIRCLE_VERTICES + 1, true);
+        data.indices = DArray<u16> (N_CIRCLE_VERTICES * 3, true);
 
         VertexInstance center = VertexInstance (0, 0, 0.5, 0.5);
         data.vertices[0] = center;
