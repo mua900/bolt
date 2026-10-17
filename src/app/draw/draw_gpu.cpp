@@ -15,11 +15,13 @@ namespace bolt
     static_assert(sizeof(Vertex) == 32);
     static_assert(sizeof(VertexInstance) == 16);
     static_assert(sizeof(InstanceData) == 32);
+    static_assert(sizeof(PointLight) == 24);
 
     void draw_mesh(RenderContext& render, MeshDraw& mesh);
     void draw_mesh_buffers(RenderContext& render, MeshDraw& mesh, GPUBuffer& vertex_buffer, GPUBuffer& index_buffer);
     void draw_mesh_texture(RenderContext& render, MeshDraw& draw);
     void draw_mesh_texture_buffers(RenderContext& render, MeshDraw& draw, GPUBuffer& vertex_buffer, GPUBuffer& index_buffer);
+    // unused
     void draw_generic(RenderContext& render, GraphicsPipeline& pipeline);
 
     void draw_mesh(RenderContext& render, DrawGroup& group, SDL_GPURenderPass* pass, int instance_buffer, int instance_size);
@@ -2072,6 +2074,7 @@ namespace bolt
         SDL_DrawGPUIndexedPrimitives(render.frame.render_pass, reference.index_count, group.used, reference.index_offset, reference.vertex_offset, 0);
     }
 
+    // unused
     void draw_generic(RenderContext& render, GraphicsPipeline& pipeline)
     {
         ASSERT(render.frame.render_pass);
@@ -2204,6 +2207,7 @@ namespace bolt
         return true;
     }
 
+    // unit quad
     void generate_quad_mesh(MeshInstanceData& data, MeshReference *reference)
     {
         data.vertices = DArray<VertexInstance> (4, true);
@@ -2225,6 +2229,7 @@ namespace bolt
         reference->index_count = data.indices.size();
     }
 
+    // circle with a unit diameter
     constexpr int N_CIRCLE_VERTICES = 32;
     void generate_circle_mesh(MeshInstanceData& data, MeshReference *reference)
     {
@@ -2243,8 +2248,8 @@ namespace bolt
         float ycomp = 0.0;
         for (int i = 1; i <= N_CIRCLE_VERTICES; i++)
         {
-            float px = center.x + xcomp;
-            float py = center.y + ycomp;
+            float px = center.x + xcomp * 0.5;
+            float py = center.y + ycomp * 0.5;
             float u = (xcomp + 1.0f) * 0.5f;
             float v = (ycomp + 1.0f) * 0.5f;
             data.vertices[i] = VertexInstance(px, py, u, v);
@@ -2299,6 +2304,10 @@ namespace bolt
         else if (string_compare(extension, String("msl")))
         {
             format = SDL_GPU_SHADERFORMAT_MSL;
+        }
+        else
+        {
+            return SHADER_LOAD_FAIL;
         }
 
         SDL_GPUShaderFormat expectedFormat = SDL_GetGPUShaderFormats(context.device);
@@ -2377,7 +2386,7 @@ namespace bolt
 
     u16 pack_rotation(float rot)
     {
-        rot = std::fmodf(rot, CONSTANT_TAU);
+        rot = std::fmodf(std::fabsf(rot), CONSTANT_TAU);
         u16 x = (u16)((rot / CONSTANT_TAU) * float(0xFFFF));
         return x;
     }
