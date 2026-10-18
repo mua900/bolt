@@ -436,7 +436,6 @@ namespace bolt
         FrameContext frame = {};
 
         DArray<MeshReference> mesh_ref = {};
-        DArray<MeshReference> mesh_frame = {};
         // takes ownership of it
         // frees the data as it is done uploading it
         DArray<MeshInstanceData> mesh_upload_frame = {};
@@ -495,7 +494,7 @@ namespace bolt
         DrawGroupId make_draw_group(GraphicsPipelineId id, Texture texture, int size);
         GraphicsPipelineId make_graphics_pipeline(GraphicsPipelineParameters& params, SDL_GPUShader* vertex, SDL_GPUShader* fragment); // -1 on fail
 
-        MeshId make_mesh(MeshInstanceData& mesh, SDL_GPUCopyPass* copy_pass);
+        MeshId make_mesh(MeshInstanceData& mesh);
 
         DrawGroup& get_draw_group(DrawGroupId id) const;
 

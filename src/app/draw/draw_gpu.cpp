@@ -55,12 +55,10 @@ namespace bolt
             }
         }
 
-        /*
         if (!copy_frame_mesh_data(context))
         {
             return;
         }
-        */
 
         if (!context.get_command_buffer())
         {
@@ -80,7 +78,7 @@ namespace bolt
             upload_frame_light_data(context);
         }
 
-        //upload_frame_mesh_data(context);
+        upload_frame_mesh_data(context);
 
         context.end_copy_pass();
 
@@ -218,7 +216,6 @@ namespace bolt
 
         context.frameMeshDraw.discard_data();
         context.frameMeshDrawTex.discard_data();
-        context.mesh_frame.discard_data();
         context.instanceData.mark_empty();
 
         for (GraphicsPipeline& pipeline : context.graphics)
@@ -1354,6 +1351,8 @@ namespace bolt
             mesh_ref[i] = mesh[i];
         }
 
+        mesh_ref.mark_full();
+
         return true;
     }
 
@@ -1621,20 +1620,23 @@ namespace bolt
 
     bool copy_frame_light_data(RenderContext& render)
     {
-        PointLight* memory = (PointLight*) SDL_MapGPUTransferBuffer(render.device, render.light_transfer_buffer.buffer, false);
-        ASSERT(memory);
-        GraphicsPipeline& pipeline = render.graphics[render.graphics_light];
-
-        u32 index = 0;
-        for (auto& light : render.lights)
+        if (render.lights.size() > 0)
         {
-            memory[index] = light;
-            index += 1;
-        }
+            PointLight* memory = (PointLight*) SDL_MapGPUTransferBuffer(render.device, render.light_transfer_buffer.buffer, false);
+            ASSERT(memory);
+            GraphicsPipeline& pipeline = render.graphics[render.graphics_light];
 
-        SDL_UnmapGPUTransferBuffer(render.device, render.light_transfer_buffer.buffer);
+            u32 index = 0;
+            for (auto& light : render.lights)
+            {
+                memory[index] = light;
+                index += 1;
+            }
 
-        return true;
+            SDL_UnmapGPUTransferBuffer(render.device, render.light_transfer_buffer.buffer);
+
+            return true;
+       }
     }
 
     void upload_frame_light_data(RenderContext& render)
@@ -1657,28 +1659,31 @@ namespace bolt
 
     bool copy_frame_mesh_data(RenderContext& render)
     {
-        u8 *buffer = (u8*) SDL_MapGPUTransferBuffer(render.device, render.transfer_buffer.buffer, false);
-        ASSERT(buffer);
-
-        size_t offset = 0;
-        for (MeshInstanceData& data : render.mesh_upload_frame)
+        if (render.mesh_upload_frame.size() > 0)
         {
-            size_t vertex_size = data.vertices.size() * sizeof(VertexInstance);
-            VertexInstance *vertices = (VertexInstance*) (buffer + offset);
+            u8 *buffer = (u8*) SDL_MapGPUTransferBuffer(render.device, render.transfer_buffer.buffer, false);
+            ASSERT(buffer);
 
-            memcpy(vertices, data.vertices.data(), vertex_size);
+            size_t offset = 0;
+            for (MeshInstanceData& data : render.mesh_upload_frame)
+            {
+                size_t vertex_size = data.vertices.size() * sizeof(VertexInstance);
+                VertexInstance *vertices = (VertexInstance*) (buffer + offset);
 
-            offset += vertex_size;
-        }
+                memcpy(vertices, data.vertices.data(), vertex_size);
 
-        for (MeshInstanceData& data : render.mesh_upload_frame)
-        {
-            size_t index_size = data.indices.size() * sizeof(u16);
-            u16 *indices = (u16*) (buffer + offset);
+                offset += vertex_size;
+            }
 
-            memcpy(indices, data.indices.data(), index_size);
+            for (MeshInstanceData& data : render.mesh_upload_frame)
+            {
+                size_t index_size = data.indices.size() * sizeof(u16);
+                u16 *indices = (u16*) (buffer + offset);
 
-            offset += index_size;
+                memcpy(indices, data.indices.data(), index_size);
+
+                offset += index_size;
+            }
         }
 
         return true;
@@ -1719,6 +1724,13 @@ namespace bolt
 
                 SDL_UploadToGPUBuffer(render.frame.copy_pass, &vertex_source, &vertex_destination, false);
                 SDL_UploadToGPUBuffer(render.frame.copy_pass, &index_source, &index_destination, false);
+
+                reference.vertex_count = mesh.vertices.size();
+                reference.index_count = mesh.indices.size();
+                reference.vertex_offset = vertex_destination.offset;
+                reference.index_offset = index_destination.offset;
+                reference.vertex_buffer = render.vertex_buffer;
+                reference.index_buffer = render.index_buffer;
 
                 render.mesh_ref[mesh.mesh] = reference;
 
@@ -1895,12 +1907,12 @@ namespace bolt
         return graphics.add(graphics_pipeline);
     }
 
-    MeshId RenderContext::make_mesh(MeshInstanceData& data, SDL_GPUCopyPass *copy_pass)
+    MeshId RenderContext::make_mesh(MeshInstanceData& data)
     {
-        // this data will be uploaded and this reference set at the end of the frame so it is invalid until the end of the frame
+        // this data will be uploaded and this reference set in the copy pass this frame
         MeshReference reference = MeshReference::get_invalid();
 
-        MeshId mesh = mesh_frame.add(reference);
+        MeshId mesh = mesh_ref.add(reference);
 
         data.mesh = mesh;
         mesh_upload_frame.add(data);

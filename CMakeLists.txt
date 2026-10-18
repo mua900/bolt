@@ -85,6 +85,12 @@ add_library(bolt STATIC
 	src/bundle/fragment_light_msl.h
 )
 
+set_target_properties(
+	bolt PROPERTIES
+	C_STANDARD 23
+	CXX_STANDARD 23
+)
+
 option(BUILD_EXAMPLE_PROGRAMS "Build the example programs" OFF)
 
 if (BUILD_EXAMPLE_PROGRAMS)
