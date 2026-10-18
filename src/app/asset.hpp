@@ -111,6 +111,7 @@ namespace bolt
     {
         AssetCatalogSourceType source_type = CatalogFile;
 
+        // the default name for the file is "run_tree.txt" and this is the place to override the name or wheter the application looks for a file at all
         union
         {
             // if source type is file

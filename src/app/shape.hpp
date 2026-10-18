@@ -7,14 +7,18 @@
 namespace bolt
 {
 
+    // @todo this is not complete
+    // this will be done alongside physics
+    // it is here to reduce data duplication between different systems like graphics, ui and physics
+    // this is going to be a little messy since it needs to be used by different things
+
     using ShapeId = u32;
 
     enum ShapeType
     {
-        ShapeQuad      = 0,
-        ShapeCircle    = 1,
-        ShapeRectangle = 2,
-        ShapePolygon   = 3,
+        ShapeCircle    = 0,
+        ShapeRectangle = 1,
+        ShapePolygon   = 2,
         ShapeCount
     };
 
@@ -111,13 +115,11 @@ namespace bolt
 
     struct Shape
     {
-        DArray<vec2> points = {};
-        DArray<int> indices = {};
-
         ShapeType type = {};
         union {
+            Rectangle rect;
             Circle circle;
-            Polygon polyon;
+            Polygon polygon;
         };
     };
 

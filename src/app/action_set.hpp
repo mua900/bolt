@@ -8,7 +8,7 @@
 namespace bolt {
 
     // @todo
-    // actions that look for event instead of reading the current state
+    // actions that look for events instead of reading the current state
     // maybe they take callbacks or something
 
     #define ACTION_MAX_INPUT 4

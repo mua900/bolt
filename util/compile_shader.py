@@ -85,7 +85,7 @@ def compile_shaders(shaders : List[str], shader_stage : str, directory : Path, r
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('directory')
-    parser.add_arguemnt('-reflect_dir')
+    parser.add_argument('-reflect_dir')
     parser.add_argument('-vertex', action="append")
     parser.add_argument('-fragment', action="append")
 

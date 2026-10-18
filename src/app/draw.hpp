@@ -435,7 +435,10 @@ namespace bolt
 
         FrameContext frame = {};
 
+        // the user can register meshes so that they can use them with draw groups and do instanced draw calls with them
+        // @todo a way to remove existing shapes or defining frame only shapes
         DArray<MeshReference> mesh_ref = {};
+
         // takes ownership of it
         // frees the data as it is done uploading it
         DArray<MeshInstanceData> mesh_upload_frame = {};

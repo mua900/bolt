@@ -6,12 +6,16 @@
 
 using namespace bolt;
 
+// @todo a more well organized example
+// this is more a test program for the developer
+
 #define NUM_RANDOM 8
 
 struct State
 {
 	float number = 0;
 	DArray<MeshReference> references = {};
+	MeshId mesh = {};
 	Texture texture = {};
 	DrawGroupId group_solid = {};
 	DrawGroupId group_tex = {};
@@ -55,8 +59,6 @@ bool initialize(void *userdata, Application *app)
 	{
 		return false;
 	}
-
-	app->render.get_draw_group(id_solid).mesh = bolt::MeshCircle;
 
 	TransferData triangle, quad;
 
@@ -127,11 +129,13 @@ bool initialize(void *userdata, Application *app)
 		return false;
 	}
 
+	MeshId mesh = {};
 	{
 		float scale = 200;
 
 		// define persistent custom geometry
 
+		// this will be multiplied by the projection matrix so it should be defined in unit coordinates like the builtin shapes
 		VertexInstance vertices[3] = {
 			{ 1,     0,     1, 0.5},
 			{ -0.5,  0.866, 0, 1},
@@ -141,16 +145,11 @@ bool initialize(void *userdata, Application *app)
 			0, 1, 2
 		};
 
-		for (int i = 0; i < 3; i++) {
-			vertices[i].x *= scale;
-			vertices[i].y *= scale;
-		}
-
 		MeshInstanceData mesh_data = {};
 		mesh_data.vertices.add_array(vertices, 3);
 		mesh_data.indices.add_array(indices, 3);
 
-		MeshId mesh = app->render.make_mesh(mesh_data, app->render.frame.copy_pass);
+		mesh = app->render.make_mesh(mesh_data);
 	}
 
 	GPUTexture& gpu_tex = app->render.get_texture(texture);
@@ -174,14 +173,17 @@ bool initialize(void *userdata, Application *app)
 		bolt::colorToHex(Colorf(1,1,0,1))
 	};
 
-	add_point_light(app->render, light);
-	add_point_light(app->render, light2);
+	bolt::add_point_light(app->render, light);
+	bolt::add_point_light(app->render, light2);
+
+	app->render.get_draw_group(id_solid).mesh = mesh;
 
 	app->render.ambient_light = {
 		0.8,0.8,0.8,1
 	};
 
 	state->references = upload_mesh_data(app->render, memory);
+	state->mesh = mesh;
 	state->texture = texture;
 	state->animation = anim;
 	state->group_tex = id;
