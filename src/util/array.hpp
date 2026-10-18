@@ -101,6 +101,12 @@ namespace bolt
 			}
 		}
 
+		void reset_fields() {
+			m_data = nullptr;
+			m_size = 0;
+			m_cap = 0;
+		}
+
 		bool in_bounds(int index) const {
 			return index < m_size && index >= 0;
 		}

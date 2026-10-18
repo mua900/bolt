@@ -31,7 +31,7 @@ bool initialize(void *userdata, Application *app)
 	app->render.clear_color = Colorf(0.5, 0.6, 0.8);
 	//app->render.light_clear_color = Colorf(0.6, 0.4, 0.3);
 
-	for (int i = 0; i < 64; i++)
+	for (int i = 0; i < NUM_RANDOM; i++)
 	{
 		int range = 600;
 		float x = rand() % range;

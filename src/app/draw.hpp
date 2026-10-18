@@ -45,6 +45,7 @@ namespace bolt
 
     using Viewport = SDL_GPUViewport;
 
+    // @todo
     enum Flip {
         FlipNone = SDL_FLIP_NONE,
         FlipHorizontal = SDL_FLIP_HORIZONTAL,
@@ -162,6 +163,13 @@ namespace bolt
         {}
     };
 
+    // index to RenderContext.mesh_ref
+    using MeshId = u32;
+
+    #define MESH_INVALID u32(-1)
+
+    // would we ever need 32 bit indices?
+
     struct MeshData
     {
         DArray<Vertex> vertices;
@@ -170,14 +178,10 @@ namespace bolt
 
     struct MeshInstanceData
     {
-        DArray<VertexInstance> vertices;
-        DArray<u16> indices;
+        MeshId mesh = 0;
+        DArray<VertexInstance> vertices = {};
+        DArray<u16> indices = {};
     };
-
-    // index to RenderContext.mesh_ref
-    using MeshId = u32;
-
-    #define MESH_INVALID u32(-1)
 
     enum BuiltinMesh
     {
@@ -195,6 +199,13 @@ namespace bolt
 
         int vertex_buffer = 0;
         int index_buffer = 0;
+
+        static MeshReference get_invalid()
+        {
+            return MeshReference{
+                -1,-1,-1,-1,-1,-1
+            };
+        }
     };
 
     struct MeshDraw
@@ -343,7 +354,7 @@ namespace bolt
         SDL_GPUCopyPass* copy_pass = nullptr;
     };
 
-    // @todo return to this when doing ui
+    // @todo this is not used for the moment and it is from older code, return to this when doing ui
     // you should set this to the correct value before drawing something
     // typically you would set this in the top draw loop to switch between things that you want to draw in the coordinate space you want
     // and also set it and back in place for exceptions
@@ -372,7 +383,7 @@ namespace bolt
     struct RenderContext {
         bolt::vec2 render_size = {};
 
-        CoordinateSpace space = {};  // what coordinate space input vertices are in
+        CoordinateSpace space = {};  // what coordinate space input vertices are in, currently unused
         // a view matrix is derived from this if this pointer is not null
     	const Camera* camera = {};
 
@@ -383,10 +394,11 @@ namespace bolt
 
         SDL_GPUDevice* device = nullptr;
 
-        // view matrix is orthographic projection from the render coordinates to the ndc
+        // projection matrix is orthographic projection from the render coordinates to the ndc
         // view matrix is calculated from the camera
         // you can set a model matrix for a draw command
-        // or just set the mvp
+        // or just overwrite the mvp
+        // this just stores the result and the last pushed matrix
         bolt::mat4x4 mvp = {};
 
         DArray<GPUBuffer> buffers = {};
@@ -394,7 +406,7 @@ namespace bolt
         int active_index_buffer = 0;
 
         SDL_GPUSampler* sampler = nullptr;
-        SDL_GPUSampler* light_sampler = nullptr;
+        SDL_GPUSampler* light_sampler = nullptr; // @todo we might not need this and can remove it maybe
 
         // the intention here is to provide something that does the basic things you could want to do
         // but still provide hooks to lower level things if the user wants them
@@ -417,16 +429,16 @@ namespace bolt
         SDL_GPUTexture* light_target = nullptr;
         SDL_GPUTexture* depth_target = nullptr;
 
-        TransferBuffer transfer_buffer = {};
-        TransferBuffer group_transfer_buffer = {};
-        TransferBuffer light_transfer_buffer = {};
+        TransferBuffer transfer_buffer = {};  // used for uploading vertex data
+        TransferBuffer group_transfer_buffer = {};  // used for uploading instance data
+        TransferBuffer light_transfer_buffer = {};  // used for uploading light data
 
         FrameContext frame = {};
 
-        // the first slots are filled for predefined meshes
         DArray<MeshReference> mesh_ref = {};
         DArray<MeshReference> mesh_frame = {};
         // takes ownership of it
+        // frees the data as it is done uploading it
         DArray<MeshInstanceData> mesh_upload_frame = {};
 
         // different graphics pipelines so seperate in memory
