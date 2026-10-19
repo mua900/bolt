@@ -53,7 +53,7 @@ namespace bolt
 
             int byte_index = bit_index / 8;
             int offset = bit_index % 8;
-            u8 result = bits[byte] >> offset;
+            u8 result = bits[byte_index] >> offset;
             if (offset != 0 && byte_index + 1 < Size)
             {
                 result |= bits[byte_index + 1] << (8 - offset);
