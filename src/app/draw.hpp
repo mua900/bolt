@@ -17,8 +17,6 @@ namespace bolt
 
     // @todo
     // normal maps
-    // models (multiple meshes can make up a model)
-    // merge mesh and predefined graphics pipeline paths. You should be able to define additional geometry and refer to it and then choose how to draw it or what sort of pipeline to use etc.
 
     struct RenderContext;
 

@@ -97,6 +97,27 @@ namespace bolt
         return vec2(c, s);
     }
 
+    vec3 get_barycentric_coordinates(vec2 p, vec2 v0, vec2 v1, vec2 v2)
+    {
+        vec2 edge0 = v1 - v0;
+        vec2 edge1 = v2 - v0;
+
+        // b = subtriangle_area / triangle_area
+        // = (det(edge, difference) / 2) / (det(edge0, edge2) / 2)
+        // = det(edge, difference) / det(edge0, edge2)
+
+        float area = edge0.x * edge1.y - edge0.y * edge1.x;
+
+        vec2 diff = p - v0;
+        float b1 = (-edge1.x * diff.y + edge1.y * diff.x) / area;
+        float b2 = (edge0.x * diff.y - edge0.y * diff.x) / area;
+        return vec3(
+            1.0f - b1 - b2,
+            b1,
+            b2
+        );
+    }
+
 
     mat4x4 identity_matrix()
     {

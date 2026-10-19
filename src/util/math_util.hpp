@@ -131,9 +131,32 @@ namespace bolt {
         return vec2(a.x * b.x, a.y * b.y);
     }
 
+    struct mat2x2
+    {
+        float m00 = 0;
+        float m01 = 0;
+        float m10 = 0;
+        float m11 = 0;
+
+        mat2x2()
+        {}
+
+        mat2x2(float x00, float x01, float x10, float x11)
+            : m00(x00), m01(x01), m10(x10), m11(x11)
+        {}
+
+        float determinant()
+        {
+            return m00 * m11 - m01 * m10;
+        }
+    };
+
     vec2 lerp2(vec2 a, vec2 b, float t);
     vec2 reflect2(vec2 incident, vec2 normal);
     vec2 get_direction_vector(float angle);
+
+    // counter clockwise
+    float triangle_area(vec2 v0, vec2 v1, vec2 v2);
 
     struct vec3 {
         float x = 0;
@@ -291,6 +314,10 @@ namespace bolt {
             : x(v.x), y(v.y), z(v.z)
         {}
     };
+
+    // get barycentric coordinates of the point p in the triangle with vertices v0, v1, v2
+    // just applies the barycentric formula so if results can come out negative if the point p is outside the triangle
+    vec3 get_barycentric_coordinates(vec2 p, vec2 v0, vec2 v1, vec2 v2);
 
     // @todo quaternions
 
