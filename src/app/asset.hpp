@@ -306,6 +306,17 @@ namespace bolt
     // useful when iterating through the assets and you already know the index
     AssetId get_asset_at_index(int index, AssetCatalog& catalog);
 
+    // @todo maybe add an intermediate step that loads the file to memory but doesn't process it yet like load svg text or font but don't yet rasterize it.
+    // if memory usage becomes a problem
+
+    void get_base_path(String_Builder& builder);
+
+    void get_to_run_tree_path(String_Builder& builder, const char* path);
+    void get_to_run_tree_path_string(String_Builder& builder, String path);
+
+    void get_to_asset_path(String_Builder& builder, const char* path);
+    void get_to_asset_path_string(String_Builder& builder, String path);
+
     enum AssetLoadResult
     {
         AssetSuccess = 0,
@@ -315,19 +326,6 @@ namespace bolt
 
     AssetLoadResult load_asset(String name, AssetCatalog& catalog);
     AssetLoadResult load_asset_at_index(int index, AssetCatalog& catalog);
-
-    // @todo maybe add an intermediate step that loads the file to memory but doesn't process it yet like load svg text or font but don't yet rasterize it.
-    // if memory usage becomes a problem
-
-    AssetKind get_asset_kind(String file_extension);
-
-    void get_base_path(String_Builder& builder);
-
-    void get_to_run_tree_path(String_Builder& builder, const char* path);
-    void get_to_run_tree_path_string(String_Builder& builder, String path);
-
-    void get_to_asset_path(String_Builder& builder, const char* path);
-    void get_to_asset_path_string(String_Builder& builder, String path);
 
 } // namespace
 

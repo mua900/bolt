@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INPUT_HPP
+#define INPUT_HPP
 
 #include "util/math_util.hpp"
 #include "util/common.hpp"
@@ -174,3 +175,5 @@ namespace bolt
     ValueType get_input_value_type(InputKind kind);
 
 } // namespace
+
+#endif // INPUT_HPP

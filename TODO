@@ -1,3 +1,5 @@
 - stop preloading every asset by default (memory bloat)
 - split the example to subsystems like draw, animation, assets etc.
 - don't fail when not finding asset catalog by default, make the behaviour an option
+- fix compiler warnings
+- make a more user friendly interface for rendering

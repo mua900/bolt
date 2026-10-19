@@ -10,6 +10,8 @@
 namespace bolt
 {
 
+    AssetKind get_asset_kind(String file_extension);
+
     AssetLoadResult load_asset_helper(int index, AssetCatalog& catalog);
     bool unload_asset(AssetId id, AssetCatalog& catalog, bool reset_generation = true);
 

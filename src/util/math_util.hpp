@@ -415,6 +415,11 @@ namespace bolt {
     constexpr double radian_to_degree(double angle) { return angle * RADIAN_TO_DEGREE; }
     constexpr double degree_to_radian(double angle) { return angle * DEGREE_TO_RADIAN; }
 
+    constexpr int ceil_of_ratio(int numerator, int denominator)
+    {
+        return (numerator + denominator - 1) / denominator;
+    }
+
 }  // namespace
 
 #endif // MATH_UTIL_HPP

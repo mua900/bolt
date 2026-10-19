@@ -17,6 +17,8 @@ namespace bolt
 
     // @todo
     // normal maps
+    // user pipelines
+    // user shaders
 
     struct RenderContext;
 
@@ -627,7 +629,6 @@ namespace bolt
     bool create_default_shaders(SDL_GPUDevice* device, DefaultShaders* shaders);
     void destroy_default_shaders(SDL_GPUDevice* device, DefaultShaders* shaders);
 
-    // @todo
     Texture render_text(RenderContext& render, String text, Font font, bolt::Color color);
     Text create_text(RenderContext& render, String text, Font font, bolt::Color color);
 

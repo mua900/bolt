@@ -1,4 +1,5 @@
-#pragma once
+#ifndef AUDIO_HPP
+#define AUDIO_HPP
 
 #include <SDL3/SDL.h>
 #include <SDL3_mixer/SDL_mixer.h>
@@ -49,3 +50,5 @@ namespace bolt
     };
 
 } // namespace
+
+#endif // AUDIO_HPP
