@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 
 #include "asset.hpp"
+#include "input.hpp"
 #include "text.hpp"
 
 #include "util/common.hpp"
@@ -761,6 +762,8 @@ namespace bolt
 
         ~UiState();
     };
+
+    void set_text_editor_cursor(MouseState *mouse, bolt::Rectangle text_area, bolt::Direction dir);
 
 } // namespace
 

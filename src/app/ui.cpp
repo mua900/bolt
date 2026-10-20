@@ -4,6 +4,27 @@
 namespace bolt
 {
 
+    void set_text_editor_cursor(MouseState *mouse, bolt::Rectangle text_area, bolt::Direction dir)
+    {
+        if (dir) {
+            if (direction_is_vertical(dir))
+            {
+                SDL_SetCursor(mouse->cursor.resize_ns);
+            }
+            else if (direction_is_horizontal(dir))
+            {
+                SDL_SetCursor(mouse->cursor.resize_ew);
+            }
+        }
+        else if (text_area.contains_centered(mouse->pos)) {
+            SDL_SetCursor(mouse->cursor.text);
+        }
+        else {
+            // SDL checks wheter the cursor set is different so no unnecessary redraws here
+            SDL_SetCursor(mouse->cursor.normal);
+        }
+    }
+
     void GapBuffer::initialize(int init_buffer_size) {
         buffer = (char*) std::malloc(init_buffer_size);
         buffer_size = init_buffer_size;

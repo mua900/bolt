@@ -45,7 +45,7 @@ namespace bolt
 
     using Viewport = SDL_GPUViewport;
 
-    // @todo
+    // @todo implement
     enum Flip {
         FlipNone = SDL_FLIP_NONE,
         FlipHorizontal = SDL_FLIP_HORIZONTAL,

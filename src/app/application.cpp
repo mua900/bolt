@@ -157,114 +157,6 @@ namespace bolt
         return true;
     }
 
-    void Application::set_camera(CameraId cam)
-    {
-        active_camera = cameras.get_ref(cam);
-    }
-
-    bool Application::read_asset_catalog(String_Builder& path, AssetInitConfig asset_config)
-    {
-        if (asset_config.source_type == CatalogFile)
-        {
-            const char* desc_name = asset_config.source.filename;
-            path.append(make_string(desc_name));
-            bool parse_description = parse_assets(path.c_string(), catalog);
-
-            catalog.load_context.render = &render;
-            catalog.load_context.audio = &audio_player;
-
-            return parse_description;
-        }
-        else if (asset_config.source_type == CatalogMemory)
-        {
-            const char* description = asset_config.source.catalog;
-            bool parse_description = parse_asset_description(description, catalog, false);
-
-            catalog.load_context.render = &render;
-            catalog.load_context.audio = &audio_player;
-
-            return parse_description;
-        }
-        else if (asset_config.source_type == CatalogUser)
-        {
-            // the user wants to fill it
-            return true;
-        }
-
-        panic("Invalid asset catalog source type");
-    }
-
-    bool Application::reload_assets()
-    {
-        for (int i = 0; i < catalog.catalogEntryCount; i++)
-        {
-            if (!catalog.reload_asset_at_index(i))
-            {
-                return false;
-            }
-        }
-
-        update_assets();
-
-        return true;
-    }
-
-    // literally reinitialize everything that touches any asset
-    bool Application::update_assets()
-    {
-        AssetId fontId = get_asset(String("FiraSans"), catalog);
-        AssetId editorFontId = get_asset(String("FiraCode"), catalog);
-        return true;
-    }
-
-    bool Application::load_assets()
-    {
-        if (!render.get_command_buffer())
-        {
-            return false;
-        }
-
-        if (!render.start_copy_pass())
-        {
-            return false;
-        }
-
-        // the size can actually change when we are trying to load assets since folder references will expand and include arbitrary amount of files
-        // so save the amount we need to iterate
-        int count = catalog.assets.count();
-        for (int i = 0; i < count; i++)
-        {
-            if (!(catalog.assets[i].flags & ASSET_IS_LAZY))
-            {
-                AssetLoadResult result = load_asset_at_index(i, catalog);
-                if (result == AssetFail)
-                {
-                    auto asset_name = catalog.get_asset_name_at_index(i);
-                    SCOPE_STRING(asset_name, name);
-                    if (!(catalog.assets[i].flags & ASSET_IS_OPTIONAL)) {
-                        log_error("Couldn't load asset %s", name);
-                        return false;
-                    }
-                    else {
-                        log_warning("Couldn't load asset %s", name);
-                    }
-                }
-            }
-        }
-
-        render.end_copy_pass();
-        render.submit_command_buffer();
-
-        catalog.path.free_buffer();
-
-        return true;
-    }
-
-    UiState* Application::get_active_ui()
-    {
-        return uiStates.get_ptr_or_null(active_ui_state);
-    }
-
     void Application::handle_events()
     {
         SDL_Event e = {};
@@ -278,8 +170,6 @@ namespace bolt
     			}
     		}
 
-            // @todo
-            // other device added/removed events
             switch (e.type)
             {
                 case SDL_EVENT_QUIT:
@@ -291,12 +181,6 @@ namespace bolt
                 {
                     SDL_KeyboardEvent keyboard = e.key;
                     keyboard_input_down(keyboard);
-                    break;
-                }
-                case SDL_EVENT_KEY_UP:
-                {
-                    SDL_KeyboardEvent keyboard = e.key;
-                    keyboard_input_up(keyboard);
                     break;
                 }
                 case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -405,6 +289,187 @@ namespace bolt
     	}
     }
 
+    void Application::update()
+    {
+        // update time
+        SDL_Time time = SDL_GetTicks();
+        double time_sec = (double)time / MILLISECONDS_PER_SECOND;
+        timeInfo.deltaTime = time - timeInfo.time;
+        timeInfo.deltaTimeSeconds = time_sec - timeInfo.timeSeconds;
+        timeInfo.time = time;
+        timeInfo.timeSeconds = time_sec;
+
+        update_ui_pos();
+        timeout();
+
+    	user_update();
+    }
+
+    void Application::cleanup()
+    {
+    	if (user.before_cleanup)
+    	{
+    		user.before_cleanup(user.userdata, this);
+    	}
+
+        MIX_Quit();
+        TTF_Quit();
+        NET_Quit();
+        SDL_Quit();
+
+    	if (user.after_cleanup)
+    	{
+    		user.after_cleanup(user.userdata, this);
+    	}
+    }
+
+    void Application::set_camera(CameraId cam)
+    {
+        active_camera = cameras.get_ref(cam);
+    }
+
+    bool Application::read_asset_catalog(String_Builder& path, AssetInitConfig asset_config)
+    {
+        if (asset_config.source_type == CatalogFile)
+        {
+            const char* desc_name = asset_config.source.filename;
+            path.append(make_string(desc_name));
+            bool parse_description = parse_assets(path.c_string(), catalog);
+
+            catalog.load_context.render = &render;
+            catalog.load_context.audio = &audio_player;
+
+            return parse_description;
+        }
+        else if (asset_config.source_type == CatalogMemory)
+        {
+            const char* description = asset_config.source.catalog;
+            bool parse_description = parse_asset_description(description, catalog, false);
+
+            catalog.load_context.render = &render;
+            catalog.load_context.audio = &audio_player;
+
+            return parse_description;
+        }
+        else if (asset_config.source_type == CatalogUser)
+        {
+            // the user wants to fill it
+            return true;
+        }
+        else panic("Invalid asset catalog source type");
+    }
+
+    bool Application::reload_assets()
+    {
+        for (int i = 0; i < catalog.catalogEntryCount; i++)
+        {
+            if (!catalog.reload_asset_at_index(i))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool Application::load_assets()
+    {
+        if (!render.get_command_buffer())
+        {
+            return false;
+        }
+
+        if (!render.start_copy_pass())
+        {
+            return false;
+        }
+
+        // the size can actually change when we are trying to load assets since folder references will expand and include arbitrary amount of files
+        // so save the amount we need to iterate
+        int count = catalog.assets.count();
+        for (int i = 0; i < count; i++)
+        {
+            if (!(catalog.assets[i].flags & ASSET_IS_LAZY))
+            {
+                AssetLoadResult result = load_asset_at_index(i, catalog);
+                if (result == AssetFail)
+                {
+                    auto asset_name = catalog.get_asset_name_at_index(i);
+                    SCOPE_STRING(asset_name, name);
+                    if (!(catalog.assets[i].flags & ASSET_IS_OPTIONAL)) {
+                        log_error("Couldn't load asset %s", name);
+                        return false;
+                    }
+                    else {
+                        log_warning("Couldn't load asset %s", name);
+                    }
+                }
+            }
+        }
+
+        render.end_copy_pass();
+        render.submit_command_buffer();
+
+        catalog.path.free_buffer();
+
+        return true;
+    }
+
+    UiState* Application::get_active_ui()
+    {
+        return uiStates.get_ptr_or_null(active_ui_state);
+    }
+
+    bool Application::mouse_input_common()
+    {
+    	bolt::vec2 mouse_pos = input.mouse.pos;
+    	UiState* ui = get_active_ui();
+
+        if (ui)
+        {
+        	for (int it = 0; it < ui->text_field.size(); it++)
+        	{
+        		auto& field = ui->text_field.get_ref(it);
+
+                if (!field.editable)
+                {
+                    continue;
+                }
+
+                if (!field.info.active)
+                {
+                    continue;
+                }
+
+        		bolt::Rectangle area = field.m_area;
+        		if (area.contains_centered(mouse_pos)) {
+                    bolt::vec2 relative = mouse_pos - area.get_top_left();
+                    if (doing_text_input && (ui->text_input_target.flags & TEXT_INPUT_TARGET_IS_VALID) && ui->text_input_target.index == it)
+                    {
+                        // if we are already doing text input
+                        field.mouse_x = relative.x;
+                        field.mouse_y = relative.y;
+                    }
+                    else
+                    {
+                        text_input_start();
+
+                        ui->text_input_target.index = it;
+                        ui->text_input_target.flags = TEXT_INPUT_TARGET_IS_VALID;
+                    }
+
+                    Font f = catalog.get_font(field.fontId);
+                    field.m_cursor = field.calculate_cursor_from_mouse(relative, field.get_string(), f, true);
+                    field.m_selection_point = field.m_cursor;
+
+        			return true;
+        		}
+        	}
+        }
+
+    	return false;
+    }
+
     void Application::mouse_move_ui(UiState& ui)
     {
         bolt::vec2 mouse_pos = input.mouse.pos;
@@ -421,7 +486,7 @@ namespace bolt
             else
             {
                 bolt::Direction dir = text_area.on_edge(mouse_pos, 3);
-                set_text_editor_cursor(text_area, dir);
+                set_text_editor_cursor(&input.mouse, text_area, dir);
             }
         }
 
@@ -450,60 +515,7 @@ namespace bolt
         }
     }
 
-    void Application::set_text_editor_cursor(bolt::Rectangle text_area, bolt::Direction dir)
-    {
-        bolt::vec2 mouse_pos = input.mouse.pos;
-
-        if (dir) {
-            if (direction_is_vertical(dir))
-            {
-                SDL_SetCursor(input.mouse.cursor.resize_ns);
-            }
-            else if (direction_is_horizontal(dir))
-            {
-                SDL_SetCursor(input.mouse.cursor.resize_ew);
-            }
-        }
-        else if (text_area.contains_centered(mouse_pos)) {
-            SDL_SetCursor(input.mouse.cursor.text);
-        }
-        else {
-            // SDL checks wheter the cursor set is different so no unnecessary redraws here
-            SDL_SetCursor(input.mouse.cursor.normal);
-        }
-    }
-
-    bool Application::keyboard_input_up(SDL_KeyboardEvent keyboard)
-    {
-        switch (keyboard.scancode)
-        {
-            case SDL_SCANCODE_DOWN: // fallthrough
-            case SDL_SCANCODE_UP: {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    bool Application::keyboard_input_down(SDL_KeyboardEvent keyboard)
-    {
-        if (keyboard_input_down_common(keyboard))
-        {
-            return true;
-        }
-        else
-        {
-    		if (!input.keyboard.do_input)
-    		{
-    			return false;
-    		}
-
-            return false;
-        }
-    }
-
-    bool Application::keyboard_input_down_common(KeyboardEvent keyboard)
+    bool Application::keyboard_input_down(KeyboardEvent keyboard)
     {
         UiState* ui = get_active_ui();
 
@@ -752,76 +764,10 @@ namespace bolt
         }
     }
 
-    bool Application::mouse_input_common()
-    {
-    	bolt::vec2 mouse_pos = input.mouse.pos;
-    	UiState* ui = get_active_ui();
-
-        if (ui)
-        {
-        	for (int it = 0; it < ui->text_field.size(); it++)
-        	{
-        		auto& field = ui->text_field.get_ref(it);
-
-                if (!field.editable)
-                {
-                    continue;
-                }
-
-                if (!field.info.active)
-                {
-                    continue;
-                }
-
-        		bolt::Rectangle area = field.m_area;
-        		if (area.contains_centered(mouse_pos)) {
-                    bolt::vec2 relative = mouse_pos - area.get_top_left();
-                    if (doing_text_input && (ui->text_input_target.flags & TEXT_INPUT_TARGET_IS_VALID) && ui->text_input_target.index == it)
-                    {
-                        // if we are already doing text input
-                        field.mouse_x = relative.x;
-                        field.mouse_y = relative.y;
-                    }
-                    else
-                    {
-                        text_input_start();
-
-                        ui->text_input_target.index = it;
-                        ui->text_input_target.flags = TEXT_INPUT_TARGET_IS_VALID;
-                    }
-
-                    Font f = catalog.get_font(field.fontId);
-                    field.m_cursor = field.calculate_cursor_from_mouse(relative, field.get_string(), f, true);
-                    field.m_selection_point = field.m_cursor;
-
-        			return true;
-        		}
-        	}
-        }
-
-    	return false;
-    }
-
     void Application::update_keyboard_state()
     {
         input.keyboard.keys = SDL_GetKeyboardState(&input.keyboard.num_keys);
         input.keyboard.mod_state = SDL_GetModState();
-    }
-
-    void Application::update()
-    {
-        // update time
-        SDL_Time time = SDL_GetTicks();
-        double time_sec = (double)time / MILLISECONDS_PER_SECOND;
-        timeInfo.deltaTime = time - timeInfo.time;
-        timeInfo.deltaTimeSeconds = time_sec - timeInfo.timeSeconds;
-        timeInfo.time = time;
-        timeInfo.timeSeconds = time_sec;
-
-        update_ui_pos();
-        timeout();
-
-    	user_update();
     }
 
     void Application::user_update()
@@ -924,24 +870,6 @@ namespace bolt
         events[event_index].active = false;
     }
 
-    void Application::cleanup()
-    {
-    	if (user.before_cleanup)
-    	{
-    		user.before_cleanup(user.userdata, this);
-    	}
-
-        MIX_Quit();
-        TTF_Quit();
-        NET_Quit();
-        SDL_Quit();
-
-    	if (user.after_cleanup)
-    	{
-    		user.after_cleanup(user.userdata, this);
-    	}
-    }
-
     bool Application::init_render(bool enableDebug)
     {
         if (!initialize_render_context(&render, window.window, enableDebug))
@@ -1031,7 +959,7 @@ namespace bolt
 
         for (const Label& label : state.label)
         {
-                // @todo
+            // @todo
         }
 
         for (const DiscreteSlider& slider : state.discrete_slider)
@@ -1414,9 +1342,6 @@ namespace bolt
         SDL_StartTextInput(window.window);
         doing_text_input = true;
         input.keyboard.do_input = false;
-
-        // @todo not hardcode
-        render.clear_color = {0, 0x44, 0x66, 0xff};
     }
 
     void Application::toggle_text_input()

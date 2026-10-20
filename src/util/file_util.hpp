@@ -21,6 +21,8 @@ namespace bolt
 		File(String filepath, const char* access) {
 			char* tmp = (char*) malloc(filepath.size);
 
+			ASSERT(tmp);
+			
 			memcpy(tmp, filepath.data, filepath.size);
 			tmp[filepath.size] = '\0';
 

@@ -146,7 +146,7 @@ namespace bolt
 
         bool add_asset_unique(Asset& asset)
         {
-            for (auto x : assets)
+            for (auto& x : assets)
             {
                 if (x.kind == asset.kind &&
                     string_compare(catalog.get_string(x.path), catalog.get_string(asset.path)))

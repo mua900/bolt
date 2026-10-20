@@ -7,7 +7,7 @@
 
 #include <bundle/bundle_shaders.h>
 
-#include <SDL3_image/SDL_image.h>
+#include <SDL3_image/SDL_image.h>  // for IMG_Load
 
 namespace bolt
 {
@@ -1575,7 +1575,7 @@ namespace bolt
     bool copy_frame_instance_data(RenderContext& render)
     {
         InstanceData* memory = (InstanceData*) SDL_MapGPUTransferBuffer(render.device, render.group_transfer_buffer.buffer, false);
-        ASSERT(memory);
+        if (!memory) return false;
         for (GraphicsPipeline& pipeline : render.graphics)
         {
             if (pipeline.frame_data)
@@ -1623,7 +1623,7 @@ namespace bolt
         if (render.lights.size() > 0)
         {
             PointLight* memory = (PointLight*) SDL_MapGPUTransferBuffer(render.device, render.light_transfer_buffer.buffer, false);
-            ASSERT(memory);
+            if (!memory) return false;
             GraphicsPipeline& pipeline = render.graphics[render.graphics_light];
 
             u32 index = 0;
@@ -1634,9 +1634,9 @@ namespace bolt
             }
 
             SDL_UnmapGPUTransferBuffer(render.device, render.light_transfer_buffer.buffer);
+        }
 
-            return true;
-       }
+        return true;
     }
 
     void upload_frame_light_data(RenderContext& render)
@@ -1662,7 +1662,7 @@ namespace bolt
         if (render.mesh_upload_frame.size() > 0)
         {
             u8 *buffer = (u8*) SDL_MapGPUTransferBuffer(render.device, render.transfer_buffer.buffer, false);
-            ASSERT(buffer);
+            if (!buffer) return false;
 
             size_t offset = 0;
             for (MeshInstanceData& data : render.mesh_upload_frame)

@@ -89,17 +89,13 @@ namespace bolt
         AssetInitConfig asset = {};
     };
 
-    // we need this even though there are default initializers because there are unions etc.
-    // you shouldn't rely on default initializers and call this to get default values
+    // call this to get default values
     InitConfiguration get_default_init_configuration();
 
     typedef u32 UiStateId;
 
     class Application {
     public:
-    	// you can directly access everything here
-    	// maybe be careful with doing_text_input
-
         Window window = {};
         RenderContext render = {};
         AudioPlayer audio_player = {};
@@ -143,13 +139,16 @@ namespace bolt
 
         void set_event_active(int event_index, double timeout_seconds);
         void set_event_deactive(int event_index);
+
+        bool is_minimized() const;
+        bool is_maximized() const;
+        bool is_fullscreen() const;
+        bolt::vec2 get_window_size() const;
     private:
         bool init_render(bool enableDebug);
 
     	bool load_assets();
-        bool reload_assets();
-
-        bool update_assets();
+        bool reload_assets(); // @todo not implemented
 
         UiState* get_active_ui();
 
@@ -166,15 +165,11 @@ namespace bolt
         void on_mouse_move();
         void mouse_move_ui(UiState& ui);
 
-        void set_text_editor_cursor(bolt::Rectangle text_area, bolt::Direction dir);
-
     	bool mouse_input_common();
 
         void update_keyboard_state();
-        bool keyboard_input_down(KeyboardEvent keyboard);
-        bool keyboard_input_up(KeyboardEvent keyboard);
 
-        bool keyboard_input_down_common(KeyboardEvent keyboard);
+        bool keyboard_input_down(KeyboardEvent keyboard);
 
         void text_input_start();
         void text_input_stop();
@@ -195,16 +190,10 @@ namespace bolt
         void render_panel(const Panel& panel) const;
         void render_value_panel(const UiState& ui, const ValuePanel& panel) const;
         void render_button_group(const ButtonGroup& group) const;
-
-        bool is_minimized() const;
-        bool is_maximized() const;
-        bool is_fullscreen() const;
-        bolt::vec2 get_window_size() const;
     };
 
     void get_base_path(String_Builder& builder);
     void get_pref_path(String_Builder& builder, const char *org, const char *app);
-
 } // namespace
 
 #endif // APPLICATION_HPP
