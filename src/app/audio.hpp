@@ -10,6 +10,8 @@
 namespace bolt
 {
 
+    // @todo groups
+
     // a track which can be set to play different audio sources one at a time
     using TrackId = u32;
     constexpr TrackId NullTrackId = -1;
@@ -30,13 +32,20 @@ namespace bolt
         void tag_track(TrackId track, const char* tag);
         int get_track_count() const { return tracks.count(); }
 
+        // frequency ratio is basically playback speed
+
         void set_master_gain(float gain);
+        float get_master_gain() const;
+        float get_master_frequency_ratio();
+        void set_master_frequency_ratio(float ratio);
 
         void stop_all(s64 fade_out_ms);
 
         void pause_all();
         void resume_all();
 
+        float get_track_frequency_ratio(TrackId track);
+        void set_track_frequency_ratio(TrackId track, float ratio);
         bool is_track_playing(TrackId track);
         void play_track(TrackId track, int repeat);
         void stop_track(TrackId track, s64 fade_out_ms);
@@ -44,6 +53,7 @@ namespace bolt
         void pause_track(TrackId track);
         void resume_track(TrackId track);
         void set_track_gain(TrackId track, float gain);
+        void set_track_stereo(TrackId track, float left_gain, float right_gain);
 
         void play_tag(const char* tag, int repeat);
         void stop_tag(const char* tag, s64 fade_out_ms);

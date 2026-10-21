@@ -59,9 +59,24 @@ namespace bolt
         MIX_TagTrack(tracks[track], tag);
     }
 
+    float AudioPlayer::get_master_gain() const
+    {
+        return MIX_GetMixerGain(mixer);
+    }
+
     void AudioPlayer::set_master_gain(float gain)
     {
         MIX_SetMixerGain(mixer, gain);
+    }
+
+    float AudioPlayer::get_master_frequency_ratio()
+    {
+        return MIX_GetMixerFrequencyRatio(mixer);
+    }
+
+    void AudioPlayer::set_master_frequency_ratio(float ratio)
+    {
+        MIX_SetMixerFrequencyRatio(mixer, ratio);
     }
 
     void AudioPlayer::stop_all(s64 fade_out_ms)
@@ -77,6 +92,18 @@ namespace bolt
     void AudioPlayer::resume_all()
     {
         MIX_ResumeAllTracks(mixer);
+    }
+
+    float AudioPlayer::get_track_frequency_ratio(TrackId track)
+    {
+        MIX_Track* t = tracks.get(track);
+        return MIX_GetTrackFrequencyRatio(t);
+    }
+
+    void AudioPlayer::set_track_frequency_ratio(TrackId track, float ratio)
+    {
+        MIX_Track* t = tracks.get(track);
+        MIX_SetTrackFrequencyRatio(t, ratio);
     }
 
     bool AudioPlayer::is_track_playing(TrackId track)
@@ -125,6 +152,13 @@ namespace bolt
     void AudioPlayer::set_track_gain(TrackId track, float gain)
     {
         MIX_SetTrackGain(tracks[track], gain);
+    }
+
+    void AudioPlayer::set_track_stereo(TrackId track, float left_gain, float right_gain)
+    {
+        MIX_Track* t = tracks.get(track);
+        MIX_StereoGains gains = { left_gain, right_gain };
+        MIX_SetTrackStereo(t, &gains);
     }
 
     void AudioPlayer::play_tag(const char* tag, int repeat)
