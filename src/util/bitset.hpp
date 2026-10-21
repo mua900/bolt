@@ -2,6 +2,7 @@
 #define BITSET_HPP
 
 #include "common.hpp"
+#include "math_util.hpp"
 
 namespace bolt
 {
@@ -61,38 +62,31 @@ namespace bolt
             return result;
         }
 
-        u32 read_interval(int bit_index, int interval)
+        u64 read_interval(int bit_index, int interval)
         {
-            if (interval > 32)
+            if (!in_bounds(bit_index) || !in_bounds(bit_index + interval - 1))
             {
-                panic("Bitset read_interval misuse, maximum interval is 32 bits");
+                panic("Out of bounds access to bitset");
+            }
+            if (interval <= 0 || interval > 64)
+            {
+                panic("Bitset read_interval misuse, interval should be non zero and at most 64");
             }
 
             int byte_index = bit_index / 8;
             int offset = bit_index % 8;
-            u32 result = read_byte(bit_index);
-            int diff = Size - byte_index;
-            ASSERT(diff != 0 && diff > 0);
-            switch (diff)
+            u64 result = 0;
+            int num_bits = offset + interval;
+            int bytes_to_read = bolt::ceil_of_ratio(num_bits, 8);
+            ASSERT(byte_index + bytes_to_read <= Size);
+
+            for (int i = 0; i < bytes_to_read; i++)
             {
-                case 1: break;
-                case 2: {
-                    result |= read_byte(byte_index + 1) << 8;
-                    break;
-                }
-                case 3: {
-                    result |= read_byte(byte_index + 1) << 8;
-                    result |= read_byte(byte_index + 2) << 16;
-                    break;
-                }
-                case 4:  // fallthrough
-                default: {
-                    result |= read_byte(byte_index + 1) << 8;
-                    result |= read_byte(byte_index + 2) << 16;
-                    result |= read_byte(byte_index + 3) << 24;
-                    break;
-                }
+                result |= ((u64)bits[byte_index + i]) << (i * 8);
             }
+
+            result >>= offset;
+            if (interval < 64) result &= BIT(interval) - 1;
 
             return result;
         }

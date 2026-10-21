@@ -76,9 +76,6 @@ namespace bolt
 
         // window
         {
-            // @todo use this
-            // float scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
-
             SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE |
                                     SDL_WINDOW_HIDDEN;  // show the window after the initialization is complete
             SDL_Window* w = SDL_CreateWindow(conf.name, conf.window_width, conf.window_height, flags);
@@ -87,6 +84,8 @@ namespace bolt
                 SDL_Log("Failed to create window with SDL: %s\n", SDL_GetError());
                 return false;
             }
+
+            float scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
 
             // minimum aspect ratio of 1 and maximum aspect ratio of 2 default 1.6
             SDL_SetWindowAspectRatio(w, 1.0, 2.0);

@@ -112,10 +112,17 @@ if (BUILD_EXAMPLE_PROGRAMS)
 		example/src/example_editor.cpp
 	)
 
+	add_executable(
+		example_util
+		example/src/example_util.cpp
+	)
+
 	target_include_directories(example PRIVATE src)
 	target_include_directories(example_editor PRIVATE src)
+	target_include_directories(example_util PRIVATE src)
 	target_link_libraries(example PUBLIC bolt)
 	target_link_libraries(example_editor PUBLIC bolt)
+	target_link_libraries(example_util PUBLIC bolt)
 
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT example)
 endif()
