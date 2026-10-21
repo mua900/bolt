@@ -37,6 +37,7 @@ namespace bolt
         void pause_all();
         void resume_all();
 
+        bool is_track_playing(TrackId track);
         void play_track(TrackId track, int repeat);
         void stop_track(TrackId track, s64 fade_out_ms);
         void stop_track_frames(TrackId track, s64 fade_out_frames);

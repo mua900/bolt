@@ -79,6 +79,12 @@ namespace bolt
         MIX_ResumeAllTracks(mixer);
     }
 
+    bool AudioPlayer::is_track_playing(TrackId track)
+    {
+        MIX_Track *t = tracks.get(track);
+        return MIX_TrackPlaying(t);
+    }
+
     void AudioPlayer::play_track(TrackId track, int repeat)
     {
         MIX_Track* t = tracks.get(track);
