@@ -60,8 +60,7 @@ namespace bolt
         MatrixIsMVP   = 2, // override mvp
     };
 
-    // effects resolution and maximum scale
-    const float MaxInstanceScale = 256;
+    const float MaxInstanceScale = 4096;
 
     const int VBufferDescriptionCountVertex = 1;
     const int VBufferDescriptionCountInstance = 2;
@@ -122,6 +121,8 @@ namespace bolt
         {}
     };
 
+    // @todo maybe have a fat version of this with things like
+    // room for proper scale factors in floats, flip flags etc.
     struct InstanceData
     {
         float x = 0;

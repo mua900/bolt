@@ -30,7 +30,7 @@ struct main0_in
 vertex main0_out main0(main0_in in [[stage_in]], constant type_buffer& _buffer [[buffer(0)]])
 {
     main0_out out = {};
-    float2 _46 = in.in_var_TEXCOORD4 * 256.0;
+    float2 _46 = in.in_var_TEXCOORD4 * 4096.0;
     float _49 = in.in_var_TEXCOORD0.x * _46.x;
     float _52 = in.in_var_TEXCOORD0.y * _46.y;
     float _53 = cos(in.in_var_TEXCOORD3);

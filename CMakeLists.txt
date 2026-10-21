@@ -104,7 +104,7 @@ if (BUILD_EXAMPLE_PROGRAMS)
 
 	add_executable(
 		example
-		example/src/main.cpp
+		example/src/example.cpp
 	)
 
 	add_executable(
