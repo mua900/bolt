@@ -7,10 +7,8 @@
 namespace bolt
 {
 
-    // @todo this is not complete
-    // this will be done alongside physics
     // it is here to reduce data duplication between different systems like graphics, ui and physics
-    // this is going to be a little messy since it needs to be used by different things
+    // and it needs to server all of them so the code here can be all over the place
 
     using ShapeId = u32;
 
@@ -120,7 +118,7 @@ namespace bolt
             Rectangle rect;
             Circle circle;
             Polygon polygon;
-        };
+        } data = {};
     };
 
     struct ShapeData
