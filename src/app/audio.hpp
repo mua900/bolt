@@ -14,6 +14,8 @@ namespace bolt
     using TrackId = u32;
     constexpr TrackId NullTrackId = -1;
 
+    constexpr int PlayRepeatInfinite = -1;
+
     // this is a wrapper around SDL mixer
     struct AudioPlayer {
         SDL_AudioDeviceID device = {};
@@ -35,14 +37,14 @@ namespace bolt
         void pause_all();
         void resume_all();
 
-        void play_track(TrackId track);
+        void play_track(TrackId track, int repeat);
         void stop_track(TrackId track, s64 fade_out_ms);
         void stop_track_frames(TrackId track, s64 fade_out_frames);
         void pause_track(TrackId track);
         void resume_track(TrackId track);
         void set_track_gain(TrackId track, float gain);
 
-        void play_tag(const char* tag);
+        void play_tag(const char* tag, int repeat);
         void stop_tag(const char* tag, s64 fade_out_ms);
         void pause_tag(const char* tag);
         void resume_tag(const char* tag);

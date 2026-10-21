@@ -79,13 +79,13 @@ namespace bolt
         MIX_ResumeAllTracks(mixer);
     }
 
-    void AudioPlayer::play_track(TrackId track)
+    void AudioPlayer::play_track(TrackId track, int repeat)
     {
         MIX_Track* t = tracks.get(track);
 
         SDL_PropertiesID options = SDL_CreateProperties();
 
-        SDL_SetNumberProperty(options, MIX_PROP_PLAY_LOOPS_NUMBER, 1);
+        SDL_SetNumberProperty(options, MIX_PROP_PLAY_LOOPS_NUMBER, repeat);
 
         MIX_PlayTrack(t, options);
         SDL_DestroyProperties(options);
@@ -121,11 +121,11 @@ namespace bolt
         MIX_SetTrackGain(tracks[track], gain);
     }
 
-    void AudioPlayer::play_tag(const char* tag)
+    void AudioPlayer::play_tag(const char* tag, int repeat)
     {
         SDL_PropertiesID options = SDL_CreateProperties();
 
-        SDL_SetNumberProperty(options, MIX_PROP_PLAY_LOOPS_NUMBER, 1);
+        SDL_SetNumberProperty(options, MIX_PROP_PLAY_LOOPS_NUMBER, repeat);
 
         MIX_PlayTag(mixer, tag, options);
 
