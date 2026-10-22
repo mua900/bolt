@@ -53,6 +53,11 @@ namespace bolt
         bool key_pressed(Scancode code) const;
     };
 
+    struct KeyboardVector {
+        SDL_Scancode x;
+        SDL_Scancode y;
+    };
+
     struct MouseCursor {
         SDL_Cursor* normal = nullptr;
         SDL_Cursor* text = nullptr;
@@ -136,6 +141,7 @@ namespace bolt
         InputMouseWheel,
         InputMouseMotion,
         InputKeyboardKey,
+        InputKeyboardVector,
         InputGamepadButton,
         InputGamepadAxis,
         InputGamepadVector,
@@ -145,7 +151,9 @@ namespace bolt
     {
         InputKind kind = {};
         u32 device = 0;
-        u32 key = 0; // what this means depends on input kind
+        // what these means depends on input kind
+        u32 key = 0;
+        u32 key2 = 0;
 
         Input() {}
         Input(InputKind k) : kind(k)
@@ -158,7 +166,9 @@ namespace bolt
         {}
         Input(SDL_GamepadAxis axis) : kind(InputGamepadAxis), key(axis)
         {}
-        Input(GamepadVector vector) : kind(InputGamepadVector), key(vector)
+        Input(GamepadVector game_vector) : kind(InputGamepadVector), key(game_vector)
+        {}
+        Input(KeyboardVector key_vec) : kind(InputKeyboardVector), key(key_vec.x), key2(key_vec.y)
         {}
     };
 

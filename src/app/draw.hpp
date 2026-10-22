@@ -248,8 +248,8 @@ namespace bolt
         vec2 sourceOffset = {};
         vec2 sourceScale = {};
 
-        // additional
-        Flip flip = FlipNone; // just negates the source scale per axis if set to flip for that axis
+        // @todo
+        Flip flip = FlipNone;
     };
 
     enum VertexInputType

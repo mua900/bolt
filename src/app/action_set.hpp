@@ -18,7 +18,7 @@ namespace bolt {
         Input input[ACTION_MAX_INPUT] = {};
         int num_input = 0;
 
-        void add_input(Input& input);
+        bool add_input(Input& input);
         bool read_value(InputState& state, Value& out);
     };
 
@@ -26,7 +26,7 @@ namespace bolt {
     {
         HashTable<Action> action_set = {};
 
-        void add_action(const char* name, Input& input);
+        bool add_action(const char* name, Input& input);
         bool read_action(InputState& input, const char* name, Value& out);
     };
 

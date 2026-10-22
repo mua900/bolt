@@ -2,20 +2,22 @@
 
 namespace bolt {
 
-	void ActionSet::add_action(const char* name, Input& input)
+	bool ActionSet::add_action(const char* name, Input& input)
 	{
 		String s = String(name);
 		Action* action = action_set.find(s);
+		bool added = false;
 		if (!action)
 		{
 			Action naction = {};
-			naction.add_input(input);
-			action_set.add(s, naction);
+			added = naction.add_input(input);
+			if (added) action_set.add(s, naction);
 		}
 		else
 		{
-			action->add_input(input);
+			added = action->add_input(input);
 		}
+		return added;
 	}
 
 	bool ActionSet::read_action(InputState& state, const char* name, Value& out)
@@ -30,13 +32,15 @@ namespace bolt {
 		return action->read_value(state, out);
 	}
 
-	void Action::add_input(Input& in)
+	bool Action::add_input(Input& in)
 	{
 		if (num_input < ACTION_MAX_INPUT)
 		{
 			input[num_input] = in;
 			num_input += 1;
+			return true;
 		}
+		else return false;
 	}
 
 	bool Action::read_value(InputState& state, Value& out)
@@ -61,7 +65,7 @@ namespace bolt {
 						out = Value(false);
 						return true;
 					}
-					break;
+					else break;
 				}
 				case InputMouseMotion:
 				{
@@ -95,7 +99,22 @@ namespace bolt {
 						out = Value(false);
 						return true;
 					}
-					break;
+					else break;
+				}
+				case InputKeyboardVector:
+				{
+					if (input[i].key >= state.keyboard.num_keys || input[i].key2 >= state.keyboard.num_keys)
+					{
+						log_error("Key value out of range");
+						// bad input, ignore it
+						// panic("Bad key value for input");
+						return false;
+					}
+
+					bool x_pressed = state.keyboard.keys[input[i].key];
+					bool y_pressed = state.keyboard.keys[input[i].key2];
+					out = bolt::vec2(x_pressed ? 1 : 0, y_pressed ? 1 : 0);
+					return true;
 				}
 				case InputGamepadButton:
 				{
@@ -116,7 +135,7 @@ namespace bolt {
 						out = Value(false);
 						return true;
 					}
-					break;
+					else break;
 				}
 				case InputGamepadAxis:
 				{

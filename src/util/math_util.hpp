@@ -420,6 +420,8 @@ namespace bolt {
         return (numerator + denominator - 1) / denominator;
     }
 
+    float remap(float x, float old_lower, float old_upper, float new_lower, float new_upper);
+
 }  // namespace
 
 #endif // MATH_UTIL_HPP

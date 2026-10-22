@@ -3,6 +3,15 @@
 namespace bolt
 {
 
+    float remap(float x, float old_lower, float old_upper, float new_lower, float new_upper)
+    {
+        float ratio = (new_upper - new_lower) / (old_upper - old_lower);
+        float lower = old_lower * ratio;
+        x *= ratio;
+        x += new_lower - lower;
+        return x;
+    }
+
     float Complex::magnitude() const
     {
         return sqrtf(real * real + imaginary * imaginary);
