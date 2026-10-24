@@ -45,6 +45,7 @@ namespace bolt {
 
 	bool Action::read_value(InputState& state, Value& out)
 	{
+		// currently the if no satisfactory input is found between alternatives, the last one is chosen
 		for (int i = 0; i < num_input; i++)
 		{
 			bool last = (i == num_input - 1);
@@ -122,7 +123,7 @@ namespace bolt {
 					}
 
 					int negative = state.keyboard.keys[input[i].key];
-					int positive = state.keyboard.keys[input[i].key];
+					int positive = state.keyboard.keys[input[i].key2];
 					float val = (float) (positive - negative);
 					if (last || read_analog_float(val))
 					{
@@ -240,7 +241,7 @@ namespace bolt {
 			}
 			case AnalogInputIgnoreThreshold:
 			{
-				if (v < threshold) break;
+				if (std::fabsf(v) < threshold) break;
 				return true;
 			}
 		}

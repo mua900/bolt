@@ -104,6 +104,9 @@ namespace bolt
         bool has_axis(SDL_GamepadAxis axis) const;
         bool has_button(SDL_GamepadButton button) const;
 
+        // SDL reports down as positive and up as negative on the y axis
+        // which is different from what we want
+        // raw versions just give the same number as SDL but others negate the y axis value from SDL
         s16 get_axis_raw(SDL_GamepadAxis axis) const;
         float get_axis_normalized(SDL_GamepadAxis axis, float range) const;
         float get_axis(SDL_GamepadAxis axis) const;

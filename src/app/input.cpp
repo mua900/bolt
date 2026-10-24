@@ -44,6 +44,13 @@ namespace bolt {
     {
         int maxRaw = MAX_SIGNED_16_BIT; //32767;
         float value = float(SDL_GetGamepadAxis(gamepad, axis)) / float(maxRaw);
+
+        // sdl reports down as positive and up as negative on the y axis
+        if (axis == SDL_GAMEPAD_AXIS_LEFTY || axis == SDL_GAMEPAD_AXIS_RIGHTY)
+        {
+            value = -value;
+        }
+
         if (std::fabsf(value) < epsilon)
         {
             return 0;
