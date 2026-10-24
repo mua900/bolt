@@ -379,9 +379,7 @@ int main()
 
 	while (!app.quit)
 	{
-		app.handle_events();
-		app.update();
-		app.draw();
+		app.loop_step();
 	}
 
 	app.cleanup();

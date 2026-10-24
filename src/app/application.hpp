@@ -133,6 +133,8 @@ namespace bolt
         void update();
         void draw();
 
+		void loop_step() { handle_events(); update(); draw(); }
+
         void cleanup();
 
         void set_camera(CameraId cam);
