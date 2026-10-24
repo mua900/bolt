@@ -65,7 +65,7 @@ namespace bolt
     // @shader
     // something drawn with instancing can be this large at maximum
     // rarely should something need to be this big since the units are in pixels
-    // 65535
+    // it will be clamped to 65535
     const float MaxInstanceScale = float(0xffff);
 
     const int VBufferDescriptionCountVertex = 1;
@@ -177,6 +177,7 @@ namespace bolt
 
     struct MeshData
     {
+        MeshId mesh = 0;
         DArray<Vertex> vertices;
         DArray<u16> indices;
     };
@@ -282,6 +283,7 @@ namespace bolt
         VertexInputType input = {};
         PrimitiveType primitive = {};
         DrawType draw_type = DrawGeometry;
+        // @todo SDL_GPUMultisampleState multisample = {};
         SDL_GPUTextureFormat format = {};
         SDL_GPUTextureFormat depth_format = {};
     };
@@ -349,8 +351,15 @@ namespace bolt
         SDL_GPUBuffer* buffer = nullptr;
         GPUBufferUsage usage = {};
         u32 size = 0;
+
+        // these two aren't actually used that much currently
         u32 used = 0;
         bool per_frame = false; // does this hold per frame or persistent data
+
+        GPUBuffer() {}
+        GPUBuffer(SDL_GPUBuffer *buff, GPUBufferUsage p_usage, u32 p_size, bool is_per_frame)
+            : buffer(buff), usage(p_usage), size(p_size), used(0), per_frame(is_per_frame)
+        {}
     };
 
     struct TransferBuffer {
@@ -431,17 +440,24 @@ namespace bolt
         BucketList<GraphicsPipeline> graphics = {};
 
         BufferHandle vertex_buffer = {};
-        BufferHandle instance_buffer = {};
         BufferHandle index_buffer = {};
+        BufferHandle vertex_instance_buffer = {};
+        BufferHandle index_instance_buffer = {};
+        BufferHandle instance_buffer = {};
         BufferHandle light_buffer = {};
 
         SDL_GPUTexture* render_target = nullptr;
         SDL_GPUTexture* light_target = nullptr;
         SDL_GPUTexture* depth_target = nullptr;
 
-        TransferBuffer transfer_buffer = {};  // used for uploading vertex data
-        TransferBuffer group_transfer_buffer = {};  // used for uploading instance data
-        TransferBuffer light_transfer_buffer = {};  // used for uploading light data
+        // used for uploading Vertex data
+        TransferBuffer vertex_transfer_buffer = {};
+        // used for uploading VertexInstance data
+        TransferBuffer instance_transfer_buffer = {};
+        // used for uploading instance data
+        TransferBuffer group_transfer_buffer = {};
+        // used for uploading light data
+        TransferBuffer light_transfer_buffer = {};
 
         FrameContext frame = {};
 
@@ -451,8 +467,10 @@ namespace bolt
 
         // takes ownership of it
         // frees the data as it is done uploading it
-        DArray<MeshInstanceData> mesh_upload_frame = {};
+        DArray<MeshData> mesh_upload_frame = {};
         size_t mesh_upload_frame_size = 0;
+        DArray<MeshInstanceData> mesh_instance_upload_frame = {};
+        size_t mesh_instance_upload_frame_size = 0;
 
         // different graphics pipelines so seperate in memory
         DArray<MeshDraw> frameMeshDraw = {};
@@ -501,7 +519,7 @@ namespace bolt
         bool start_composition_pass(SDL_GPUTexture* swapchain);
         void end_composition_pass();
 
-        u32 allocate_gpu_buffer(GPUBufferUsage usage, u32 size);
+        u32 allocate_gpu_buffer(GPUBufferUsage usage, u32 size, bool per_frame);
         bool set_vertex_buffer(u32 buffer);
         bool set_index_buffer(u32 buffer);
 
@@ -612,8 +630,8 @@ namespace bolt
 
     void render_present(RenderContext& context, SDL_Window* window);
 
-    TransferData add_to_transfer_buffer_array(RenderContext& context, DArray<MeshData>& data);
-    TransferData add_to_transfer_buffer(RenderContext& context, const MeshData *mesh, int num_mesh);
+    TransferData add_to_transfer_buffer_array(RenderContext& context, TransferBuffer& transfer_buffer, DArray<MeshData>& data);
+    TransferData add_to_transfer_buffer(RenderContext& context, TransferBuffer& transfer_buffer, const MeshData *mesh, int num_mesh);
 
     // resets the input transfer data
     DArray<MeshReference> upload_mesh_data(RenderContext& context, TransferData& data);

@@ -106,10 +106,10 @@ bool initialize(void *userdata, Application *app)
 	meshData[1].vertices.add_array(qv, 4);
 	meshData[1].indices.add_array(qi, 6);
 
-	TransferData memory = add_to_transfer_buffer(app->render, meshData, 2);
+	TransferData memory = add_to_transfer_buffer(app->render, app->render.instance_transfer_buffer, meshData, 2);
 
-	int vertex_buffer = app->render.allocate_gpu_buffer(GPUBufferVertex, 1024);
-	int index_buffer = app->render.allocate_gpu_buffer(GPUBufferIndex, 1024);
+	int vertex_buffer = app->render.allocate_gpu_buffer(GPUBufferVertex, 1024, false);
+	int index_buffer = app->render.allocate_gpu_buffer(GPUBufferIndex, 1024, false);
 
 	if (vertex_buffer == -1 || index_buffer == -1)
 	{

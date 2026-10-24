@@ -35,30 +35,29 @@ namespace bolt
     void upload_frame_instance_data(RenderContext& render);
     bool copy_frame_light_data(RenderContext& render);
     void upload_frame_light_data(RenderContext& render);
+    bool copy_frame_mesh_instance_data(RenderContext& render);
+    void upload_frame_mesh_instance_data(RenderContext& render);
     bool copy_frame_mesh_data(RenderContext& render);
     void upload_frame_mesh_data(RenderContext& render);
 
     const int RenderTargetWidth = 1440;
     const int RenderTargetHeight = 810;
 
+    bool copy_frame_data(RenderContext& render) {
+        if (!copy_frame_instance_data(render)) return false;
+        if (render.doLighting && !copy_frame_light_data(render)) return false;
+        if (!copy_frame_mesh_instance_data(render)) return false;
+        return true;
+    }
+
+    void upload_frame_data(RenderContext& render) {
+        upload_frame_instance_data(render);
+        if (render.doLighting) upload_frame_light_data(render);
+        upload_frame_mesh_instance_data(render);
+    }
+
     void render_present(RenderContext& context, SDL_Window* window) {
-        if (!copy_frame_instance_data(context))
-        {
-            return;
-        }
-
-        if (context.doLighting)
-        {
-            if (!copy_frame_light_data(context))
-            {
-                return;
-            }
-        }
-
-        if (!copy_frame_mesh_data(context))
-        {
-            return;
-        }
+        if (!copy_frame_data(context)) return;
 
         if (!context.get_command_buffer())
         {
@@ -71,14 +70,7 @@ namespace bolt
             return;
         }
 
-        upload_frame_instance_data(context);
-
-        if (context.doLighting)
-        {
-            upload_frame_light_data(context);
-        }
-
-        upload_frame_mesh_data(context);
+        upload_frame_data(context);
 
         context.end_copy_pass();
 
@@ -183,10 +175,10 @@ namespace bolt
                 SDL_GPUBufferBinding composition_vertex_binding = {};
                 SDL_GPUBufferBinding composition_index_binding = {};
 
-                composition_vertex_binding.buffer = context.buffers[context.vertex_buffer].buffer;
+                composition_vertex_binding.buffer = context.buffers[context.vertex_instance_buffer].buffer;
                 composition_vertex_binding.offset = 0;
 
-                composition_index_binding.buffer = context.buffers[context.index_buffer].buffer;
+                composition_index_binding.buffer = context.buffers[context.index_instance_buffer].buffer;
                 composition_index_binding.offset = 0;
 
                 SDL_GPUTexture* textures [2] = {
@@ -820,11 +812,11 @@ namespace bolt
         SDL_GPUTransferBufferCreateInfo transferInfo = {};
         transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
         transferInfo.size = InitTransferBufferSize;
-        SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(render->device, &transferInfo);
+        SDL_GPUTransferBuffer* instance_transfer_buffer = SDL_CreateGPUTransferBuffer(render->device, &transferInfo);
         SDL_GPUTransferBuffer* group_transfer_buffer = SDL_CreateGPUTransferBuffer(render->device, &transferInfo);
         SDL_GPUTransferBuffer* light_transfer_buffer = SDL_CreateGPUTransferBuffer(render->device, &transferInfo);
 
-        if (!(transfer_buffer && group_transfer_buffer && light_transfer_buffer))
+        if (!(instance_transfer_buffer && group_transfer_buffer && light_transfer_buffer))
         {
             log_error("Couldn't create transfer buffer");
             return false;
@@ -837,6 +829,8 @@ namespace bolt
 
         SDL_GPUBuffer* vertex_buffer = SDL_CreateGPUBuffer(render->device, &vertexBufferCI);
         SDL_GPUBuffer* index_buffer = SDL_CreateGPUBuffer(render->device, &indexBufferCI);
+        SDL_GPUBuffer* vertex_instance_buffer = SDL_CreateGPUBuffer(render->device, &vertexBufferCI);
+        SDL_GPUBuffer* index_instance_buffer = SDL_CreateGPUBuffer(render->device, &indexBufferCI);
         SDL_GPUBuffer* instance_buffer = SDL_CreateGPUBuffer(render->device, &instanceBufferCI);
         SDL_GPUBuffer *light_buffer = nullptr;
         if (conf->doLights)
@@ -849,7 +843,7 @@ namespace bolt
             }
         }
 
-        if (!(vertex_buffer && index_buffer && instance_buffer))
+        if (!(vertex_instance_buffer && index_instance_buffer && instance_buffer))
         {
             log_error("Couldn't create vertex buffer");
             return false;
@@ -984,16 +978,18 @@ namespace bolt
         render->graphics_lines = render->graphics.add(GraphicsPipeline(pipeline_parameters_lines, pipeline_lines, true, true));
         render->graphics_light = render->graphics.add(GraphicsPipeline(pipeline_parameters_light, pipeline_light, true, true));
         render->graphics_composition = render->graphics.add(GraphicsPipeline(pipeline_parameters_composition, pipeline_composition, true, false));
-        render->vertex_buffer = render->buffers.add({ vertex_buffer, GPUBufferVertex, InitVertexBufferSize, 0 });
-        render->index_buffer = render->buffers.add({ index_buffer, GPUBufferIndex, InitIndexBufferSize, 0 });
-        render->instance_buffer = render->buffers.add({ instance_buffer, GPUBufferVertex, InitInstanceBufferSize, 0 });
-        render->light_buffer = render->buffers.add({ light_buffer, GPUBufferVertex, InitInstanceBufferSize, 0 });
+        render->vertex_buffer = render->buffers.add(GPUBuffer(vertex_buffer, GPUBufferVertex, InitVertexBufferSize, false));
+        render->index_buffer = render->buffers.add(GPUBuffer(index_buffer, GPUBufferIndex, InitIndexBufferSize, false));
+        render->vertex_instance_buffer = render->buffers.add(GPUBuffer(vertex_instance_buffer, GPUBufferVertex, InitVertexBufferSize, false));
+        render->index_instance_buffer = render->buffers.add(GPUBuffer(index_instance_buffer, GPUBufferIndex, InitIndexBufferSize, false));
+        render->instance_buffer = render->buffers.add(GPUBuffer(instance_buffer, GPUBufferVertex, InitInstanceBufferSize, true));
+        render->light_buffer = render->buffers.add(GPUBuffer(light_buffer, GPUBufferVertex, InitInstanceBufferSize, false));
         render->render_target = render_target;
         render->light_target = light_target;
         render->depth_target = depth_target;
         render->sampler = sampler;
         render->light_sampler = light_sampler;
-        render->transfer_buffer = { transfer_buffer, transferInfo.size };
+        render->instance_transfer_buffer = { instance_transfer_buffer, transferInfo.size };
         render->group_transfer_buffer = { group_transfer_buffer, transferInfo.size };
         render->light_transfer_buffer = { light_transfer_buffer, transferInfo.size };
         render->doLighting = conf->doLights;
@@ -1263,25 +1259,20 @@ namespace bolt
         }
     }
 
-    u32 RenderContext::allocate_gpu_buffer(GPUBufferUsage usage, u32 size)
+    u32 RenderContext::allocate_gpu_buffer(GPUBufferUsage usage, u32 size, bool per_frame)
     {
-        GPUBuffer buffer = {};
-
         SDL_GPUBufferCreateInfo ci = {};
         ci.usage = SDL_GPUBufferUsageFlags(usage);
         ci.size = size;
 
-        buffer.buffer = SDL_CreateGPUBuffer(device, &ci);
-        buffer.usage = usage;
-        buffer.size = size;
-        buffer.used = 0;
+        SDL_GPUBuffer* buffer = SDL_CreateGPUBuffer(device, &ci);
 
-        if (!buffer.buffer)
+        if (!buffer)
         {
             return u32(-1);
         }
 
-        return buffers.add(buffer);
+        return buffers.add(GPUBuffer(buffer, usage, size, per_frame));
     }
 
     bool RenderContext::upload_common_mesh_data()
@@ -1299,7 +1290,7 @@ namespace bolt
         size_t offset = 0;
         size_t vertex_offset = 0;
         size_t index_offset = 0;
-        u8 *memory = (u8*) SDL_MapGPUTransferBuffer(device, transfer_buffer.buffer, false);
+        u8 *memory = (u8*) SDL_MapGPUTransferBuffer(device, instance_transfer_buffer.buffer, false);
 
         MeshInstanceData* mesh_data[MeshCount] = {
             &quad_mesh,
@@ -1324,7 +1315,7 @@ namespace bolt
             index_offset += size;
         }
 
-        SDL_UnmapGPUTransferBuffer(device, transfer_buffer.buffer);
+        SDL_UnmapGPUTransferBuffer(device, instance_transfer_buffer.buffer);
 
         if (!get_command_buffer())
         {
@@ -1340,28 +1331,28 @@ namespace bolt
 
         {
             SDL_GPUTransferBufferLocation source = {};
-            source.transfer_buffer = transfer_buffer.buffer;
+            source.transfer_buffer = instance_transfer_buffer.buffer;
             source.offset = 0;
 
             SDL_GPUBufferRegion destination = {};
-            destination.buffer = buffers[vertex_buffer].buffer;
+            destination.buffer = buffers[vertex_instance_buffer].buffer;
             destination.offset = 0;
             destination.size = vertex_offset;
             SDL_UploadToGPUBuffer(frame.copy_pass, &source, &destination, false);
-            buffers[vertex_buffer].used += vertex_offset;
+            buffers[vertex_instance_buffer].used += vertex_offset;
         }
 
         {
             SDL_GPUTransferBufferLocation source = {};
-            source.transfer_buffer = transfer_buffer.buffer;
+            source.transfer_buffer = instance_transfer_buffer.buffer;
             source.offset = vertex_offset;
 
             SDL_GPUBufferRegion destination = {};
-            destination.buffer = buffers[index_buffer].buffer;
+            destination.buffer = buffers[index_instance_buffer].buffer;
             destination.offset = 0;
             destination.size = index_offset;
             SDL_UploadToGPUBuffer(frame.copy_pass, &source, &destination, false);
-            buffers[index_buffer].used += index_offset;
+            buffers[index_instance_buffer].used += index_offset;
         }
 
         end_copy_pass();
@@ -1540,12 +1531,12 @@ namespace bolt
         return true;
     }
 
-    TransferData add_to_transfer_buffer_array(RenderContext& context, DArray<MeshData>& data)
+    TransferData add_to_transfer_buffer_array(RenderContext& context, TransferBuffer& transfer_buffer, DArray<MeshData>& data)
     {
-        return add_to_transfer_buffer(context, data.data(), data.size());
+        return add_to_transfer_buffer(context, transfer_buffer, data.data(), data.size());
     }
 
-    TransferData add_to_transfer_buffer(RenderContext& context, const MeshData *mesh, int num_mesh)
+    TransferData add_to_transfer_buffer(RenderContext& context, TransferBuffer& transfer_buffer, const MeshData *mesh, int num_mesh)
     {
         if (num_mesh == 0)
         {
@@ -1561,12 +1552,12 @@ namespace bolt
         }
 
         size_t total = vcount * sizeof(Vertex) + icount * sizeof(u16);
-        if (total > context.transfer_buffer.size)
+        if (total > transfer_buffer.size)
         {
             return TransferData();
         }
 
-        u8* memory = (u8*) SDL_MapGPUTransferBuffer(context.device, context.transfer_buffer.buffer, false);
+        u8* memory = (u8*) SDL_MapGPUTransferBuffer(context.device, transfer_buffer.buffer, false);
         if (!memory)
         {
             return TransferData();
@@ -1591,7 +1582,7 @@ namespace bolt
             meshes.add(MeshDataSize(vertex_count, index_count));
         }
 
-        SDL_UnmapGPUTransferBuffer(context.device, context.transfer_buffer.buffer);
+        SDL_UnmapGPUTransferBuffer(context.device, transfer_buffer.buffer);
 
         return TransferData(meshes);
     }
@@ -1685,27 +1676,24 @@ namespace bolt
     {
         if (render.mesh_upload_frame.size() > 0)
         {
-            u8 *buffer = (u8*) SDL_MapGPUTransferBuffer(render.device, render.transfer_buffer.buffer, false);
+            u8 *buffer = (u8*) SDL_MapGPUTransferBuffer(render.device, render.vertex_transfer_buffer.buffer, false);
             if (!buffer) return false;
-
             size_t offset = 0;
-            for (MeshInstanceData& data : render.mesh_upload_frame)
+            for (MeshData& data : render.mesh_upload_frame)
             {
-                size_t vertex_size = data.vertices.size() * sizeof(VertexInstance);
-                VertexInstance *vertices = (VertexInstance*) (buffer + offset);
+                size_t vertex_size = data.vertices.size() * sizeof(Vertex);
+                Vertex *vertices = (Vertex*) (buffer + offset);
 
                 memcpy(vertices, data.vertices.data(), vertex_size);
-
                 offset += vertex_size;
             }
 
-            for (MeshInstanceData& data : render.mesh_upload_frame)
+            for (MeshData& data : render.mesh_upload_frame)
             {
                 size_t index_size = data.indices.size() * sizeof(u16);
                 u16 *indices = (u16*) (buffer + offset);
 
                 memcpy(indices, data.indices.data(), index_size);
-
                 offset += index_size;
             }
         }
@@ -1717,17 +1705,17 @@ namespace bolt
     {
         if (render.mesh_upload_frame.size() > 0)
         {
-            for (auto& mesh : render.mesh_upload_frame)
+            for (MeshData& mesh : render.mesh_upload_frame)
             {
                 MeshReference reference = {};
 
-                size_t vertex_byte = mesh.vertices.size() * sizeof(VertexInstance);
+                size_t vertex_byte = mesh.vertices.size() * sizeof(Vertex);
                 size_t index_byte = mesh.indices.size() * sizeof(u16);
 
                 SDL_GPUTransferBufferLocation vertex_source = {};
                 SDL_GPUBufferRegion vertex_destination = {};
 
-                vertex_source.transfer_buffer = render.transfer_buffer.buffer;
+                vertex_source.transfer_buffer = render.vertex_transfer_buffer.buffer;
                 vertex_source.offset = 0;
 
                 GPUBuffer& vertex_buffer = render.buffers.get_ref(render.vertex_buffer);
@@ -1738,16 +1726,19 @@ namespace bolt
                 SDL_GPUTransferBufferLocation index_source = {};
                 SDL_GPUBufferRegion index_destination = {};
 
-                index_source.transfer_buffer = render.transfer_buffer.buffer;
+                index_source.transfer_buffer = render.vertex_transfer_buffer.buffer;
                 index_source.offset = vertex_byte;
 
-                GPUBuffer& index_buffer = render.buffers.get_ref(render.index_buffer);
+                GPUBuffer& index_buffer = render.buffers.get_ref(render.index_instance_buffer);
                 index_destination.buffer = index_buffer.buffer;
                 index_destination.offset = index_buffer.used;
                 index_destination.size = index_byte;
 
                 SDL_UploadToGPUBuffer(render.frame.copy_pass, &vertex_source, &vertex_destination, false);
                 SDL_UploadToGPUBuffer(render.frame.copy_pass, &index_source, &index_destination, false);
+
+                vertex_buffer.used += vertex_byte;
+                index_buffer.used += index_byte;
 
                 reference.vertex_count = mesh.vertices.size();
                 reference.index_count = mesh.indices.size();
@@ -1762,8 +1753,97 @@ namespace bolt
                 mesh.indices.reset();
             }
 
-            render.mesh_upload_frame.discard_data();
+            render.mesh_upload_frame.reset();
             render.mesh_upload_frame_size = 0;
+        }
+    }
+
+    bool copy_frame_mesh_instance_data(RenderContext& render)
+    {
+        if (render.mesh_instance_upload_frame.size() > 0)
+        {
+            u8 *buffer = (u8*) SDL_MapGPUTransferBuffer(render.device, render.instance_transfer_buffer.buffer, false);
+            if (!buffer) return false;
+
+            size_t offset = 0;
+            for (MeshInstanceData& data : render.mesh_instance_upload_frame)
+            {
+                size_t vertex_size = data.vertices.size() * sizeof(VertexInstance);
+                VertexInstance *vertices = (VertexInstance*) (buffer + offset);
+
+                memcpy(vertices, data.vertices.data(), vertex_size);
+
+                offset += vertex_size;
+            }
+
+            for (MeshInstanceData& data : render.mesh_instance_upload_frame)
+            {
+                size_t index_size = data.indices.size() * sizeof(u16);
+                u16 *indices = (u16*) (buffer + offset);
+
+                memcpy(indices, data.indices.data(), index_size);
+
+                offset += index_size;
+            }
+        }
+
+        return true;
+    }
+
+    void upload_frame_mesh_instance_data(RenderContext& render)
+    {
+        if (render.mesh_instance_upload_frame.size() > 0)
+        {
+            for (auto& mesh : render.mesh_instance_upload_frame)
+            {
+                MeshReference reference = {};
+
+                size_t vertex_byte = mesh.vertices.size() * sizeof(VertexInstance);
+                size_t index_byte = mesh.indices.size() * sizeof(u16);
+
+                SDL_GPUTransferBufferLocation vertex_source = {};
+                SDL_GPUBufferRegion vertex_destination = {};
+
+                vertex_source.transfer_buffer = render.instance_transfer_buffer.buffer;
+                vertex_source.offset = 0;
+
+                GPUBuffer& vertex_buffer = render.buffers.get_ref(render.vertex_instance_buffer);
+                vertex_destination.buffer = vertex_buffer.buffer;
+                vertex_destination.offset = vertex_buffer.used;
+                vertex_destination.size = vertex_byte;
+
+                SDL_GPUTransferBufferLocation index_source = {};
+                SDL_GPUBufferRegion index_destination = {};
+
+                index_source.transfer_buffer = render.instance_transfer_buffer.buffer;
+                index_source.offset = vertex_byte;
+
+                GPUBuffer& index_buffer = render.buffers.get_ref(render.index_instance_buffer);
+                index_destination.buffer = index_buffer.buffer;
+                index_destination.offset = index_buffer.used;
+                index_destination.size = index_byte;
+
+                SDL_UploadToGPUBuffer(render.frame.copy_pass, &vertex_source, &vertex_destination, false);
+                SDL_UploadToGPUBuffer(render.frame.copy_pass, &index_source, &index_destination, false);
+
+                vertex_buffer.used += vertex_byte;
+                index_buffer.used += index_byte;
+
+                reference.vertex_count = mesh.vertices.size();
+                reference.index_count = mesh.indices.size();
+                reference.vertex_offset = vertex_destination.offset;
+                reference.index_offset = index_destination.offset;
+                reference.vertex_buffer = render.vertex_instance_buffer;
+                reference.index_buffer = render.index_instance_buffer;
+
+                render.mesh_ref[mesh.mesh] = reference;
+
+                mesh.vertices.reset();
+                mesh.indices.reset();
+            }
+
+            render.mesh_instance_upload_frame.reset();
+            render.mesh_instance_upload_frame_size = 0;
         }
     }
 
@@ -1791,7 +1871,7 @@ namespace bolt
             size_t index_byte = mesh.index_count * sizeof(u16);
 
             SDL_GPUTransferBufferLocation source;
-            source.transfer_buffer = context.transfer_buffer.buffer;
+            source.transfer_buffer = context.instance_transfer_buffer.buffer;
             source.offset = transfer_offset;
 
             SDL_GPUBufferRegion destination;
@@ -1938,14 +2018,14 @@ namespace bolt
         MeshReference reference = MeshReference::get_invalid();
 
         u32 data_size = data.vertices.size() * sizeof(VertexInstance) + data.indices.size() * sizeof(u16);
-        u32 needed_size = mesh_upload_frame_size + data_size;
+        u32 needed_size = mesh_instance_upload_frame_size + data_size;
 
-        if (!resize_transfer_buffer(transfer_buffer, needed_size))
+        if (!resize_transfer_buffer(instance_transfer_buffer, needed_size))
         {
             return MESH_INVALID;
         }
 
-        if (!resize_gpu_buffer(buffers.get_ref(vertex_buffer), needed_size))
+        if (!resize_gpu_buffer(buffers.get_ref(vertex_instance_buffer), needed_size))
         {
             return MESH_INVALID;
         }
@@ -1953,11 +2033,11 @@ namespace bolt
         MeshId mesh = mesh_ref.add(reference);
 
         data.mesh = mesh;
-        mesh_upload_frame.add(data);
+        mesh_instance_upload_frame.add(data);
         data.vertices.reset_fields();
         data.indices.reset_fields();
 
-        mesh_upload_frame_size += data_size;
+        mesh_instance_upload_frame_size += data_size;
 
         return mesh;
     }
@@ -2122,13 +2202,13 @@ namespace bolt
 
         MeshReference reference = render.mesh_ref[group.mesh];
 
-        vertex_bindings[0].buffer = render.buffers[render.vertex_buffer].buffer;
+        vertex_bindings[0].buffer = render.buffers[render.vertex_instance_buffer].buffer;
         vertex_bindings[0].offset = reference.vertex_offset;
 
         vertex_bindings[1].buffer = render.buffers[instance_buffer].buffer;
         vertex_bindings[1].offset = group.offset * instance_size;
 
-        index_binding.buffer = render.buffers[render.index_buffer].buffer;
+        index_binding.buffer = render.buffers[render.index_instance_buffer].buffer;
         index_binding.offset = reference.index_offset;
 
         SDL_BindGPUVertexBuffers(pass, 0, vertex_bindings, 2);
@@ -2154,13 +2234,13 @@ namespace bolt
         SDL_GPUBufferBinding vertex_bindings[2] = {};
         SDL_GPUBufferBinding index_binding = {};
 
-        vertex_bindings[0].buffer = render.buffers[render.vertex_buffer].buffer;
+        vertex_bindings[0].buffer = render.buffers[render.vertex_instance_buffer].buffer;
         vertex_bindings[0].offset = 0;
 
         vertex_bindings[1].buffer = render.buffers[render.instance_buffer].buffer;
         vertex_bindings[1].offset = group.offset * sizeof(InstanceData);
 
-        index_binding.buffer = render.buffers[render.index_buffer].buffer;
+        index_binding.buffer = render.buffers[render.index_instance_buffer].buffer;
         index_binding.offset = 0;
 
         MeshReference reference = render.mesh_ref[group.mesh];
@@ -2193,13 +2273,13 @@ namespace bolt
 
             if (pipeline.use_predefined_buffers)
             {
-                vertex_bindings[0].buffer = render.buffers[render.vertex_buffer].buffer;
+                vertex_bindings[0].buffer = render.buffers[render.vertex_instance_buffer].buffer;
                 vertex_bindings[0].offset = 0;
 
                 vertex_bindings[1].buffer = render.buffers[render.instance_buffer].buffer;
                 vertex_bindings[1].offset = group.offset;
 
-                index_binding.buffer = render.buffers[render.index_buffer].buffer;
+                index_binding.buffer = render.buffers[render.index_instance_buffer].buffer;
                 index_binding.offset = 0;
             }
             else
