@@ -88,37 +88,49 @@ namespace bolt
             return;
         }
 
-        GraphicsPipeline& pipelineDefault = context.graphics.get(context.graphics_default);
-        SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineDefault.pipeline);
-        for (MeshDraw& draw : context.frameMeshDraw)
+        if (context.frameMeshDraw.size() > 0)
         {
-            draw_mesh(context, draw);
+            GraphicsPipeline& pipelineDefault = context.graphics.get(context.graphics_default);
+            SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineDefault.pipeline);
+            for (MeshDraw& draw : context.frameMeshDraw)
+            {
+                draw_mesh(context, draw);
+            }
         }
 
-        GraphicsPipeline& pipelineTexture = context.graphics.get(context.graphics_texture);
-        SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineTexture.pipeline);
-        for (MeshDraw& draw : context.frameMeshDrawTex)
+        if (context.frameMeshDrawTex.size() > 0)
         {
-            draw_mesh_texture(context, draw);
+            GraphicsPipeline& pipelineTexture = context.graphics.get(context.graphics_texture);
+            SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineTexture.pipeline);
+            for (MeshDraw& draw : context.frameMeshDrawTex)
+            {
+                draw_mesh_texture(context, draw);
+            }
         }
 
         GraphicsPipeline& pipelineInstance = context.graphics.get(context.graphics_instance);
-        SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineInstance.pipeline);
-        for (DrawGroup& group : pipelineInstance.groups)
+        if (pipelineInstance.groups.size() > 0)
         {
-            if (group.used > 0)
+            SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineInstance.pipeline);
+            for (DrawGroup& group : pipelineInstance.groups)
             {
-                draw_mesh(context, group, context.frame.render_pass, context.instance_buffer, sizeof(InstanceData));
+                if (group.used > 0)
+                {
+                    draw_mesh(context, group, context.frame.render_pass, context.instance_buffer, sizeof(InstanceData));
+                }
             }
         }
 
         GraphicsPipeline& pipelineInstanceTexture = context.graphics.get(context.graphics_instance_texture);
-        SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineInstanceTexture.pipeline);
-        for (DrawGroup& group : pipelineInstanceTexture.groups)
+        if (pipelineInstanceTexture.groups.size() > 0)
         {
-            if (group.used > 0)
+            SDL_BindGPUGraphicsPipeline(context.frame.render_pass, pipelineInstanceTexture.pipeline);
+            for (DrawGroup& group : pipelineInstanceTexture.groups)
             {
-                draw_quads_texture(context, group);
+                if (group.used > 0)
+                {
+                    draw_quads_texture(context, group);
+                }
             }
         }
 
@@ -463,6 +475,7 @@ namespace bolt
     {
         GraphicsPipelineParameters parameters = {};
         parameters.format = RenderFormat;
+        parameters.primitive = TriangleList;
         parameters.depth_format = SDL_GPU_TEXTUREFORMAT_INVALID;
         parameters.input = InputVertex;
         return parameters;
@@ -714,7 +727,7 @@ namespace bolt
         pipelineInfo.vertex_shader = vertex;
         pipelineInfo.fragment_shader = fragment;
         pipelineInfo.vertex_input_state = vertex_input;
-        pipelineInfo.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+        pipelineInfo.primitive_type = (SDL_GPUPrimitiveType) parameters->primitive;
         pipelineInfo.rasterizer_state = rasterizer;
         pipelineInfo.multisample_state = multisample;
         pipelineInfo.depth_stencil_state = stencil;
@@ -737,6 +750,9 @@ namespace bolt
         GraphicsPipelineParameters pipeline_parameters_instance = get_default_graphics_pipeline_parameters();
         GraphicsPipelineParameters pipeline_parameters_light = get_default_graphics_pipeline_parameters();
         GraphicsPipelineParameters pipeline_parameters_composition = get_default_graphics_pipeline_parameters();
+        GraphicsPipelineParameters pipeline_parameters_lines = get_default_graphics_pipeline_parameters();
+
+        pipeline_parameters_lines.primitive = LineList;
 
         pipeline_parameters.depth_format = DepthFormat;
         pipeline_parameters_instance.depth_format = DepthFormat;
@@ -770,6 +786,13 @@ namespace bolt
 
         SDL_GPUGraphicsPipeline* pipeline_instance_texture = create_gpu_graphics_pipeline(&pipeline_parameters_instance, render, shaders.vertexInstance, shaders.fragmentTexture);
         if (!pipeline_instance_texture)
+        {
+            log_error("Failed to create graphics pipeline: %s", SDL_GetError());
+            return false;
+        }
+
+        SDL_GPUGraphicsPipeline *pipeline_lines = create_gpu_graphics_pipeline(&pipeline_parameters_lines, render, shaders.vertex, shaders.fragment);
+        if (!pipeline_lines)
         {
             log_error("Failed to create graphics pipeline: %s", SDL_GetError());
             return false;
@@ -958,6 +981,7 @@ namespace bolt
         render->graphics_texture = render->graphics.add(GraphicsPipeline(pipeline_parameters, pipeline_texture, true, true));
         render->graphics_instance = render->graphics.add(GraphicsPipeline(pipeline_parameters_instance, pipeline_instance, true, true));
         render->graphics_instance_texture = render->graphics.add(GraphicsPipeline(pipeline_parameters_instance, pipeline_instance_texture, true, true));
+        render->graphics_lines = render->graphics.add(GraphicsPipeline(pipeline_parameters_lines, pipeline_lines, true, true));
         render->graphics_light = render->graphics.add(GraphicsPipeline(pipeline_parameters_light, pipeline_light, true, true));
         render->graphics_composition = render->graphics.add(GraphicsPipeline(pipeline_parameters_composition, pipeline_composition, true, false));
         render->vertex_buffer = render->buffers.add({ vertex_buffer, GPUBufferVertex, InitVertexBufferSize, 0 });
@@ -1739,6 +1763,7 @@ namespace bolt
             }
 
             render.mesh_upload_frame.discard_data();
+            render.mesh_upload_frame_size = 0;
         }
     }
 
@@ -1912,12 +1937,27 @@ namespace bolt
         // this data will be uploaded and this reference set in the copy pass this frame
         MeshReference reference = MeshReference::get_invalid();
 
+        u32 data_size = data.vertices.size() * sizeof(VertexInstance) + data.indices.size() * sizeof(u16);
+        u32 needed_size = mesh_upload_frame_size + data_size;
+
+        if (!resize_transfer_buffer(transfer_buffer, needed_size))
+        {
+            return MESH_INVALID;
+        }
+
+        if (!resize_gpu_buffer(buffers.get_ref(vertex_buffer), needed_size))
+        {
+            return MESH_INVALID;
+        }
+
         MeshId mesh = mesh_ref.add(reference);
 
         data.mesh = mesh;
         mesh_upload_frame.add(data);
         data.vertices.reset_fields();
         data.indices.reset_fields();
+
+        mesh_upload_frame_size += data_size;
 
         return mesh;
     }

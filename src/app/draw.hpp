@@ -19,6 +19,7 @@ namespace bolt
     // normal maps
     // user pipelines
     // user shaders
+    // put an option to enable msaa
 
     struct RenderContext;
 
@@ -260,16 +261,23 @@ namespace bolt
         InputComposition, // VertexInstance
     };
 
-    // find a better name
     enum DrawType
     {
         DrawGeometry = 0,
         DrawLight    = 1,
     };
 
+    // @todo triangle strip etc.
+    enum PrimitiveType
+    {
+        TriangleList = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        LineList = SDL_GPU_PRIMITIVETYPE_LINELIST,
+    };
+
     struct GraphicsPipelineParameters
     {
         VertexInputType input = {};
+        PrimitiveType primitive = {};
         DrawType draw_type = DrawGeometry;
         SDL_GPUTextureFormat format = {};
         SDL_GPUTextureFormat depth_format = {};
@@ -407,15 +415,13 @@ namespace bolt
         int active_index_buffer = 0;
 
         SDL_GPUSampler* sampler = nullptr;
-        SDL_GPUSampler* light_sampler = nullptr; // @todo we might not need this and can remove it maybe
-
-        // the intention here is to provide something that does the basic things you could want to do
-        // but still provide hooks to lower level things if the user wants them
+        SDL_GPUSampler* light_sampler = nullptr; // @todo we might not need this
 
         GraphicsPipelineId graphics_default = {};
         GraphicsPipelineId graphics_instance = {};
         GraphicsPipelineId graphics_texture = {};
         GraphicsPipelineId graphics_instance_texture = {};
+        GraphicsPipelineId graphics_lines = {};
         GraphicsPipelineId graphics_light = {};
         GraphicsPipelineId graphics_composition = {};
 
@@ -443,6 +449,7 @@ namespace bolt
         // takes ownership of it
         // frees the data as it is done uploading it
         DArray<MeshInstanceData> mesh_upload_frame = {};
+        size_t mesh_upload_frame_size = 0;
 
         // different graphics pipelines so seperate in memory
         DArray<MeshDraw> frameMeshDraw = {};
