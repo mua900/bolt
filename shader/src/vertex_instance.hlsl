@@ -26,7 +26,7 @@ VSOutput main(VSInput input)
     float2 uv = input.uv;
     uv = input.uv * input.sourceScale + input.sourceOffset;
 
-    float2 scale = input.scale * 4096;
+    float2 scale = input.scale * 0xffff;
 
     VSOutput output;
     float2 p = input.position;

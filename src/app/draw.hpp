@@ -20,6 +20,7 @@ namespace bolt
     // user pipelines
     // user shaders
     // put an option to enable msaa
+    // directional lights, area lights
 
     struct RenderContext;
 
@@ -61,7 +62,11 @@ namespace bolt
         MatrixIsMVP   = 2, // override mvp
     };
 
-    const float MaxInstanceScale = 4096;
+    // @shader
+    // something drawn with instancing can be this large at maximum
+    // rarely should something need to be this big since the units are in pixels
+    // 65535
+    const float MaxInstanceScale = float(0xffff);
 
     const int VBufferDescriptionCountVertex = 1;
     const int VBufferDescriptionCountInstance = 2;
@@ -122,8 +127,6 @@ namespace bolt
         {}
     };
 
-    // @todo maybe have a fat version of this with things like
-    // room for proper scale factors in floats, flip flags etc.
     struct InstanceData
     {
         float x = 0;

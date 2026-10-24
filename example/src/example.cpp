@@ -19,6 +19,7 @@ struct State
 	Texture texture = {};
 	DrawGroupId group_solid = {};
 	DrawGroupId group_tex = {};
+	DrawGroupId group_lines = {};
 
 	SpriteAnimation animation = {};
 
@@ -55,7 +56,8 @@ bool initialize(void *userdata, Application *app)
 
 	bolt::DrawGroupId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024);
 	bolt::DrawGroupId id_solid = app->render.make_draw_group(app->render.graphics_instance, TEXTURE_INVALID, 1024);
-	if (!(id.is_valid() && id_solid.is_valid()))
+	bolt::DrawGroupId id_lines = app->render.make_draw_group(app->render.graphics_lines, TEXTURE_INVALID, 1024);
+	if (!(id.is_valid() && id_solid.is_valid() && id_lines.is_valid()))
 	{
 		return false;
 	}
@@ -188,6 +190,7 @@ bool initialize(void *userdata, Application *app)
 	state->animation = anim;
 	state->group_tex = id;
 	state->group_solid = id_solid;
+	state->group_lines = id_lines;
 
 	app->render.end_copy_pass();
 	app->render.submit_command_buffer();
@@ -272,6 +275,12 @@ void draw(void *userdata, Application *app)
 
 	bolt::InstanceData frame = state->animation.get_frame(vec3(-100, 100, 0.2), 0, vec2(100, 100));
 	bolt::queue_draw_group(app->render, frame, state->group_tex);
+
+	// lines
+	bolt::InstanceData line = bolt::InstanceData {
+		0, 0, 0, 0, bolt::pack_scale(bolt::vec2(200, 200)), bolt::colorToHex(bolt::Colorf(0.5, 0.5, 0.5))
+	};
+	bolt::queue_draw_group(app->render, line, state->group_lines);
 }
 
 bool handleEvent(SDL_Event event, void *userdata, Application* app)
