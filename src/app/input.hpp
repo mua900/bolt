@@ -163,6 +163,8 @@ namespace bolt
         u32 key3 = 0;
         u32 key4 = 0;
 
+
+
         Input() {}
         Input(InputKind k) :
             kind(k)

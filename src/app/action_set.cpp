@@ -69,14 +69,23 @@ namespace bolt {
 				}
 				case InputMouseMotion:
 				{
-					out = Value(state.mouse.motion);
-					return true;
+					vec2 val = state.mouse.motion;
+					if (last || read_analog_vector(val))
+					{
+						out = Value(val);
+						return true;
+					}
+					else break;
 				}
 				case InputMouseWheel:
 				{
-					vec2 wheel = state.mouse.wheel;
-					out = Value(wheel);
-					return true;
+					vec2 val = state.mouse.wheel;
+					if (last || read_analog_vector(val))
+					{
+						out = Value(val);
+						return true;
+					}
+					else break;
 				}
 				case InputKeyboardKey:
 				{
@@ -103,7 +112,8 @@ namespace bolt {
 				}
 				case InputKeyboardAxis:
 				{
-					if (input[i].key >= state.keyboard.num_keys || input[i].key2 >= state.keyboard.num_keys)
+					if (input[i].key >= state.keyboard.num_keys ||
+						input[i].key2 >= state.keyboard.num_keys)
 					{
 						log_error("Key value out of range");
 						// bad input, ignore it
@@ -113,12 +123,17 @@ namespace bolt {
 
 					int negative = state.keyboard.keys[input[i].key];
 					int positive = state.keyboard.keys[input[i].key];
-					out = (float) (positive - negative);
-					return true;
+					float val = (float) (positive - negative);
+					if (last || read_analog_float(val))
+					{
+						out = Value(val);
+						return true;
+					}
+					else break;
 				}
 				case InputKeyboardVector:
 				{
-					if (input[i].key >= state.keyboard.num_keys ||
+					if (input[i].key >= state.keyboard.num_keys  ||
 						input[i].key2 >= state.keyboard.num_keys ||
 						input[i].key3 >= state.keyboard.num_keys ||
 						input[i].key4 >= state.keyboard.num_keys)
@@ -133,8 +148,13 @@ namespace bolt {
 					int x_positive = state.keyboard.keys[input[i].key2];
 					int y_negative = state.keyboard.keys[input[i].key3];
 					int y_positive = state.keyboard.keys[input[i].key4];
-					out = bolt::vec2((float)(x_positive - x_negative), (float)(y_positive - y_negative));
-					return true;
+					vec2 val = vec2((float)(x_positive - x_negative), (float)(y_positive - y_negative));
+					if (last || read_analog_vector(val))
+					{
+						out = Value(val);
+						return true;
+					}
+					else break;
 				}
 				case InputGamepadButton:
 				{
@@ -165,9 +185,13 @@ namespace bolt {
 						break;
 					}
 					auto gamepad_axis = (SDL_GamepadAxis) input[i].key;
-					float axis = pad.get_axis(gamepad_axis);
-					out = Value(axis);
-					return true;
+					float val = pad.get_axis(gamepad_axis);
+					if (last || read_analog_float(val))
+					{
+						out = Value(val);
+						return true;
+					}
+					else break;
 				}
 				case InputGamepadVector:
 				{
@@ -191,11 +215,50 @@ namespace bolt {
 					}
 					else return false;
 
-					out = Value(v);
-
-					return true;
+					if (last || read_analog_vector(v))
+					{
+						out = Value(v);
+						return true;
+					}
+					else break;
 				}
 			}
+		}
+
+		return false;
+	}
+
+	bool Action::read_analog_float(float v) const
+	{
+		switch (analog_behavior)
+		{
+			case AnalogInputFirstWins:		return true;
+			case AnalogInputIgnoreZero:
+			{
+				if (v == 0) break;
+				return true;
+			}
+			case AnalogInputIgnoreThreshold:
+			{
+				if (v < threshold) break;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool Action::read_analog_vector(vec2 v) const
+	{
+		switch (analog_behavior)
+		{
+			case AnalogInputFirstWins:		return true;
+			case AnalogInputIgnoreZero:
+				if (v.magnitude() == 0) break;
+				return true;
+			case AnalogInputIgnoreThreshold:
+				if (v.magnitude() < threshold) break;
+				return true;
 		}
 
 		return false;
