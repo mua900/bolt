@@ -101,7 +101,7 @@ namespace bolt {
 					}
 					else break;
 				}
-				case InputKeyboardVector:
+				case InputKeyboardAxis:
 				{
 					if (input[i].key >= state.keyboard.num_keys || input[i].key2 >= state.keyboard.num_keys)
 					{
@@ -111,9 +111,29 @@ namespace bolt {
 						return false;
 					}
 
-					bool x_pressed = state.keyboard.keys[input[i].key];
-					bool y_pressed = state.keyboard.keys[input[i].key2];
-					out = bolt::vec2(x_pressed ? 1 : 0, y_pressed ? 1 : 0);
+					int negative = state.keyboard.keys[input[i].key];
+					int positive = state.keyboard.keys[input[i].key];
+					out = (float) (positive - negative);
+					return true;
+				}
+				case InputKeyboardVector:
+				{
+					if (input[i].key >= state.keyboard.num_keys ||
+						input[i].key2 >= state.keyboard.num_keys ||
+						input[i].key3 >= state.keyboard.num_keys ||
+						input[i].key4 >= state.keyboard.num_keys)
+					{
+						log_error("Key value out of range");
+						// bad input, ignore it
+						// panic("Bad key value for input");
+						return false;
+					}
+
+					int x_negative = state.keyboard.keys[input[i].key];
+					int x_positive = state.keyboard.keys[input[i].key2];
+					int y_negative = state.keyboard.keys[input[i].key3];
+					int y_positive = state.keyboard.keys[input[i].key4];
+					out = bolt::vec2((float)(x_positive - x_negative), (float)(y_positive - y_negative));
 					return true;
 				}
 				case InputGamepadButton:

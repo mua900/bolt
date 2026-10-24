@@ -53,9 +53,14 @@ namespace bolt
         bool key_pressed(Scancode code) const;
     };
 
+    struct KeyboardAxis {
+        SDL_Scancode negative;
+        SDL_Scancode positive;
+    };
+
     struct KeyboardVector {
-        SDL_Scancode x;
-        SDL_Scancode y;
+        KeyboardAxis x;
+        KeyboardAxis y;
     };
 
     struct MouseCursor {
@@ -141,6 +146,7 @@ namespace bolt
         InputMouseWheel,
         InputMouseMotion,
         InputKeyboardKey,
+        InputKeyboardAxis,
         InputKeyboardVector,
         InputGamepadButton,
         InputGamepadAxis,
@@ -154,21 +160,36 @@ namespace bolt
         // what these means depends on input kind
         u32 key = 0;
         u32 key2 = 0;
+        u32 key3 = 0;
+        u32 key4 = 0;
 
         Input() {}
-        Input(InputKind k) : kind(k)
+        Input(InputKind k) :
+            kind(k)
         {}
-        Input(SDL_MouseButtonFlags flags) : kind(InputMouseButton), key(flags)
+        Input(SDL_MouseButtonFlags flags) :
+            kind(InputMouseButton), key(flags)
         {}
-        Input(SDL_Scancode scancode) : kind(InputKeyboardKey), key(scancode)
+        Input(SDL_Scancode scancode) :
+            kind(InputKeyboardKey), key(scancode)
         {}
-        Input(SDL_GamepadButton button) : kind(InputGamepadButton), key(button)
+        Input(SDL_GamepadButton button) :
+            kind(InputGamepadButton), key(button)
         {}
-        Input(SDL_GamepadAxis axis) : kind(InputGamepadAxis), key(axis)
+        Input(SDL_GamepadAxis axis) :
+            kind(InputGamepadAxis), key(axis)
         {}
-        Input(GamepadVector game_vector) : kind(InputGamepadVector), key(game_vector)
+        Input(GamepadVector game_vector) :
+            kind(InputGamepadVector), key(game_vector)
         {}
-        Input(KeyboardVector key_vec) : kind(InputKeyboardVector), key(key_vec.x), key2(key_vec.y)
+        Input(KeyboardAxis key_axis) :
+            kind(InputKeyboardAxis),
+            key(key_axis.negative), key2(key_axis.positive)
+        {}
+        Input(KeyboardVector key_vec) :
+            kind(InputKeyboardVector),
+            key(key_vec.x.negative), key2(key_vec.x.positive),
+            key3(key_vec.y.negative), key4(key_vec.y.positive)
         {}
     };
 

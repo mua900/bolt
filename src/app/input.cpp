@@ -10,6 +10,8 @@ namespace bolt {
             case InputMouseWheel:       return ValueType::VECTOR2;
             case InputMouseMotion:      return ValueType::VECTOR2;
             case InputKeyboardKey:      return ValueType::BOOLEAN;
+            case InputKeyboardAxis:     return ValueType::REAL;
+            case InputKeyboardVector:   return ValueType::VECTOR2;
             case InputGamepadButton:    return ValueType::BOOLEAN;
             case InputGamepadAxis:      return ValueType::REAL;
             case InputGamepadVector:    return ValueType::VECTOR2;
