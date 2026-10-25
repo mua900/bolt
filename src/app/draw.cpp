@@ -131,7 +131,11 @@ namespace bolt
         SDL_GPUTexture* swapchain = nullptr;
         u32 swapchain_width = 0;
         u32 swapchain_height = 0;
-        SDL_WaitAndAcquireGPUSwapchainTexture(context.frame.command_buffer, window, &swapchain, &swapchain_width, &swapchain_height);
+        if (!SDL_WaitAndAcquireGPUSwapchainTexture(context.frame.command_buffer, window, &swapchain, &swapchain_width, &swapchain_height))
+        {
+            context.cancel_command_buffer();
+            return;
+        }
 
         if (!swapchain)
         {

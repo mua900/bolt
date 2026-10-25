@@ -77,6 +77,8 @@ namespace bolt
     	int window_width = 1440;
     	int window_height = 810;
 
+        int target_fps = 60;
+
     	SDL_InitFlags flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO;
         bool init_ttf = true;
         bool init_mixer = true;
@@ -121,6 +123,8 @@ namespace bolt
         AssetId font = {};
         AssetId editor_font = {};
 
+        int target_fps = 0;
+
         bool quit = false;
         bool doing_text_input = false;  // don't mess with this.
 
@@ -132,10 +136,27 @@ namespace bolt
         void handle_events();
         void update();
         void draw();
+        void wait_frame_time();
 
-		void loop_step() { handle_events(); update(); draw(); }
+		void loop_step() {
+            handle_events();
+            update();
+            draw();
+            wait_frame_time();
+        }
 
         void cleanup();
+
+        double get_target_frame_time()
+        {
+            double time = 1.0 / (double)target_fps;
+            return time;
+        }
+
+        s64 get_target_frame_time_ms()
+        {
+            return get_target_frame_time() * MILLISECONDS_PER_SECOND;
+        }
 
         void set_camera(CameraId cam);
 

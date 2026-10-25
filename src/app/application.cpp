@@ -19,6 +19,8 @@ namespace bolt
     	conf.window_width = 1440;
     	conf.window_height = 810;
 
+        conf.target_fps = 60;
+
     	conf.name = "Default Name";
 
     	conf.render.gpuDebug = false;
@@ -73,6 +75,8 @@ namespace bolt
                 }
             }
         }
+
+        target_fps = conf.target_fps;
 
         // window
         {
@@ -302,6 +306,16 @@ namespace bolt
         timeout();
 
     	user_update();
+    }
+
+    void Application::wait_frame_time()
+    {
+        s64 target = get_target_frame_time_ms();
+        s64 delta = target - timeInfo.deltaTime;
+        if (delta > 0)
+        {
+            SDL_Delay(delta);
+        }
     }
 
     void Application::cleanup()
