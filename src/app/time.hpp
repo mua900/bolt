@@ -7,7 +7,7 @@ namespace bolt
 {
 
     struct TimeInfo {
-        s64 time = 0;  // miliseconds
+        s64 time = 0;  // nanoseconds
         s64 deltaTime = 0;
         double timeSeconds = 0;
         double deltaTimeSeconds = 0;

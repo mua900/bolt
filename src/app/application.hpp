@@ -123,6 +123,7 @@ namespace bolt
         AssetId font = {};
         AssetId editor_font = {};
 
+        s64 frame_time = 0;  // frame time without waits
         int target_fps = 0;
 
         bool quit = false;
@@ -136,14 +137,8 @@ namespace bolt
         void handle_events();
         void update();
         void draw();
-        void wait_frame_time();
-
-		void loop_step() {
-            handle_events();
-            update();
-            draw();
-            wait_frame_time();
-        }
+        void wait_frame_time(s64 frame_time);
+        void loop_step();
 
         void cleanup();
 
@@ -153,9 +148,20 @@ namespace bolt
             return time;
         }
 
-        s64 get_target_frame_time_ms()
+        s64 get_target_frame_time_ns()
         {
-            return get_target_frame_time() * MILLISECONDS_PER_SECOND;
+            return get_target_frame_time() * NANOSECONDS_PER_SECOND;
+        }
+
+        double get_estimate_fps()
+        {
+            return 1.0 / timeInfo.deltaTimeSeconds;
+        }
+
+        double get_frame_time()
+        {
+            double frame = (double) frame_time / NANOSECONDS_PER_SECOND;
+            return 1.0 / frame;
         }
 
         void set_camera(CameraId cam);

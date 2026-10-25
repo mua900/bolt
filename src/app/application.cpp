@@ -295,8 +295,8 @@ namespace bolt
     void Application::update()
     {
         // update time
-        SDL_Time time = SDL_GetTicks();
-        double time_sec = (double)time / MILLISECONDS_PER_SECOND;
+        SDL_Time time = SDL_GetTicksNS();
+        double time_sec = (double)time / NANOSECONDS_PER_SECOND;
         timeInfo.deltaTime = time - timeInfo.time;
         timeInfo.deltaTimeSeconds = time_sec - timeInfo.timeSeconds;
         timeInfo.time = time;
@@ -308,14 +308,27 @@ namespace bolt
     	user_update();
     }
 
-    void Application::wait_frame_time()
+    void Application::wait_frame_time(s64 frame_time)
     {
-        s64 target = get_target_frame_time_ms();
-        s64 delta = target - timeInfo.deltaTime;
+        s64 target = get_target_frame_time_ns();
+        s64 delta = target - frame_time;
         if (delta > 0)
         {
-            SDL_Delay(delta);
+            SDL_DelayNS(delta);
         }
+    }
+
+    void Application::loop_step() {
+        s64 frame_start = SDL_GetTicksNS();
+
+        handle_events();
+        update();
+        draw();
+
+        s64 frame_end = SDL_GetTicksNS();
+        this->frame_time = frame_end - frame_start;
+
+        wait_frame_time(this->frame_time);
     }
 
     void Application::cleanup()
@@ -873,7 +886,7 @@ namespace bolt
 
     void Application::set_event_active(int event_index, double timeout_seconds)
     {
-        s64 timeout = (s64)(timeout_seconds * MILLISECONDS_PER_SECOND);
+        s64 timeout = (s64)(timeout_seconds * NANOSECONDS_PER_SECOND);
         events[event_index].active = true;
         events[event_index].event = timeInfo.time + timeout;
     }
