@@ -21,6 +21,8 @@ namespace bolt
     // user shaders
     // put an option to enable msaa
     // directional lights, area lights
+    // maybe have an option to have an additional render pass for ui and text since you may not want them to be effected by lighting or blend with other geometry
+    // maybe have multiple command buffers for upload and render commands see: SDL_AcquireGPUCommandBuffer
 
     struct RenderContext;
 
@@ -326,7 +328,7 @@ namespace bolt
         u32 height = 0;
 
         TextureFormat format = {};
-        u32 sampler = 0;
+        u32 sampler = 0; // @todo unused
 
         GPUTexture() {}
         GPUTexture(SDL_GPUTexture *tex, TextureFormat fm, u32 w, u32 h)
@@ -504,7 +506,7 @@ namespace bolt
         // releases the texture and writes null to handle
         void destroy_texture(Texture& handle);
         bool load_gpu_texture(const char* path, Texture& texture);
-        bool upload_gpu_texture(SDL_Surface *surface, Texture& texture);
+        bool upload_gpu_texture(SDL_Surface *surface, Texture texture);
 
         GPUTexture& get_texture(Texture handle);
 

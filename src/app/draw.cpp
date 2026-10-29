@@ -45,6 +45,30 @@ namespace bolt
     const int RenderTargetWidth = 1440;
     const int RenderTargetHeight = 810;
 
+    void reset_frame_data(RenderContext& render)
+    {
+        for (GPUBuffer& buffer : render.buffers)
+        {
+            if (buffer.per_frame)
+            {
+                buffer.used = 0;
+            }
+        }
+
+        render.frameMeshDraw.discard_data();
+        render.frameMeshDrawTex.discard_data();
+        render.frameTexture.discard_data();
+        render.instanceData.mark_empty();
+
+        for (GraphicsPipeline& pipeline : render.graphics)
+        {
+            for (DrawGroup& group : pipeline.groups)
+            {
+                group.used = 0;
+            }
+        }
+    }
+
     bool copy_frame_data(RenderContext& render) {
         if (!copy_frame_instance_data(render)) return false;
         if (render.doLighting && !copy_frame_light_data(render)) return false;
@@ -64,11 +88,13 @@ namespace bolt
 
         if (!context.get_command_buffer())
         {
+            reset_frame_data(context);
             return;
         }
 
         if (!context.start_copy_pass())
         {
+            reset_frame_data(context);
             context.cancel_command_buffer();
             return;
         }
@@ -79,6 +105,7 @@ namespace bolt
 
         if (!context.start_render_pass())
         {
+            reset_frame_data(context);
             context.cancel_command_buffer();
             return;
         }
@@ -131,25 +158,17 @@ namespace bolt
 
         context.end_render_pass();
 
+        // it is an error to cancel the command buffer after acquiring it. see: SDL_CancelGPUCommandBuffer
+        // defer acquiring it so that we can cancel if something fails earlier
         SDL_GPUTexture* swapchain = nullptr;
         u32 swapchain_width = 0;
         u32 swapchain_height = 0;
-        if (!SDL_WaitAndAcquireGPUSwapchainTexture(context.frame.command_buffer, window, &swapchain, &swapchain_width, &swapchain_height))
-        {
-            context.cancel_command_buffer();
-            return;
-        }
-
-        if (!swapchain)
-        {
-            context.cancel_command_buffer();
-            return;
-        }
 
         if (context.doLighting)
         {
             if (!context.start_light_pass())
             {
+                reset_frame_data(context);
                 context.cancel_command_buffer();
                 return;
             }
@@ -169,9 +188,25 @@ namespace bolt
 
             context.end_light_pass();
 
+            if (!SDL_WaitAndAcquireGPUSwapchainTexture(context.frame.command_buffer, window, &swapchain, &swapchain_width, &swapchain_height))
+            {
+                reset_frame_data(context);
+                context.cancel_command_buffer();
+                log_error("Couldn't acquire swapchain texture: %s", SDL_GetError());
+                return;
+            }
+
+            if (!swapchain)
+            {
+                reset_frame_data(context);
+                context.submit_command_buffer();
+                return;
+            }
+
             if (!context.start_composition_pass(swapchain))
             {
-                context.cancel_command_buffer();
+                reset_frame_data(context);
+                context.submit_command_buffer();
                 return;
             }
 
@@ -211,32 +246,28 @@ namespace bolt
         }
         else
         {
+            if (!SDL_WaitAndAcquireGPUSwapchainTexture(context.frame.command_buffer, window, &swapchain, &swapchain_width, &swapchain_height))
+            {
+                reset_frame_data(context);
+                context.cancel_command_buffer();
+                log_error("Couldn't acquire swapchain texture: %s", SDL_GetError());
+                return;
+            }
+
+            if (!swapchain)
+            {
+                reset_frame_data(context);
+                context.submit_command_buffer();
+                return;
+            }
+
             // copy render target to swapchain
             context.copy_to_swapchain(context.render_target, swapchain, swapchain_width, swapchain_height);
         }
 
         context.submit_command_buffer();
 
-        for (GPUBuffer& buffer : context.buffers)
-        {
-            if (buffer.per_frame)
-            {
-                buffer.used = 0;
-            }
-        }
-
-        context.frameMeshDraw.discard_data();
-        context.frameMeshDrawTex.discard_data();
-        context.frameTexture.discard_data();
-        context.instanceData.mark_empty();
-
-        for (GraphicsPipeline& pipeline : context.graphics)
-        {
-            for (DrawGroup& group : pipeline.groups)
-            {
-                group.used = 0;
-            }
-        }
+        reset_frame_data(context);
     }
 
     bool RenderContext::get_command_buffer()
@@ -1219,37 +1250,27 @@ namespace bolt
             return false;
         }
 
-        if (!upload_gpu_texture(surface, texture))
+        texture = create_texture_verbose(RenderFormat, TextureUsageSampler, surface->w, surface->h, texture.mip_levels, SampleCount1);
+        if (!texture.is_valid())
         {
-            return false;
-        }
-
-        return true;
-    }
-
-    bool RenderContext::upload_gpu_texture(SDL_Surface *surface, Texture& texture)
-    {
-        ASSERT(surface);
-
-        // reference: SDL_image/src/IMG_gpu.c/LoadGPUTexture
-        int width = surface->w;
-        int height = surface->h;
-
-        const TextureFormat StandardTextureFormat = RenderFormat;
-        SDL_GPUTextureCreateInfo textureInfo = {};
-        textureInfo.format = StandardTextureFormat;
-        textureInfo.type = SDL_GPU_TEXTURETYPE_2D;
-        textureInfo.layer_count_or_depth = 1;
-        textureInfo.num_levels = texture.mip_levels;
-        textureInfo.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
-        textureInfo.width = width;
-        textureInfo.height = height;
-        SDL_GPUTexture *ptr = SDL_CreateGPUTexture(device, &textureInfo);
-        if (!ptr)
-        {
+            log_error("Couldn't create a texture to load from a file");
             SDL_DestroySurface(surface);
             return false;
         }
+
+        bool upload = upload_gpu_texture(surface, texture);
+        SDL_DestroySurface(surface);
+        return upload;
+    }
+
+    bool RenderContext::upload_gpu_texture(SDL_Surface *surface, Texture texture)
+    {
+        ASSERT(surface);
+
+        int width = surface->w;
+        int height = surface->h;
+
+        GPUTexture& tex = textures.get(texture.index);
 
         SDL_GPUTransferBufferCreateInfo transferInfo = {};
         transferInfo.size = width * height * 4; // @Hardcode depends on RenderFormat
@@ -1257,16 +1278,16 @@ namespace bolt
         SDL_GPUTransferBuffer* transfer = SDL_CreateGPUTransferBuffer(device, &transferInfo);
         if (!transfer)
         {
-            SDL_DestroySurface(surface);
-            SDL_ReleaseGPUTexture(device, ptr);
+            log_error("Couldn't create a transfer buffer to upload a texture: %s", SDL_GetError());
+            SDL_ReleaseGPUTexture(device, tex.texture);  // @lifetime is this our responsibility?
             return false;
         }
 
         u8* dst = (u8*) SDL_MapGPUTransferBuffer(device, transfer, false);
         if (!dst)
         {
-            SDL_DestroySurface(surface);
-            SDL_ReleaseGPUTexture(device, ptr);
+            log_error("Couldn't map a transfer buffer to upload a texture: %s", SDL_GetError());
+            SDL_ReleaseGPUTexture(device, tex.texture);
             SDL_ReleaseGPUTransferBuffer(device, transfer);
             return false;
         }
@@ -1289,23 +1310,14 @@ namespace bolt
         SDL_GPUTextureTransferInfo texture_transfer_info = {};
         SDL_GPUTextureRegion texture_region = {};
         texture_transfer_info.transfer_buffer = transfer;
-        texture_region.texture = ptr;
+        texture_region.texture = tex.texture;
         texture_region.w = width;
         texture_region.h = height;
         texture_region.d = 1;
         SDL_UploadToGPUTexture(frame.copy_pass, &texture_transfer_info, &texture_region, false);
 
-        SDL_DestroySurface(surface);
         SDL_ReleaseGPUTransferBuffer(device, transfer);
 
-        GPUTexture tex = {};
-        tex.texture = ptr;
-        tex.width = width;
-        tex.height = height;
-        tex.format = textureInfo.format;
-        tex.sampler = 0; // @todo @Hardcode
-
-        texture.index = textures.add(tex);
         return true;
     }
 
@@ -1466,7 +1478,10 @@ namespace bolt
     {
         for (auto& upload : render.frameTexture)
         {
-            render.upload_gpu_texture(upload.src, upload.target);
+            if (!render.upload_gpu_texture(upload.src, upload.target))
+            {
+                log_error("Couldn't upload texture");
+            }
             SDL_DestroySurface(upload.src);
         }
     }
@@ -2217,6 +2232,7 @@ namespace bolt
         if (!surface)
         {
             log_error("Couldn't render text %s", SDL_GetError());
+            SDL_DestroySurface(surface);
             return TEXTURE_INVALID;
         }
 
@@ -2229,7 +2245,7 @@ namespace bolt
             SDL_Surface *converted = SDL_ConvertSurface(surface, pixel_format);
             if (!converted)
             {
-                log_error("Couldn't convert rendered text to the format we want");
+                log_error("Couldn't convert rendered text to the format we want %s", SDL_GetError());
                 return TEXTURE_INVALID;
             }
 
@@ -2240,6 +2256,7 @@ namespace bolt
         Texture texture = {};
         if (!render.make_texture_upload(surface, texture))
         {
+            SDL_DestroySurface(surface);
             return TEXTURE_INVALID;
         }
 
