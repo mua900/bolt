@@ -1011,7 +1011,7 @@ namespace bolt
             }
         }
 
-        GPUTexture tex = render.get_texture(state.hoverText.text.texture.index);
+        GPUTexture tex = render.get_texture(state.hoverText.text.texture);
     	float hoverWidth = tex.width;
     	float hoverHeight = tex.height;
         // @todo

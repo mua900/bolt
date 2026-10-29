@@ -1,1 +1,2 @@
 image file TestImg image/test.png
+font file TestFont font/Fira_Sans/FiraSans-Regular.ttf

@@ -39,6 +39,7 @@ namespace bolt
     void upload_frame_mesh_instance_data(RenderContext& render);
     bool copy_frame_mesh_data(RenderContext& render);
     void upload_frame_mesh_data(RenderContext& render);
+    void upload_frame_texture_data(RenderContext& render);
 
     const int RenderTargetWidth = 1440;
     const int RenderTargetHeight = 810;
@@ -54,6 +55,7 @@ namespace bolt
         upload_frame_instance_data(render);
         if (render.doLighting) upload_frame_light_data(render);
         upload_frame_mesh_instance_data(render);
+        upload_frame_texture_data(render);
     }
 
     void render_present(RenderContext& context, SDL_Window* window) {
@@ -224,6 +226,7 @@ namespace bolt
 
         context.frameMeshDraw.discard_data();
         context.frameMeshDrawTex.discard_data();
+        context.frameTexture.discard_data();
         context.instanceData.mark_empty();
 
         for (GraphicsPipeline& pipeline : context.graphics)
@@ -1382,13 +1385,25 @@ namespace bolt
             return false;
         }
 
-        // reference: SDL_image/src/IMG_gpu.c/LoadGPUTexture
         SDL_Surface *surface = IMG_Load(path);
         if (!surface)
         {
             return false;
         }
 
+        if (!upload_gpu_texture(surface, texture))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool RenderContext::upload_gpu_texture(SDL_Surface *surface, Texture& texture)
+    {
+        ASSERT(surface);
+
+        // reference: SDL_image/src/IMG_gpu.c/LoadGPUTexture
         int width = surface->w;
         int height = surface->h;
 
@@ -1617,6 +1632,15 @@ namespace bolt
         SDL_UnmapGPUTransferBuffer(render.device, render.group_transfer_buffer.buffer);
 
         return true;
+    }
+
+    void upload_frame_texture_data(RenderContext& render)
+    {
+        for (auto& upload : render.frameTexture)
+        {
+            render.upload_gpu_texture(upload.src, upload.target);
+            SDL_DestroySurface(upload.src);
+        }
     }
 
     void upload_frame_instance_data(RenderContext& render)
@@ -1913,20 +1937,34 @@ namespace bolt
         return refs;
     }
 
-    bool RenderContext::make_texture_upload(SDL_Surface* surface, TextureUpload* upload)
+    bool RenderContext::make_texture_upload(SDL_Surface* surface, Texture& texture)
     {
         TextureFormat format = SDL_GetGPUTextureFormatFromPixelFormat(surface->format);
+        if (format == SDL_GPU_TEXTUREFORMAT_INVALID)
+        {
+            log_error("Trying to create a texture from a surface with unsupported format");
+            return false;
+        }
+
         if (!SDL_GPUTextureSupportsFormat(device, format, SDL_GPU_TEXTURETYPE_2D, SDL_GPU_TEXTUREUSAGE_SAMPLER))
         {
             log_error("Texture format isn't supported: %s", SDL_GetPixelFormatName(surface->format));
             return false;
         }
-        Texture texture = create_texture(format, surface->w, surface->h);
-        TextureUpload data = {};
-        data.target = texture;
-        data.src = surface;
 
-        *upload = data;
+        texture = create_texture(format, surface->w, surface->h);
+        if (!texture.is_valid())
+        {
+            log_error("Couldn't create texture to upload");
+            return false;
+        }
+
+        TextureUpload upload;
+        upload.target = texture;
+        upload.src = surface;
+
+        frameTexture.add(upload);
+
         return true;
     }
 
@@ -1952,10 +1990,10 @@ namespace bolt
             return TEXTURE_INVALID;
         }
         GPUTexture texture = GPUTexture(sdl_texture, format, width, height);
-        return textures.add(texture);
+        return Texture(textures.add(texture), mip_levels);
     }
 
-    void RenderContext::destroy_texture(Texture handle)
+    void RenderContext::destroy_texture(Texture& handle)
     {
         if (handle.is_valid())
         {
@@ -1963,6 +2001,8 @@ namespace bolt
             SDL_ReleaseGPUTexture(device, texture.texture);
             textures.remove(handle.index);
         }
+
+        handle = TEXTURE_INVALID;
     }
 
     GPUTexture& RenderContext::get_texture(Texture handle)
@@ -2346,18 +2386,36 @@ namespace bolt
         SDL_Color sdl_color = { color.r, color.g, color.b, color.a };
         SDL_Surface* surface = TTF_RenderText_Solid(font.font, text.data, text.size, sdl_color);
 
-        if (!surface) {
-            return Texture();
+        if (!surface)
+        {
+            log_error("Couldn't render text %s", SDL_GetError());
+            return TEXTURE_INVALID;
         }
 
-        // @todo
-        // create gpu texture
-        // calculate text width and height
-        SDL_GPUTexture* texture = nullptr;
+        {
+            SDL_PixelFormat pixel_format =  SDL_GetPixelFormatFromGPUTextureFormat(RenderFormat);
 
-    	SDL_DestroySurface(surface);
+            // ttf creates surfaces in an 8 bit indexed format
+            // we need a format we can use for a gpu texture
+            ASSERT(surface->format == SDL_PIXELFORMAT_INDEX8);
+            SDL_Surface *converted = SDL_ConvertSurface(surface, pixel_format);
+            if (!converted)
+            {
+                log_error("Couldn't convert rendered text to the format we want");
+                return TEXTURE_INVALID;
+            }
 
-        return TEXTURE_INVALID;
+            SDL_DestroySurface(surface);
+            surface = converted;
+        }
+
+        Texture texture = {};
+        if (!render.make_texture_upload(surface, texture))
+        {
+            return TEXTURE_INVALID;
+        }
+
+        return texture;
     }
 
     Text create_text(RenderContext& render, String text, Font font, bolt::Color color)

@@ -12,13 +12,13 @@ namespace bolt {
         u32 mip_levels = 0;
 
         Texture() {}
-        Texture(u32 idx)
-            : index(idx)
+        Texture(u32 idx, u32 ml)
+            : index(idx), mip_levels(ml)
         {}
 
         bool is_valid()
         {
-            return index != -1;
+            return (index != -1) && (mip_levels != 0);
         }
     };
 
@@ -39,7 +39,7 @@ namespace bolt {
     using BufferHandle = u32;
     using GraphicsPipelineId = u32;
 
-    #define TEXTURE_INVALID             Texture(-1)
+    #define TEXTURE_INVALID             Texture(-1, 0)
     #define DRAW_GROUPID_INVALID        DrawGroupId(-1, -1)
     #define GRAPHICS_PIPELINE_INVALID   u32(-1)
 

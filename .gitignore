@@ -9,6 +9,8 @@ tmp/
 *.pch
 *.gch
 __pycache__
+*.sublime-project
+*.sublime-workspace
 
 run_tree/lib
 run_tree/melv

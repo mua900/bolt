@@ -337,9 +337,8 @@ namespace bolt
 
     struct TextureUpload
     {
-        Texture target = 0;
+        Texture target = {};
         SDL_Surface *src = nullptr;
-        bool done = false;
     };
 
     enum GPUBufferUsage : u32 {
@@ -476,6 +475,8 @@ namespace bolt
         DArray<MeshDraw> frameMeshDraw = {};
         DArray<MeshDraw> frameMeshDrawTex = {};
 
+        DArray<TextureUpload> frameTexture = {};
+
         LinearBuffer<InstanceData> instanceData = {};
         u32 next_offset = 0; // the offset after the allocated space for draw groups
 
@@ -497,11 +498,13 @@ namespace bolt
             return device && render_target;
         }
 
-        bool make_texture_upload(SDL_Surface* surface, TextureUpload* upload);
+        bool make_texture_upload(SDL_Surface* surface, Texture& texture);
         Texture create_texture(TextureFormat format, u32 width, u32 height);
         Texture create_texture_verbose(TextureFormat format, TextureUsage usage, u32 width, u32 height, int mip_levels, SampleCount sampleCount);
-        void destroy_texture(Texture handle);
+        // releases the texture and writes null to handle
+        void destroy_texture(Texture& handle);
         bool load_gpu_texture(const char* path, Texture& texture);
+        bool upload_gpu_texture(SDL_Surface *surface, Texture& texture);
 
         GPUTexture& get_texture(Texture handle);
 
@@ -658,7 +661,9 @@ namespace bolt
     bool create_default_shaders(SDL_GPUDevice* device, DefaultShaders* shaders);
     void destroy_default_shaders(SDL_GPUDevice* device, DefaultShaders* shaders);
 
+    // render text to a texture and return it
     Texture render_text(RenderContext& render, String text, Font font, bolt::Color color);
+    // create a text object containing the texture string etc.
     Text create_text(RenderContext& render, String text, Font font, bolt::Color color);
 
     // convenience

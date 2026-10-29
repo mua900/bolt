@@ -20,6 +20,9 @@ struct State
 	DrawGroupId group_solid = {};
 	DrawGroupId group_tex = {};
 	DrawGroupId group_lines = {};
+	DrawGroupId group_text = {};
+
+	Text text = {};
 
 	SpriteAnimation animation = {};
 
@@ -49,6 +52,15 @@ bool initialize(void *userdata, Application *app)
 	}
 
 	AssetId texId = get_asset(String("TestImg"), app->catalog);
+	AssetId fontId = get_asset(String("TestFont"), app->catalog);
+
+	if (!(texId.is_valid() && fontId.is_valid()))
+	{
+		return false;
+	}
+
+	app->font = fontId;
+	Text text = create_text(app->render, String("Hello"), app->catalog.get_font(app->font), bolt::Color(0x33, 0x44, 0x33));
 
 	Texture texture = app->catalog.get_image(texId);
 
@@ -57,7 +69,8 @@ bool initialize(void *userdata, Application *app)
 	bolt::DrawGroupId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024);
 	bolt::DrawGroupId id_solid = app->render.make_draw_group(app->render.graphics_instance, TEXTURE_INVALID, 1024);
 	bolt::DrawGroupId id_lines = app->render.make_draw_group(app->render.graphics_lines, TEXTURE_INVALID, 1024);
-	if (!(id.is_valid() && id_solid.is_valid() && id_lines.is_valid()))
+	bolt::DrawGroupId id_text = app->render.make_draw_group(app->render.graphics_instance_texture, text.texture, 16);
+	if (!(id.is_valid() && id_solid.is_valid() && id_lines.is_valid() && id_text.is_valid()))
 	{
 		return false;
 	}
@@ -191,6 +204,8 @@ bool initialize(void *userdata, Application *app)
 	state->group_tex = id;
 	state->group_solid = id_solid;
 	state->group_lines = id_lines;
+	state->group_text = id_text;
+	state->text = text;
 
 	app->render.end_copy_pass();
 	app->render.submit_command_buffer();
@@ -250,12 +265,14 @@ void draw(void *userdata, Application *app)
 	bolt::queue_draw_group(app->render, q, state->group_tex);
 	q.color = 0xffffffff;
 
+	/*
 	for (int i = 0; i < NUM_RANDOM; i++)
 	{
 		q.x = state->position[i].x;
 		q.y = state->position[i].y;
 		bolt::queue_draw_group(app->render, q, state->group_tex);
 	}
+	*/
 
 	bolt::InstanceData solid = bolt::InstanceData {
 		0,
@@ -281,6 +298,11 @@ void draw(void *userdata, Application *app)
 		0, 0, 0, 0, bolt::pack_scale(bolt::vec2(200, 200)), bolt::colorToHex(bolt::Colorf(0.5, 0.5, 0.5))
 	};
 	bolt::queue_draw_group(app->render, line, state->group_lines);
+
+	bolt::InstanceData text = {
+		-200, 0, 0.5, 0, bolt::pack_scale(bolt::vec2(128, 128)), bolt::colorToHex(bolt::Colorf(1,1,1)), {}, bolt::pack_unorm16x2(bolt::vec2(1,1))
+	};
+	bolt::queue_draw_group(app->render, text, state->group_text);
 }
 
 bool handleEvent(SDL_Event event, void *userdata, Application* app)

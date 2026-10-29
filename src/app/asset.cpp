@@ -52,6 +52,7 @@ namespace bolt
             }
             case ASSET_KIND_FONT:
             {
+                asset.data.font.size = 32;
                 break;
             }
             case ASSET_KIND_SHADER:
