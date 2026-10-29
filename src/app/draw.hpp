@@ -31,7 +31,7 @@ namespace bolt
         bool gpuDebug = false;
     };
 
-    const Colorf ClearColorDefault = Colorf(0.5, 0.6, 0.5);
+    const Colorf ClearColorDefault = Colorf(0.5, 0.6, 0.8);
     const Colorf LightClearColorDefault = Colorf(0, 0, 0);
 
     // change if you want
@@ -649,17 +649,6 @@ namespace bolt
     void queue_draw_mesh(RenderContext& render, MeshDraw& draw);
     // returns false if there is no space left in the group buffer
     bool queue_draw_group(RenderContext& render, InstanceData& data, DrawGroupId groupId);
-
-    using ShaderLoadResult = u32;
-    #define SHADER_LOAD_SUCCESS                 0
-    #define SHADER_LOAD_FAIL                    BIT(0)
-    #define SHADER_LOAD_INCOMPATIBLE_FORMAT     BIT(1)
-
-    ShaderLoadResult loadShader(RenderContext& context, Shader& shader, const char* path);
-    void unloadShader(RenderContext& context, Shader& shader);
-
-    bool create_default_shaders(SDL_GPUDevice* device, DefaultShaders* shaders);
-    void destroy_default_shaders(SDL_GPUDevice* device, DefaultShaders* shaders);
 
     // render text to a texture and return it
     Texture render_text(RenderContext& render, String text, Font font, bolt::Color color);

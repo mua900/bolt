@@ -36,8 +36,7 @@ bool initialize(void *userdata, Application *app)
 	srand(time(0));
 
 	State* state = (State*) userdata;
-	app->render.clear_color = Colorf(0.5, 0.6, 0.8);
-	//app->render.light_clear_color = Colorf(0.6, 0.4, 0.3);
+	// app->render.clear_color = Colorf(0.5, 0.6, 0.8);
 
 	for (int i = 0; i < NUM_RANDOM; i++)
 	{
