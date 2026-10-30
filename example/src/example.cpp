@@ -31,6 +31,9 @@ struct State
 	vec2 position[NUM_RANDOM];
 };
 
+bolt::Color textColor = bolt::Color(0x33, 0x44, 0x33);
+const char* textTest = "Hello";
+
 bool initialize(void *userdata, Application *app)
 {
 	srand(time(0));
@@ -59,7 +62,7 @@ bool initialize(void *userdata, Application *app)
 	}
 
 	app->font = fontId;
-	Text text = create_text(app->render, String("Hello"), app->catalog.get_font(app->font), bolt::Color(0x33, 0x44, 0x33));
+	Text text = create_text(app->render, String(textTest), app->catalog.get_font(app->font), textColor);
 
 	Texture texture = app->catalog.get_image(texId);
 
@@ -299,13 +302,15 @@ void draw(void *userdata, Application *app)
 	bolt::queue_draw_group(app->render, line, state->group_lines);
 
 	bolt::InstanceData text = {
-		-200, 0, 0.5, 0, bolt::pack_scale(bolt::vec2(128, 128)), bolt::colorToHex(bolt::Colorf(1,1,1)), {}, bolt::pack_unorm16x2(bolt::vec2(1,1))
+		-200, 0, 0.5, 0, bolt::pack_scale(bolt::vec2(128, 96)), bolt::colorToHex(bolt::Colorf(1,1,1)), {}, bolt::pack_unorm16x2(bolt::vec2(1,1))
 	};
 	bolt::queue_draw_group(app->render, text, state->group_text);
 }
 
 bool handleEvent(SDL_Event event, void *userdata, Application* app)
 {
+	State* state = (State*)userdata;
+
 	if (event.type == SDL_EVENT_KEY_DOWN)
 	{
 		switch (event.key.scancode)
@@ -323,6 +328,22 @@ bool handleEvent(SDL_Event event, void *userdata, Application* app)
 			case SDL_SCANCODE_Q:
 			{
 				app->active_camera.zoom += 0.1;
+				return true;
+			}
+			case SDL_SCANCODE_S:
+			{
+				static int active = 0;
+				const char *text[] = {
+					"Hey","Kavun","Karpuz","Kiraz"
+				};
+				int size = ARRAY_SIZE(text);
+				if (!update_text(app->render, state->text.texture, String(text[active]), app->catalog.get_font(app->font), textColor))
+				{
+					log_error("Couldn't update text");
+				}
+
+				active += 1;
+				active %= size;
 				return true;
 			}
 		}
@@ -349,9 +370,6 @@ void handleInput(void* userdata, Application* app)
 
 	if ((vec2(100, 100) - mouse_pos).magnitude() < 100)
 	{
-		// app->render.clear_color.r += 0.01;
-		// app->render.clear_color.r = fmodf(app->render.clear_color.r, 0.8f);
-
 		app->active_camera.position.x += 0.8 * app->active_camera.zoom;
 		app->active_camera.zoom += 0.02;
 		if (app->active_camera.zoom > 2)

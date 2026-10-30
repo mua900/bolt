@@ -89,8 +89,6 @@ namespace bolt
                 return false;
             }
 
-            float scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
-
             // minimum aspect ratio of 1 and maximum aspect ratio of 2 default 1.6
             SDL_SetWindowAspectRatio(w, 1.0, 2.0);
 

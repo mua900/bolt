@@ -23,6 +23,7 @@ namespace bolt
     // directional lights, area lights
     // maybe have an option to have an additional render pass for ui and text since you may not want them to be effected by lighting or blend with other geometry
     // maybe have multiple command buffers for upload and render commands see: SDL_AcquireGPUCommandBuffer
+    // option for dynamicly resizing render target
 
     struct RenderContext;
 
@@ -324,16 +325,16 @@ namespace bolt
     struct GPUTexture
     {
         SDL_GPUTexture* texture = nullptr;
+        TextureFormat format = {};
         u32 width = 0;
         u32 height = 0;
-
-        TextureFormat format = {};
+        int mip_levels = 0;
         u32 sampler = 0; // @todo unused
 
         GPUTexture() {}
-        GPUTexture(SDL_GPUTexture *tex, TextureFormat fm, u32 w, u32 h)
+        GPUTexture(SDL_GPUTexture *tex, TextureFormat fm, u32 w, u32 h, int mip)
             :
-            texture(tex), format(fm), width(w), height(h)
+            texture(tex), format(fm), width(w), height(h), mip_levels(mip)
         {}
     };
 
@@ -500,9 +501,16 @@ namespace bolt
             return device && render_target;
         }
 
-        bool make_texture_upload(SDL_Surface* surface, Texture& texture);
+        bool create_texture_from_surface(SDL_Surface *surface, Texture& texture);
+        bool upload_surface_to_texture(SDL_Surface* surface, Texture& texture);
         Texture create_texture(TextureFormat format, u32 width, u32 height);
         Texture create_texture_verbose(TextureFormat format, TextureUsage usage, u32 width, u32 height, int mip_levels, SampleCount sampleCount);
+
+        GPUTexture make_texture(TextureFormat format, u32 width, u32 height);
+        GPUTexture make_texture_verbose(TextureFormat format, TextureUsage usage, u32 width, u32 height, int mip_levels, SampleCount sampleCount);
+        Texture add_texture(GPUTexture& tex);
+        Texture replace_texture(GPUTexture& tex, Texture old);
+
         // releases the texture and writes null to handle
         void destroy_texture(Texture& handle);
         bool load_gpu_texture(const char* path, Texture& texture);
@@ -654,6 +662,8 @@ namespace bolt
 
     // render text to a texture and return it
     Texture render_text(RenderContext& render, String text, Font font, bolt::Color color);
+    // update the text string
+    bool update_text(RenderContext& render, Texture& texture, String text, Font font, bolt::Color color);
     // create a text object containing the texture string etc.
     Text create_text(RenderContext& render, String text, Font font, bolt::Color color);
 

@@ -1481,6 +1481,7 @@ namespace bolt
             if (!render.upload_gpu_texture(upload.src, upload.target))
             {
                 log_error("Couldn't upload texture");
+                render.destroy_texture(upload.target);  // @todo how does the user know this?
             }
             SDL_DestroySurface(upload.src);
         }
@@ -1780,7 +1781,7 @@ namespace bolt
         return refs;
     }
 
-    bool RenderContext::make_texture_upload(SDL_Surface* surface, Texture& texture)
+    bool RenderContext::create_texture_from_surface(SDL_Surface* surface, Texture& texture)
     {
         TextureFormat format = SDL_GetGPUTextureFormatFromPixelFormat(surface->format);
         if (format == SDL_GPU_TEXTUREFORMAT_INVALID)
@@ -1802,6 +1803,30 @@ namespace bolt
             return false;
         }
 
+        return upload_surface_to_texture(surface, texture);
+    }
+
+    bool RenderContext::upload_surface_to_texture(SDL_Surface* surface, Texture& texture)
+    {
+        // panic on an invalid handle
+        GPUTexture& tex = get_texture(texture);
+
+        if (tex.width != surface->w || tex.height != surface->h)
+        {
+            GPUTexture replace = make_texture(tex.format, surface->w, surface->h);
+            if (!replace.texture)
+            {
+                SDL_DestroySurface(surface);
+                return false;
+            }
+
+            // it is important that we don't change the index of the handle
+            // since we don't want to invalidate all the references in data structures refering to this texture
+            Texture replace_handle = replace_texture(replace, texture);
+            ASSERT(replace_handle.index == texture.index);
+            texture = replace_handle;
+        }
+
         TextureUpload upload;
         upload.target = texture;
         upload.src = surface;
@@ -1818,6 +1843,17 @@ namespace bolt
 
     Texture RenderContext::create_texture_verbose(TextureFormat format, TextureUsage usage, u32 width, u32 height, int mip_levels, SampleCount sampleCount)
     {
+        GPUTexture tex = make_texture_verbose(format, usage, width, height, mip_levels, sampleCount);
+        return add_texture(tex);
+    }
+
+    GPUTexture RenderContext::make_texture(TextureFormat format, u32 width, u32 height)
+    {
+        return make_texture_verbose(format, TextureUsageSampler, width, height, 1, SampleCount1);
+    }
+
+    GPUTexture RenderContext::make_texture_verbose(TextureFormat format, TextureUsage usage, u32 width, u32 height, int mip_levels, SampleCount sampleCount)
+    {
         SDL_GPUTextureCreateInfo ci = {};
         ci.type = SDL_GPU_TEXTURETYPE_2D;  // @hardcode
         ci.format = SDL_GPUTextureFormat(format);
@@ -1830,10 +1866,21 @@ namespace bolt
         SDL_GPUTexture* sdl_texture = SDL_CreateGPUTexture(device, &ci);
         if (!sdl_texture)
         {
-            return TEXTURE_INVALID;
+            // texture is null
+            return GPUTexture();
         }
-        GPUTexture texture = GPUTexture(sdl_texture, format, width, height);
-        return Texture(textures.add(texture), mip_levels);
+        return GPUTexture(sdl_texture, format, width, height, mip_levels);
+    }
+
+    Texture RenderContext::add_texture(GPUTexture& tex)
+    {
+        return Texture(textures.add(tex), tex.mip_levels);
+    }
+
+    Texture RenderContext::replace_texture(GPUTexture& tex, Texture old)
+    {
+        SDL_ReleaseGPUTexture(device, textures.get(old.index).texture);
+        return Texture(textures.replace(old.index, tex), tex.mip_levels);
     }
 
     void RenderContext::destroy_texture(Texture& handle)
@@ -2225,38 +2272,69 @@ namespace bolt
         SDL_SetGPUViewport(frame.render_pass, &viewport);
     }
 
-    Texture render_text(RenderContext& render, String text, Font font, bolt::Color color) {
+
+    SDL_Surface *convert_surface_to_render_format(SDL_Surface *surface)
+    {
+        SDL_PixelFormat pixel_format = SDL_GetPixelFormatFromGPUTextureFormat(RenderFormat);
+
+        // ttf creates surfaces in an 8 bit indexed format
+        // we need a format we can use for a gpu texture
+        ASSERT(surface->format == SDL_PIXELFORMAT_INDEX8);
+
+        SDL_Surface *converted = SDL_ConvertSurface(surface, pixel_format);
+        SDL_DestroySurface(surface);
+
+        if (!converted)
+        {
+            log_error("Couldn't convert rendered text to render pixel format: %s", SDL_GetError());
+        }
+
+        return converted;
+    }
+
+    SDL_Surface *render_text_surface_solid(String text, Font font, Color color)
+    {
         SDL_Color sdl_color = { color.r, color.g, color.b, color.a };
-        SDL_Surface* surface = TTF_RenderText_Solid(font.font, text.data, text.size, sdl_color);
+        SDL_Surface *surface = TTF_RenderText_Solid(font.font, text.data, text.size, sdl_color);
 
         if (!surface)
         {
             log_error("Couldn't render text %s", SDL_GetError());
-            SDL_DestroySurface(surface);
-            return TEXTURE_INVALID;
         }
 
+        return convert_surface_to_render_format(surface);
+    }
+
+    SDL_Surface *render_text_surface_blended(String text, Font font, Color color)
+    {
+        SDL_Color sdl_color = { color.r, color.g, color.b, color.a };
+        SDL_Surface *surface = TTF_RenderText_Blended(font.font, text.data, text.size, sdl_color);
+        // do we need to convert?
+        log_info("Rendered text in format: %s", SDL_GetPixelFormatName(surface->format));
+        return surface;
+    }
+
+    SDL_Surface *render_text_surface(String text, Font font, Color color) {
+        return render_text_surface_solid(text, font, color);
+    }
+
+    bool update_text(RenderContext& render, Texture& texture, String text, Font font, bolt::Color color)
+    {
+        SDL_Surface *surface = render_text_surface(text, font, color);
+        if (!surface)
         {
-            SDL_PixelFormat pixel_format =  SDL_GetPixelFormatFromGPUTextureFormat(RenderFormat);
-
-            // ttf creates surfaces in an 8 bit indexed format
-            // we need a format we can use for a gpu texture
-            ASSERT(surface->format == SDL_PIXELFORMAT_INDEX8);
-            SDL_Surface *converted = SDL_ConvertSurface(surface, pixel_format);
-            if (!converted)
-            {
-                log_error("Couldn't convert rendered text to the format we want %s", SDL_GetError());
-                return TEXTURE_INVALID;
-            }
-
-            SDL_DestroySurface(surface);
-            surface = converted;
+            return false;
         }
 
+        return render.upload_surface_to_texture(surface, texture);
+    }
+
+    Texture render_text(RenderContext& render, String text, Font font, bolt::Color color) {
+        SDL_Surface *surface = render_text_surface(text, font, color);
+        if (!surface) return TEXTURE_INVALID;
         Texture texture = {};
-        if (!render.make_texture_upload(surface, texture))
+        if (!render.create_texture_from_surface(surface, texture))
         {
-            SDL_DestroySurface(surface);
             return TEXTURE_INVALID;
         }
 

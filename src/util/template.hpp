@@ -225,6 +225,24 @@ namespace bolt
 			return new_bucket_index * BUCKET_SIZE + 0;
 		}
 
+		int replace(int elem_index, T& elem)
+		{
+			int bucket_index = elem_index / BUCKET_SIZE;
+			int index = elem_index % BUCKET_SIZE;
+			if (!(buckets[bucket_index].occupied_flags & BIT(index))) panic("Trying to replace an empty slot in bucket list");
+			return put(elem_index, elem);
+		}
+
+		int put(int elem_index, T& elem)
+		{
+			int bucket_index = elem_index / BUCKET_SIZE;
+			int index = elem_index % BUCKET_SIZE;
+
+			if (!in_bounds(elem_index)) panic("Out of bounds bucket list replace");
+			buckets[bucket_index].elements[index] = elem;
+			return elem_index;
+		}
+
 		void remove(int elem_index)
 		{
 			int bucket_index = elem_index / BUCKET_SIZE;
@@ -249,7 +267,7 @@ namespace bolt
 			int bucket_index = elem_index / BUCKET_SIZE;
 			int index = elem_index % BUCKET_SIZE;
 
-			if (!in_bounds(elem_index)) panic("Out of bounds array access");
+			if (!in_bounds(elem_index)) panic("Out of bounds bucket list access");
 			if (!(buckets[bucket_index].occupied_flags & BIT(index)))
 			{
 				panic("Accessing an empty slot in bucket list");
