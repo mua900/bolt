@@ -57,7 +57,16 @@ namespace bolt
 
         render.frameMeshDraw.discard_data();
         render.frameMeshDrawTex.discard_data();
+
+        for (auto& upload : render.frameTexture)
+        {
+            if (upload.src)
+            {
+                SDL_DestroySurface(upload.src);
+            }
+        }
         render.frameTexture.discard_data();
+
         render.instanceData.mark_empty();
 
         for (GraphicsPipeline& pipeline : render.graphics)
@@ -1267,10 +1276,12 @@ namespace bolt
     {
         ASSERT(surface);
 
-        int width = surface->w;
-        int height = surface->h;
-
         GPUTexture& tex = textures.get(texture.index);
+
+        // if we upload to the same texture multiple times in a frame
+        // and the second texture is smaller than the first one it leads to a bug.
+        int width = min(surface->w, tex.width);
+        int height = min(surface->h, tex.height);
 
         SDL_GPUTransferBufferCreateInfo transferInfo = {};
         transferInfo.size = width * height * 4; // @Hardcode depends on RenderFormat
@@ -1279,7 +1290,6 @@ namespace bolt
         if (!transfer)
         {
             log_error("Couldn't create a transfer buffer to upload a texture: %s", SDL_GetError());
-            SDL_ReleaseGPUTexture(device, tex.texture);  // @lifetime is this our responsibility?
             return false;
         }
 
@@ -1287,7 +1297,6 @@ namespace bolt
         if (!dst)
         {
             log_error("Couldn't map a transfer buffer to upload a texture: %s", SDL_GetError());
-            SDL_ReleaseGPUTexture(device, tex.texture);
             SDL_ReleaseGPUTransferBuffer(device, transfer);
             return false;
         }
@@ -1484,6 +1493,7 @@ namespace bolt
                 render.destroy_texture(upload.target);  // @todo how does the user know this?
             }
             SDL_DestroySurface(upload.src);
+            upload.src = nullptr;
         }
     }
 
@@ -1827,11 +1837,32 @@ namespace bolt
             texture = replace_handle;
         }
 
+        int index = 0;
+        bool repeat = false;
+        for (int i = 0; i < frameTexture.size(); i++)
+        {
+            TextureUpload& upload = frameTexture[i];
+            if (upload.target.index == texture.index)
+            {
+                SDL_DestroySurface(upload.src);
+                index = i;
+                repeat = true;
+                break; // i guess we trust that there aren't any more duplicates
+            }
+        }
+
         TextureUpload upload;
         upload.target = texture;
         upload.src = surface;
 
-        frameTexture.add(upload);
+        if (repeat)
+        {
+            frameTexture[index] = upload;
+        }
+        else
+        {
+            frameTexture.add(upload);
+        }
 
         return true;
     }

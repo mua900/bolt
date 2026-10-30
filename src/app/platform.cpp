@@ -1,6 +1,6 @@
 #include "platform.hpp"
 
-// @todo separate these into separate source files
+// @todo separate these into separate source files when they actually accumulate some code
 
 #if SDL_PLATFORM_WINDOWS
     #pragma comment(lib, "dxgi.lib")

@@ -346,6 +346,27 @@ bool handleEvent(SDL_Event event, void *userdata, Application* app)
 				active %= size;
 				return true;
 			}
+			case SDL_SCANCODE_H:
+			{
+				// @test
+				// repeat update_text
+				if (!update_text(app->render, state->text.texture, String("YYYYYYYYYYYYZZZZ"), app->catalog.get_font(app->font), textColor))
+				{
+					log_error("Couldn't update text");
+				}
+
+				if (!update_text(app->render, state->text.texture, String("XXXXXXXXXX"), app->catalog.get_font(app->font), textColor))
+				{
+					log_error("Couldn't update text");
+				}
+
+				if (!update_text(app->render, state->text.texture, String("CCC"), app->catalog.get_font(app->font), textColor))
+				{
+					log_error("Couldn't update text");
+				}
+
+				return true;
+			}
 		}
 	}
 	else if (event.type == SDL_EVENT_MOUSE_WHEEL)

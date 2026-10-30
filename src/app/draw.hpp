@@ -663,6 +663,7 @@ namespace bolt
     // render text to a texture and return it
     Texture render_text(RenderContext& render, String text, Font font, bolt::Color color);
     // update the text string
+    // @todo check how it behaves if called more than once in the same frame
     bool update_text(RenderContext& render, Texture& texture, String text, Font font, bolt::Color color);
     // create a text object containing the texture string etc.
     Text create_text(RenderContext& render, String text, Font font, bolt::Color color);

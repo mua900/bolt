@@ -34,6 +34,7 @@ struct VideoMemoryInfo
 bool init_platform_context(PlatformContext* platform);
 void cleanup_platform_context(PlatformContext* platform);
 
+// noop on linux and mac
 void get_process_video_memory_info(PlatformContext* platform, VideoMemoryInfo* info);
 
 #endif // PLATFORM_HPP
