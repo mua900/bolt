@@ -12,11 +12,22 @@ namespace bolt
 
     // @todo groups
 
+    // @todo
+    // some builtin dsp effects
+    // and a way for the user to set their own callbacks
+
     // a track which can be set to play different audio sources one at a time
     using TrackId = u32;
     constexpr TrackId NullTrackId = -1;
 
     constexpr int PlayRepeatInfinite = -1;
+
+    enum AudioChannelId
+    {
+        ChannelSilence = -1,
+        ChannelLeft = 0,
+        ChannelRight = 1,
+    };
 
     // this is a wrapper around SDL mixer
     struct AudioPlayer {
@@ -31,6 +42,13 @@ namespace bolt
         void destroy_track(TrackId& track);
         void tag_track(TrackId track, const char* tag);
         int get_track_count() const { return tracks.count(); }
+
+        // route left and right channels in the track to different channels in the mix output
+        // set_track_channel_map(track, ChannelLeft, ChannelRight) should reset it to default
+        bool set_track_channel_map(TrackId track, AudioChannelId left, AudioChannelId right);
+        // see: MIX_SetTrackOutputChannelMap
+        // set_track_channel_map_raw(track, null, 0) should reset it
+        bool set_track_channel_map_raw(TrackId track, int *chmap, int count);
 
         // frequency ratio is basically playback speed
 

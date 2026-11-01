@@ -106,6 +106,17 @@ namespace bolt
         MIX_SetTrackFrequencyRatio(t, ratio);
     }
 
+    bool AudioPlayer::set_track_channel_map(TrackId track, AudioChannelId left, AudioChannelId right)
+    {
+        int chmap[2] = { (int)left, (int)right };
+        return MIX_SetTrackOutputChannelMap(tracks.get(track), chmap, 2);
+    }
+
+    bool AudioPlayer::set_track_channel_map_raw(TrackId track, int *chmap, int count)
+    {
+        return MIX_SetTrackOutputChannelMap(tracks.get(track), chmap, count);
+    }
+
     bool AudioPlayer::is_track_playing(TrackId track)
     {
         MIX_Track *t = tracks.get(track);

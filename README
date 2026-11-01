@@ -1,4 +1,4 @@
-This is a multimedia utility library that uses SDL3.
+This is a game library that uses SDL3.
 The source code is under src/ folder.
 src/app contains application development related code.
 src/util contains generic utilities and data structures.
@@ -6,3 +6,25 @@ src/bundle contains bundled data in C headers like default shaders.
 
 There is a simple example program in example/.
 It uses cmake to build.
+
+A basic feature set:
+- application lifecycle
+- 2d rendering meshes and instanced shapes like quads or circles or user defined
+- basic 2d lighting
+- audio playback and mixing through sdl mixer
+- text rendering with sdl ttf
+- basic sprite animation
+- asset management
+- 2d cameras
+- a collection of custom ui widgets that integrate with application
+- input utilities and abstraction on top of SDL
+- action sets on top of input
+- misc. utilities
+
+planned but not implemented:
+- physics
+- networking utilities
+- better serialization utilities
+- a more flexible rendering api that lets you make your own pipelines and provide your own shaders (you can sort of do custom shaders in the current version but it's not convenient)
+- better platform support for targets like android and web via webassembly
+- a base on which each project can easily build their own development tools like various editors (the style and implementation is fixed and the project can build their own tools using that for developer tools)
