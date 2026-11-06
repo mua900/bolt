@@ -296,6 +296,11 @@ namespace bolt
 			int index = elem_index % BUCKET_SIZE;
 
 			if (!in_bounds(elem_index)) panic("Out of bounds array access");
+			if (!(buckets[bucket_index].occupied_flags & BIT(index)))
+			{
+				return nullptr;
+			}
+			
 			return &buckets[bucket_index].elements[index];
 		}
 
