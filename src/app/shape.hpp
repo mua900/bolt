@@ -52,10 +52,10 @@ namespace bolt
             vec2 topLeft = get_top_left();
             vec2 relative = position - topLeft;
 
-            bool left = std::fabsf(relative.x) < d;
-            bool right = std::fabsf(relative.x - w) < d;
-            bool down = std::fabsf(relative.y) < d;
-            bool up = std::fabsf(relative.y - h) < d;
+            bool left = std::fabs(relative.x) < d;
+            bool right = std::fabs(relative.x - w) < d;
+            bool down = std::fabs(relative.y) < d;
+            bool up = std::fabs(relative.y - h) < d;
 
             bool horizontal = topLeft.x - d <= position.x && topLeft.x + w + d >= position.x;
             bool vertical = topLeft.y - d <= position.y && topLeft.y + h + d >= position.y;

@@ -51,7 +51,7 @@ namespace bolt {
             value = -value;
         }
 
-        if (std::fabsf(value) < epsilon)
+        if (std::fabs(value) < epsilon)
         {
             return 0;
         }

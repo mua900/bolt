@@ -241,7 +241,7 @@ namespace bolt {
 			}
 			case AnalogInputIgnoreThreshold:
 			{
-				if (std::fabsf(v) < threshold) break;
+				if (std::fabs(v) < threshold) break;
 				return true;
 			}
 		}

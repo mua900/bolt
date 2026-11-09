@@ -247,7 +247,7 @@ namespace bolt
 
     mat4x4 perspective_projection_matrix(float fovy, float aspect, float near, float far)
     {
-        float top = near * std::tanf(fovy/2);
+        float top = near * std::tan(fovy/2);
         float bottom = -top;
         float right = top * aspect;
         float left = -right;

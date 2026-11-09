@@ -5,8 +5,8 @@ namespace bolt
 
     RectPoints get_rotated_points(Rectangle rect, float angle)
     {
-        float s = std::sinf(angle);
-        float c = std::cosf(angle);
+        float s = std::sin(angle);
+        float c = std::cos(angle);
         float hw = rect.w / 2;
         float hh = rect.h / 2;
 

@@ -63,8 +63,8 @@ namespace bolt {
         }
 
         vec2 rotated(float angle) const {
-            float s = std::sinf(angle);
-            float c = std::cosf(angle);
+            float s = std::sin(angle);
+            float c = std::cos(angle);
             return vec2(x * c - y * s, x * s + y * c);
         }
 
@@ -322,11 +322,11 @@ namespace bolt {
     // @todo quaternions
 
     inline float normalize_angle_radians_f(float x) {
-        return std::fmodf(x, CONSTANT_TAU);
+        return std::fmod(x, CONSTANT_TAU);
     }
 
     inline float normalize_angle_degrees_f(float x) {
-        return std::fmodf(x, 360.0f);
+        return std::fmod(x, 360.0f);
     }
 
     inline double normalize_angle_radians(double x) {

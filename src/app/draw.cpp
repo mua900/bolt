@@ -2433,8 +2433,8 @@ namespace bolt
 
         // the angle between vertices and it's sin and cos
         const float angle = CONSTANT_TAU / float(N_CIRCLE_VERTICES);
-        const float c = std::cosf(angle);
-        const float s = std::sinf(angle);
+        const float c = std::cos(angle);
+        const float s = std::sin(angle);
 
         float xcomp = 1.0;
         float ycomp = 0.0;
@@ -2516,7 +2516,7 @@ namespace bolt
 
     u16 pack_rotation(float rot)
     {
-        rot = std::fmodf(std::fabsf(rot), CONSTANT_TAU);
+        rot = std::fmod(std::fabs(rot), CONSTANT_TAU);
         u16 x = (u16)((rot / CONSTANT_TAU) * float(0xFFFF));
         return x;
     }
