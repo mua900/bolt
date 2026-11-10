@@ -460,6 +460,8 @@ namespace bolt
         TransferBuffer group_transfer_buffer = {};
         // used for uploading light data
         TransferBuffer light_transfer_buffer = {};
+        // used for uploading texture data
+        TransferBuffer texture_transfer_buffer = {};
 
         FrameContext frame = {};
 

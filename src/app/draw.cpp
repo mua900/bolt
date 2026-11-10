@@ -860,11 +860,14 @@ namespace bolt
         SDL_GPUTransferBufferCreateInfo transferInfo = {};
         transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
         transferInfo.size = InitTransferBufferSize;
+        SDL_GPUTransferBuffer* vertex_transfer_buffer = SDL_CreateGPUTransferBuffer(render->device, &transferInfo);
+        SDL_GPUTransferBuffer* texture_transfer_buffer = SDL_CreateGPUTransferBuffer(render->device, &transferInfo);
         SDL_GPUTransferBuffer* instance_transfer_buffer = SDL_CreateGPUTransferBuffer(render->device, &transferInfo);
         SDL_GPUTransferBuffer* group_transfer_buffer = SDL_CreateGPUTransferBuffer(render->device, &transferInfo);
         SDL_GPUTransferBuffer* light_transfer_buffer = SDL_CreateGPUTransferBuffer(render->device, &transferInfo);
 
-        if (!(instance_transfer_buffer && group_transfer_buffer && light_transfer_buffer))
+        if (!(vertex_transfer_buffer && texture_transfer_buffer && instance_transfer_buffer &&
+              group_transfer_buffer && light_transfer_buffer))
         {
             log_error("Couldn't create transfer buffer");
             return false;
@@ -880,7 +883,7 @@ namespace bolt
         SDL_GPUBuffer* vertex_instance_buffer = SDL_CreateGPUBuffer(render->device, &vertexBufferCI);
         SDL_GPUBuffer* index_instance_buffer = SDL_CreateGPUBuffer(render->device, &indexBufferCI);
         SDL_GPUBuffer* instance_buffer = SDL_CreateGPUBuffer(render->device, &instanceBufferCI);
-        SDL_GPUBuffer *light_buffer = nullptr;
+        SDL_GPUBuffer* light_buffer = nullptr;
         if (conf->doLights)
         {
             light_buffer = SDL_CreateGPUBuffer(render->device, &lightBufferCI);
@@ -1035,6 +1038,8 @@ namespace bolt
         render->depth_target = depth_target;
         render->sampler = sampler;
         render->light_sampler = light_sampler;
+        render->texture_transfer_buffer = { texture_transfer_buffer, transferInfo.size };
+        render->vertex_transfer_buffer = { vertex_transfer_buffer, transferInfo.size };
         render->instance_transfer_buffer = { instance_transfer_buffer, transferInfo.size };
         render->group_transfer_buffer = { group_transfer_buffer, transferInfo.size };
         render->light_transfer_buffer = { light_transfer_buffer, transferInfo.size };
@@ -2331,6 +2336,7 @@ namespace bolt
         if (!surface)
         {
             log_error("Couldn't render text %s", SDL_GetError());
+            return nullptr;
         }
 
         return convert_surface_to_render_format(surface);
@@ -2340,9 +2346,14 @@ namespace bolt
     {
         SDL_Color sdl_color = { color.r, color.g, color.b, color.a };
         SDL_Surface *surface = TTF_RenderText_Blended(font.font, text.data, text.size, sdl_color);
-        // do we need to convert?
-        log_info("Rendered text in format: %s", SDL_GetPixelFormatName(surface->format));
-        return surface;
+
+        if (!surface)
+        {
+            log_error("Couldn't render text %s", SDL_GetError());
+            return nullptr;
+        }
+
+        return convert_surface_to_render_format(surface);
     }
 
     SDL_Surface *render_text_surface(String text, Font font, Color color) {

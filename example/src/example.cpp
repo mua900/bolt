@@ -21,8 +21,10 @@ struct State
 	DrawGroupId group_tex = {};
 	DrawGroupId group_lines = {};
 	DrawGroupId group_text = {};
+	DrawGroupId group_text2 = {};
 
 	Text text = {};
+	Text text2 = {};
 
 	SpriteAnimation animation = {};
 
@@ -33,6 +35,7 @@ struct State
 
 bolt::Color textColor = bolt::Color(0x33, 0x44, 0x33);
 const char* textTest = "Hello";
+const char* textTest2 = "Nomad";
 
 bool initialize(void *userdata, Application *app)
 {
@@ -63,6 +66,7 @@ bool initialize(void *userdata, Application *app)
 
 	app->font = fontId;
 	Text text = create_text(app->render, String(textTest), app->catalog.get_font(app->font), textColor);
+	Text text2 = create_text(app->render, String(textTest2), app->catalog.get_font(app->font), textColor);
 
 	Texture texture = app->catalog.get_image(texId);
 
@@ -71,8 +75,9 @@ bool initialize(void *userdata, Application *app)
 	bolt::DrawGroupId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024);
 	bolt::DrawGroupId id_solid = app->render.make_draw_group(app->render.graphics_instance, TEXTURE_INVALID, 1024);
 	bolt::DrawGroupId id_lines = app->render.make_draw_group(app->render.graphics_lines, TEXTURE_INVALID, 1024);
-	bolt::DrawGroupId id_text = app->render.make_draw_group(app->render.graphics_instance_texture, text.texture, 16);
-	if (!(id.is_valid() && id_solid.is_valid() && id_lines.is_valid() && id_text.is_valid()))
+	bolt::DrawGroupId id_text = app->render.make_draw_group(app->render.graphics_instance_texture, text.texture, 1);
+	bolt::DrawGroupId id_text2 = app->render.make_draw_group(app->render.graphics_instance_texture, text.texture, 1);
+	if (!(id.is_valid() && id_solid.is_valid() && id_lines.is_valid() && id_text.is_valid() && id_text2.is_valid()))
 	{
 		return false;
 	}
@@ -121,7 +126,7 @@ bool initialize(void *userdata, Application *app)
 	meshData[1].vertices.add_array(qv, 4);
 	meshData[1].indices.add_array(qi, 6);
 
-	TransferData memory = add_to_transfer_buffer(app->render, app->render.instance_transfer_buffer, meshData, 2);
+	TransferData memory = add_to_transfer_buffer(app->render, app->render.vertex_transfer_buffer, meshData, 2);
 
 	int vertex_buffer = app->render.allocate_gpu_buffer(GPUBufferVertex, 1024, false);
 	int index_buffer = app->render.allocate_gpu_buffer(GPUBufferIndex, 1024, false);
@@ -207,7 +212,9 @@ bool initialize(void *userdata, Application *app)
 	state->group_solid = id_solid;
 	state->group_lines = id_lines;
 	state->group_text = id_text;
+	state->group_text2 = id_text2;
 	state->text = text;
+	state->text2 = text2;
 
 	app->render.end_copy_pass();
 	app->render.submit_command_buffer();
@@ -305,6 +312,8 @@ void draw(void *userdata, Application *app)
 		-200, 0, 0.5, 0, bolt::pack_scale(bolt::vec2(128, 96)), bolt::colorToHex(bolt::Colorf(1,1,1)), {}, bolt::pack_unorm16x2(bolt::vec2(1,1))
 	};
 	bolt::queue_draw_group(app->render, text, state->group_text);
+	text.x -= 300;
+	bolt::queue_draw_group(app->render, text, state->group_text2);
 }
 
 bool handleEvent(SDL_Event event, void *userdata, Application* app)

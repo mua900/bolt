@@ -46,6 +46,11 @@ namespace bolt
     	int updateRate = 0;
 
         double calculateTimeStep() { return 1.0 / updateRate; }
+
+        float calculateDeltaTime()
+        {
+            return calculateTimeStep() * timeScale;
+        }
     };
 
     // these callbacks won't be called if they are null
