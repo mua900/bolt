@@ -327,7 +327,7 @@ namespace bolt
         }
     }
 
-    DrawGroup& RenderContext::get_draw_group(DrawGroupId id) const
+    DrawGroup& RenderContext::get_draw_group(DrawId id) const
     {
         return graphics.get(id.graphics).groups.get_ref(id.draw);
     }
@@ -1936,7 +1936,7 @@ namespace bolt
         return textures.get(handle.index);
     }
 
-    DrawGroupId RenderContext::make_draw_group(GraphicsPipelineId id, Texture texture, int size)
+    DrawId RenderContext::make_draw_group(GraphicsPipelineId id, Texture texture, int size)
     {
         GraphicsPipeline& pipeline = graphics.get(id);
         DrawGroup group = {};
@@ -1966,7 +1966,7 @@ namespace bolt
 
         u32 groupIndex = pipeline.groups.add(group);
 
-        return DrawGroupId(id, groupIndex);
+        return DrawId(id, groupIndex);
     }
 
     GraphicsPipelineId RenderContext::make_graphics_pipeline(GraphicsPipelineParameters& params, SDL_GPUShader* vertex, SDL_GPUShader* fragment)
@@ -2063,7 +2063,7 @@ namespace bolt
         }
     }
 
-    bool queue_draw_group(RenderContext& render, InstanceData& data, DrawGroupId groupId)
+    bool queue_draw_group(RenderContext& render, InstanceData& data, DrawId groupId)
     {
         DrawGroup& group = render.get_draw_group(groupId);
         queue_draw(render, group, data);
@@ -2086,7 +2086,7 @@ namespace bolt
         return true;
     }
 
-    bool draw(RenderContext& render, Draw& d, DrawGroupId groupId)
+    bool draw(RenderContext& render, Draw& d, DrawId groupId)
     {
         InstanceData data = {};
         data.x = d.position.x;

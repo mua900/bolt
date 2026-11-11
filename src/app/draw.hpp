@@ -538,12 +538,12 @@ namespace bolt
         bool set_vertex_buffer(u32 buffer);
         bool set_index_buffer(u32 buffer);
 
-        DrawGroupId make_draw_group(GraphicsPipelineId id, Texture texture, int size);
+        DrawId make_draw_group(GraphicsPipelineId id, Texture texture, int size);
         GraphicsPipelineId make_graphics_pipeline(GraphicsPipelineParameters& params, SDL_GPUShader* vertex, SDL_GPUShader* fragment); // -1 on fail
 
         MeshId make_mesh(MeshInstanceData& mesh);
 
-        DrawGroup& get_draw_group(DrawGroupId id) const;
+        DrawGroup& get_draw_group(DrawId id) const;
 
         bool upload_common_mesh_data();
 
@@ -660,7 +660,7 @@ namespace bolt
     // user functions
     void queue_draw_mesh(RenderContext& render, MeshDraw& draw);
     // returns false if there is no space left in the group buffer
-    bool queue_draw_group(RenderContext& render, InstanceData& data, DrawGroupId groupId);
+    bool queue_draw_group(RenderContext& render, InstanceData& data, DrawId groupId);
 
     // render text to a texture and return it
     Texture render_text(RenderContext& render, String text, Font font, bolt::Color color);
@@ -671,7 +671,7 @@ namespace bolt
     Text create_text(RenderContext& render, String text, Font font, bolt::Color color);
 
     // convenience
-    bool draw(RenderContext& render, Draw& d, DrawGroupId groupId);
+    bool draw(RenderContext& render, Draw& d, DrawId groupId);
 
     u16 pack_unorm16(float x, float range);
     float unpack_unorm16(u16 x, float range);

@@ -22,13 +22,13 @@ namespace bolt {
         }
     };
 
-    struct DrawGroupId
+    struct DrawId
     {
         u32 graphics = 0;
         u32 draw = 0;
 
-        DrawGroupId() {}
-        DrawGroupId(u16 g, u16 d) : graphics(g), draw(d) {}
+        DrawId() {}
+        DrawId(u16 g, u16 d) : graphics(g), draw(d) {}
 
         bool is_valid() const
         {
@@ -40,7 +40,7 @@ namespace bolt {
     using GraphicsPipelineId = u32;
 
     #define TEXTURE_INVALID             Texture(-1, 0)
-    #define DRAW_GROUPID_INVALID        DrawGroupId(-1, -1)
+    #define DRAW_GROUPID_INVALID        DrawId(-1, -1)
     #define GRAPHICS_PIPELINE_INVALID   u32(-1)
 
     using TextureFormat = SDL_GPUTextureFormat;

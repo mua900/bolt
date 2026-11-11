@@ -17,11 +17,11 @@ struct State
 	DArray<MeshReference> references = {};
 	MeshId mesh = {};
 	Texture texture = {};
-	DrawGroupId group_solid = {};
-	DrawGroupId group_tex = {};
-	DrawGroupId group_lines = {};
-	DrawGroupId group_text = {};
-	DrawGroupId group_text2 = {};
+	DrawId group_solid = {};
+	DrawId group_tex = {};
+	DrawId group_lines = {};
+	DrawId group_text = {};
+	DrawId group_text2 = {};
 
 	Text text = {};
 	Text text2 = {};
@@ -72,11 +72,11 @@ bool initialize(void *userdata, Application *app)
 
 	ASSERT(texture.is_valid());
 
-	bolt::DrawGroupId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024);
-	bolt::DrawGroupId id_solid = app->render.make_draw_group(app->render.graphics_instance, TEXTURE_INVALID, 1024);
-	bolt::DrawGroupId id_lines = app->render.make_draw_group(app->render.graphics_lines, TEXTURE_INVALID, 1024);
-	bolt::DrawGroupId id_text = app->render.make_draw_group(app->render.graphics_instance_texture, text.texture, 1);
-	bolt::DrawGroupId id_text2 = app->render.make_draw_group(app->render.graphics_instance_texture, text2.texture, 1);
+	bolt::DrawId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024);
+	bolt::DrawId id_solid = app->render.make_draw_group(app->render.graphics_instance, TEXTURE_INVALID, 1024);
+	bolt::DrawId id_lines = app->render.make_draw_group(app->render.graphics_lines, TEXTURE_INVALID, 1024);
+	bolt::DrawId id_text = app->render.make_draw_group(app->render.graphics_instance_texture, text.texture, 1);
+	bolt::DrawId id_text2 = app->render.make_draw_group(app->render.graphics_instance_texture, text2.texture, 1);
 	if (!(id.is_valid() && id_solid.is_valid() && id_lines.is_valid() && id_text.is_valid() && id_text2.is_valid()))
 	{
 		return false;
