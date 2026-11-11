@@ -1345,7 +1345,7 @@ namespace bolt
         }
 
         size_t render_texture_size = SDL_CalculateGPUTextureFormatSize(RenderFormat, RenderTargetWidth, RenderTargetHeight, 1);
-        size_t light_texture_size = 0; // SDL_CalculateGPUTextureFormatSize(); // @todo
+        size_t light_texture_size = SDL_CalculateGPUTextureFormatSize(RenderFormat, RenderTargetWidth, RenderTargetHeight, 1);
         size_t depth_texture_size = SDL_CalculateGPUTextureFormatSize(DepthFormat, RenderTargetWidth, RenderTargetHeight, 1);
         sum += render_texture_size;
         sum += light_texture_size;
