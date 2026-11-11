@@ -72,7 +72,7 @@ bool initialize(void *userdata, Application *app)
 
 	ASSERT(texture.is_valid());
 
-	bolt::DrawId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 1024);
+	bolt::DrawId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 4);
 	bolt::DrawId id_solid = app->render.make_draw_group(app->render.graphics_instance, TEXTURE_INVALID, 1024);
 	bolt::DrawId id_lines = app->render.make_draw_group(app->render.graphics_lines, TEXTURE_INVALID, 1024);
 	bolt::DrawId id_text = app->render.make_draw_group(app->render.graphics_instance_texture, text.texture, 1);

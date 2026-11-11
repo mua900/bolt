@@ -188,6 +188,7 @@ namespace bolt
                 0,
                 context.lights.size(),
                 context.lights.size(),
+                0,
                 nullptr,
                 MatrixDontUse
             };
@@ -2066,16 +2067,31 @@ namespace bolt
     bool queue_draw_group(RenderContext& render, InstanceData& data, DrawId groupId)
     {
         DrawGroup& group = render.get_draw_group(groupId);
-        queue_draw(render, group, data);
-
-        return true;
+        if (group.capacity < group.used + 1)
+        {
+            // next can never be the first so never 0
+            if (group.next != 0)
+            {
+                return queue_draw_group(render, data, DrawId(groupId.graphics, group.next));
+            }
+            else
+            {
+                DrawId next = render.make_draw_group(groupId.graphics, group.texture, group.capacity);
+                group.next = next.draw;
+                return queue_draw(render, render.get_draw_group(next), data);
+            }
+        }
+        else
+        {
+            return queue_draw(render, group, data);
+        }
     }
 
     bool queue_draw(RenderContext& render, DrawGroup& group, InstanceData& data)
     {
         if (group.capacity < group.used + 1)
         {
-            return false;
+            panic("Trying to push to a full draw group");
         }
 
         render.instanceData[group.offset + group.used] = data;

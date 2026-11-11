@@ -242,6 +242,7 @@ namespace bolt
         int offset = 0;
         int capacity = 0;
         int used = 0;  // reset every frame
+        u32 next = 0;
 
         mat4x4* matrix = {};
         DrawMatrixUsage matrix_usage = {};
@@ -538,7 +539,7 @@ namespace bolt
         bool set_vertex_buffer(u32 buffer);
         bool set_index_buffer(u32 buffer);
 
-        DrawId make_draw_group(GraphicsPipelineId id, Texture texture, int size);
+        DrawId make_draw_group(GraphicsPipelineId id, Texture texture, int init_size);
         GraphicsPipelineId make_graphics_pipeline(GraphicsPipelineParameters& params, SDL_GPUShader* vertex, SDL_GPUShader* fragment); // -1 on fail
 
         MeshId make_mesh(MeshInstanceData& mesh);
