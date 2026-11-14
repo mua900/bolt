@@ -2,7 +2,7 @@
 # there shouldn't be anything that actually requires a specific version if you aren't using a really old one
 cmake_minimum_required(VERSION 3.31)
 
-project(bolt)
+project(bolt VERSION "1.0.0")
 
 add_library(bolt STATIC
 	src/util/common.hpp
