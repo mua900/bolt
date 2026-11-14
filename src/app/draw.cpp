@@ -2376,7 +2376,7 @@ namespace bolt
         return render_text_surface_solid(text, font, color);
     }
 
-    bool update_text(RenderContext& render, Texture& texture, String text, Font font, bolt::Color color)
+    bool update_text_texture(RenderContext& render, Texture& texture, String text, Font font, bolt::Color color)
     {
         SDL_Surface *surface = render_text_surface(text, font, color);
         if (!surface)

@@ -23,6 +23,8 @@ namespace bolt
         void* ptr;
     };
 
+    struct RenderContext;
+
     struct Text {
         Texture texture = {};
         String string = {};
@@ -65,6 +67,8 @@ namespace bolt
             data.ptr = ptr;
         }
     };
+
+    bool update_text(RenderContext* render, bolt::Text& text, bolt::String new_string, bolt::Font font);
 
 } // namespace
 

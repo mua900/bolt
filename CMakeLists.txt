@@ -32,6 +32,7 @@ add_library(bolt STATIC
 	src/app/ui.hpp
 	src/app/ui.cpp
 	src/app/text.hpp
+	src/app/text.cpp
 	src/app/asset.hpp
 	src/app/asset.cpp
 	src/app/draw.hpp
