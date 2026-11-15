@@ -2,12 +2,22 @@
 
 namespace bolt
 {
-    bool aabb_overlap(Rectangle& r1, Rectangle& r2)
+    Direction aabb_overlap(Rectangle& r1, Rectangle& r2)
     {
-        return  ((r1.x < r2.x && r1.x + r1.w / 2 < r2.x) ||
-                 (r2.x < r1.x && r2.x + r2.w / 2 < r1.x) ||
-                 (r1.y < r2.y && r1.y + r1.h / 2 < r2.y) ||
-                 (r2.y < r1.y && r2.y + r2.h / 2 < r1.y));
+        bool x = r1.x + r1.w / 2 > r2.x - r2.w / 2 && r2.x + r2.w / 2 > r1.x - r1.w / 2;
+        bool y = r1.y + r1.h / 2 > r2.y - r2.h / 2 && r2.y + r2.h / 2 > r1.y - r1.h / 2;
+
+        Direction dir = {};
+        if (x) {
+            int r = (r1.x < r2.x) ? DirWest : DirEast;
+            dir = (Direction) ((int) dir | r);
+        }
+        if (y) {
+            int r = (r1.y < r2.y) ? DirSouth : DirNorth;
+            dir = (Direction) ((int) dir | r);
+        }
+
+        return dir;
     }
 
     bool point_in_rectangle(Rectangle& rect, vec2 p)

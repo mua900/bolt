@@ -505,8 +505,8 @@ namespace bolt
         render->device = device;
         render->render_size = bolt::vec2(render_size_x, render_size_y);
 
-        bolt::mat4x4 orthographic = bolt::orthographic_projection_matrix(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-        bolt::mat4x4 camera = bolt::camera_matrix(bolt::vec2(0, 0), bolt::vec2(1,1));
+        bolt::mat4 orthographic = bolt::orthographic_projection_matrix(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+        bolt::mat4 camera = bolt::camera_matrix(bolt::vec2(0, 0), bolt::vec2(1,1));
         mat4mul(&render->mvp, &orthographic, &camera);
 
         return true;
@@ -1081,7 +1081,7 @@ namespace bolt
         return true;
     }
 
-    void RenderContext::set_mvp(mat4x4* mat, DrawMatrixUsage usage)
+    void RenderContext::set_mvp(mat4* mat, DrawMatrixUsage usage)
     {
         switch (usage)
         {
@@ -1089,41 +1089,41 @@ namespace bolt
             {
                 float half_width = RenderTargetWidth/2;
                 float half_height = RenderTargetHeight/2;
-                bolt::mat4x4 orthographic = bolt::orthographic_projection_matrix(-half_width, half_width,
+                bolt::mat4 orthographic = bolt::orthographic_projection_matrix(-half_width, half_width,
                                                                                  -half_height, half_height,
                                                                                   0, 1);
 
                 vec2 cpos = camera ? camera->position : vec2(0,0);
                 vec2 cscale = camera ? vec2(camera->zoom, camera->zoom) : vec2(1,1);
 
-                bolt::mat4x4 cameraMatrix = bolt::camera_matrix(cpos, cscale);
+                bolt::mat4 cameraMatrix = bolt::camera_matrix(cpos, cscale);
                 mat4mul(&mvp, &orthographic, &cameraMatrix);
 
-                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, &mvp, sizeof(bolt::mat4x4));
+                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, &mvp, sizeof(bolt::mat4));
                 break;
             }
             case MatrixIsModel:
             {
                 float half_width = RenderTargetWidth/2;
                 float half_height = RenderTargetHeight/2;
-                bolt::mat4x4 orthographic = bolt::orthographic_projection_matrix(-half_width, half_width,
+                bolt::mat4 orthographic = bolt::orthographic_projection_matrix(-half_width, half_width,
                                                                                  -half_height, half_height,
                                                                                   0, 1);
 
                 vec2 cpos = camera ? camera->position : vec2(0,0);
                 vec2 cscale = camera ? vec2(camera->zoom, camera->zoom) : vec2(1,1);
 
-                bolt::mat4x4 cameraMatrix = bolt::camera_matrix(cpos, cscale);
+                bolt::mat4 cameraMatrix = bolt::camera_matrix(cpos, cscale);
                 mat4mul(&mvp, &orthographic, &cameraMatrix);
 
                 mat4mul(&mvp, mat, &mvp);
 
-                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, &mvp, sizeof(bolt::mat4x4));
+                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, &mvp, sizeof(bolt::mat4));
                 break;
             }
             case MatrixIsMVP:
             {
-                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, mat, sizeof(bolt::mat4x4));
+                SDL_PushGPUVertexUniformData(frame.command_buffer, 0, mat, sizeof(bolt::mat4));
                 break;
             }
         }

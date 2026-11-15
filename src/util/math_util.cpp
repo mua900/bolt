@@ -128,9 +128,9 @@ namespace bolt
     }
 
 
-    mat4x4 identity_matrix()
+    mat4 identity_matrix()
     {
-        return mat4x4{
+        return mat4{
             1, 0, 0, 0,
             0, 1, 0, 0,
             0, 0, 1, 0,
@@ -138,7 +138,7 @@ namespace bolt
         };
     }
 
-    vec3 mat3apply(mat3x3* mat, vec3 v)
+    vec3 mat3apply(mat3* mat, vec3 v)
     {
         return vec3(
             mat->m00 * v.x + mat->m01 * v.y + mat->m02 * v.z,
@@ -147,9 +147,9 @@ namespace bolt
         );
     }
 
-    void mat3mul(mat3x3* dst, mat3x3* left, mat3x3* right)
+    void mat3mul(mat3* dst, mat3* left, mat3* right)
     {
-        mat3x3 result = {
+        mat3 result = {
             left->m00 * right->m00 + left->m01 * right->m10 + left->m02 * right->m20,
             left->m00 * right->m01 + left->m01 * right->m11 + left->m02 * right->m21,
             left->m00 * right->m02 + left->m01 * right->m12 + left->m02 * right->m22,
@@ -166,7 +166,7 @@ namespace bolt
         *dst = result;
     }
 
-    void get_rotation_x(mat3x3* mat, float angle)
+    void get_rotation_x(mat3* mat, float angle)
     {
         *mat = {
             1, 0,               0,
@@ -175,7 +175,7 @@ namespace bolt
         };
     }
 
-    void get_rotation_y(mat3x3* mat, float angle)
+    void get_rotation_y(mat3* mat, float angle)
     {
         *mat = {
             std::cos(angle), 0,-std::sin(angle),
@@ -184,7 +184,7 @@ namespace bolt
         };
     }
 
-    void get_rotation_z(mat3x3* mat, float angle)
+    void get_rotation_z(mat3* mat, float angle)
     {
         *mat = {
             std::cos(angle), std::sin(angle), 0,
@@ -193,9 +193,9 @@ namespace bolt
         };
     }
 
-    void mat4mul(mat4x4* dst, mat4x4* left, mat4x4* right)
+    void mat4mul(mat4* dst, mat4* left, mat4* right)
     {
-        mat4x4 result = {
+        mat4 result = {
             left->m00 * right->m00 + left->m01 * right->m10 + left->m02 * right->m20 + left->m03 * right->m30,
             left->m00 * right->m01 + left->m01 * right->m11 + left->m02 * right->m21 + left->m03 * right->m31,
             left->m00 * right->m02 + left->m01 * right->m12 + left->m02 * right->m22 + left->m03 * right->m32,
@@ -221,9 +221,9 @@ namespace bolt
     }
 
     // https://learnwebgl.brown37.net/08_projections/projections_ortho.html
-    mat4x4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far)
+    mat4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far)
     {
-        return mat4x4 {
+        return mat4 {
             2.0f / (right - left),  0,                      0,                      -(right + left) / (right - left),
             0,                      2.0f / (top - bottom),  0,                      -(top + bottom) / (top - bottom),
             0,                      0,                      1.0f / (far - near),   -near / (far - near),
@@ -232,12 +232,12 @@ namespace bolt
     }
 
     // https://learnwebgl.brown37.net/08_projections/projections_perspective.html
-    mat4x4 frustum_matrix(float left, float right, float bottom, float top, float near, float far)
+    mat4 frustum_matrix(float left, float right, float bottom, float top, float near, float far)
     {
         float diff_x = right - left;
         float diff_y = top - bottom;
         float diff_z = far - near;
-        return mat4x4 {
+        return mat4 {
             (2 * near) / diff_x, 0,                   0,                    -near * (right + left) / diff_x,
             0,                   (2 * near) / diff_y, 0,                    -near * (top + bottom) / diff_y,
             0,                   0,                  -(far + near) / diff_z, (2 * far * near) / (-diff_z),
@@ -245,7 +245,7 @@ namespace bolt
         };
     }
 
-    mat4x4 perspective_projection_matrix(float fovy, float aspect, float near, float far)
+    mat4 perspective_projection_matrix(float fovy, float aspect, float near, float far)
     {
         float top = near * std::tan(fovy/2);
         float bottom = -top;
@@ -256,17 +256,17 @@ namespace bolt
     }
 
 
-    mat4x4 camera_matrix(vec2 position, vec2 scale)
+    mat4 camera_matrix(vec2 position, vec2 scale)
     {
-        mat4x4 result = identity_matrix();
+        mat4 result = identity_matrix();
         mat4_scale(&result, vec3(scale.x, scale.y, 1));
         mat4_translate(&result, vec3(-position.x, -position.y, 0));
         return result;
     }
 
-    mat4x4 mat4_get_translation_matrix(vec3 translation)
+    mat4 mat4_get_translation_matrix(vec3 translation)
     {
-        return mat4x4{
+        return mat4{
             1, 0, 0, translation.x,
             0, 1, 0, translation.y,
             0, 0, 1, translation.z,
@@ -274,9 +274,9 @@ namespace bolt
         };
     }
 
-    mat4x4 mat4_get_scale_matrix(vec3 scale)
+    mat4 mat4_get_scale_matrix(vec3 scale)
     {
-        return mat4x4{
+        return mat4{
             scale.x, 0, 0, 0,
             0, scale.y, 0, 0,
             0, 0, scale.z, 0,
@@ -284,19 +284,19 @@ namespace bolt
         };
     }
 
-    void mat4_translate(mat4x4 *mat, vec3 translation)
+    void mat4_translate(mat4 *mat, vec3 translation)
     {
-        mat4x4 t = mat4_get_translation_matrix(translation);
+        mat4 t = mat4_get_translation_matrix(translation);
         mat4mul(mat, mat, &t);
     }
 
-    void mat4_scale(mat4x4* mat, vec3 scale)
+    void mat4_scale(mat4* mat, vec3 scale)
     {
-        mat4x4 s = mat4_get_scale_matrix(scale);
+        mat4 s = mat4_get_scale_matrix(scale);
         mat4mul(mat, mat, &s);
     }
 
-    void print_mat4(mat4x4* mat)
+    void print_mat4(mat4* mat)
     {
         printf("%f %f %f %f\n", mat->m00, mat->m01, mat->m02, mat->m03);
         printf("%f %f %f %f\n", mat->m10, mat->m11, mat->m12, mat->m13);

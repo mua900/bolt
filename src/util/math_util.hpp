@@ -131,17 +131,17 @@ namespace bolt {
         return vec2(a.x * b.x, a.y * b.y);
     }
 
-    struct mat2x2
+    struct mat2
     {
         float m00 = 0;
         float m01 = 0;
         float m10 = 0;
         float m11 = 0;
 
-        mat2x2()
+        mat2()
         {}
 
-        mat2x2(float x00, float x01, float x10, float x11)
+        mat2(float x00, float x01, float x10, float x11)
             : m00(x00), m01(x01), m10(x10), m11(x11)
         {}
 
@@ -250,18 +250,18 @@ namespace bolt {
         return vec3(a.x * b.x, a.y * b.y, a.z * b.z);
     }
 
-    struct mat3x3 {
+    struct mat3 {
         float m00, m01, m02 = {};
         float m10, m11, m12 = {};
         float m20, m21, m22 = {};
     };
 
-    vec3 mat3apply(mat3x3* mat, vec3 v);
-    void mat3mul(mat3x3* dst, mat3x3* left, mat3x3* right);
+    vec3 mat3apply(mat3* mat, vec3 v);
+    void mat3mul(mat3* dst, mat3* left, mat3* right);
 
-    void get_rotation_x(mat3x3* mat, float angle);
-    void get_rotation_y(mat3x3* mat, float angle);
-    void get_rotation_z(mat3x3* mat, float angle);
+    void get_rotation_x(mat3* mat, float angle);
+    void get_rotation_y(mat3* mat, float angle);
+    void get_rotation_z(mat3* mat, float angle);
 
     struct vec4
     {
@@ -273,33 +273,33 @@ namespace bolt {
 
     // row major
     // m[row][column]
-    struct mat4x4 {
+    struct mat4 {
         float m00, m01, m02, m03 = {};
         float m10, m11, m12, m13 = {};
         float m20, m21, m22, m23 = {};
         float m30, m31, m32, m33 = {};
     };
 
-    void mat4mul(mat4x4* dst, mat4x4* left, mat4x4* right);
+    void mat4mul(mat4* dst, mat4* left, mat4* right);
 
-    mat4x4 identity_matrix();
-    mat4x4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far);
-    mat4x4 perspective_projection_matrix(float fovy, float aspect, float near, float far);
-    mat4x4 frustum_matrix(float left, float right, float bottom, float top, float near, float far); // perspective
+    mat4 identity_matrix();
+    mat4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far);
+    mat4 perspective_projection_matrix(float fovy, float aspect, float near, float far);
+    mat4 frustum_matrix(float left, float right, float bottom, float top, float near, float far); // perspective
     // @todo rotation
-    mat4x4 camera_matrix(vec2 position, vec2 scale);
+    mat4 camera_matrix(vec2 position, vec2 scale);
 
-    mat4x4 mat4_get_translation_matrix(vec3 translation);
-    mat4x4 mat4_get_scale_matrix(vec3 scale);
+    mat4 mat4_get_translation_matrix(vec3 translation);
+    mat4 mat4_get_scale_matrix(vec3 scale);
 
-    void mat4_translate(mat4x4 *mat, vec3 translation);
-    void mat4_scale(mat4x4* mat, vec3 scale);
+    void mat4_translate(mat4 *mat, vec3 translation);
+    void mat4_scale(mat4* mat, vec3 scale);
 
-    void get_rotation_x(mat4x4* mat, float angle);
-    void get_rotation_y(mat4x4* mat, float angle);
-    void get_rotation_z(mat4x4* mat, float angle);
+    void get_rotation_x(mat4* mat, float angle);
+    void get_rotation_y(mat4* mat, float angle);
+    void get_rotation_z(mat4* mat, float angle);
 
-    void print_mat4(mat4x4* mat);
+    void print_mat4(mat4* mat);
 
     struct vec3d {
         double x = 0;

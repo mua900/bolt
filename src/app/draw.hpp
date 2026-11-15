@@ -222,7 +222,7 @@ namespace bolt
         MeshReference mesh = {};
         Texture texture = TEXTURE_INVALID;
 
-        mat4x4* matrix = {};
+        mat4* matrix = {};
         DrawMatrixUsage matrix_usage = {};
     };
 
@@ -244,7 +244,7 @@ namespace bolt
         int used = 0;  // reset every frame
         u32 next = 0;
 
-        mat4x4* matrix = {};
+        mat4* matrix = {};
         DrawMatrixUsage matrix_usage = {};
     };
 
@@ -420,7 +420,7 @@ namespace bolt
         // you can set a model matrix for a draw command
         // or just overwrite the mvp
         // this just stores the result and the last pushed matrix
-        bolt::mat4x4 mvp = {};
+        bolt::mat4 mvp = {};
 
         DArray<GPUBuffer> buffers = {};
         int active_vertex_buffer = 0;
@@ -559,7 +559,7 @@ namespace bolt
 
         void copy_to_swapchain(SDL_GPUTexture *texture, SDL_GPUTexture* swapchain, u32 swapchain_width, u32 swapchain_height);
 
-        void set_mvp(mat4x4* mat, DrawMatrixUsage usage);
+        void set_mvp(mat4* mat, DrawMatrixUsage usage);
 
         bolt::vec2 transformWorld(bolt::vec2 p) const;
         bolt::vec2 transformScreen(bolt::vec2 p) const;
