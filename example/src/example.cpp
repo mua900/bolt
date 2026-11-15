@@ -19,7 +19,6 @@ struct State
 	Texture texture = {};
 	DrawId group_solid = {};
 	DrawId group_tex = {};
-	DrawId group_lines = {};
 	DrawId group_text = {};
 	DrawId group_text2 = {};
 
@@ -74,10 +73,9 @@ bool initialize(void *userdata, Application *app)
 
 	bolt::DrawId id = app->render.make_draw_group(app->render.graphics_instance_texture, texture, 4);
 	bolt::DrawId id_solid = app->render.make_draw_group(app->render.graphics_instance, TEXTURE_INVALID, 1024);
-	bolt::DrawId id_lines = app->render.make_draw_group(app->render.graphics_lines, TEXTURE_INVALID, 1024);
 	bolt::DrawId id_text = app->render.make_draw_group(app->render.graphics_instance_texture, text.texture, 1);
 	bolt::DrawId id_text2 = app->render.make_draw_group(app->render.graphics_instance_texture, text2.texture, 1);
-	if (!(id.is_valid() && id_solid.is_valid() && id_lines.is_valid() && id_text.is_valid() && id_text2.is_valid()))
+	if (!(id.is_valid() && id_solid.is_valid() && id_text.is_valid() && id_text2.is_valid()))
 	{
 		return false;
 	}
@@ -210,7 +208,6 @@ bool initialize(void *userdata, Application *app)
 	state->animation = anim;
 	state->group_tex = id;
 	state->group_solid = id_solid;
-	state->group_lines = id_lines;
 	state->group_text = id_text;
 	state->group_text2 = id_text2;
 	state->text = text;
@@ -301,12 +298,6 @@ void draw(void *userdata, Application *app)
 
 	bolt::InstanceData frame = state->animation.get_frame(vec3(-100, 100, 0.2), 0, vec2(100, 100));
 	bolt::queue_draw_group(app->render, frame, state->group_tex);
-
-	// lines
-	bolt::InstanceData line = bolt::InstanceData {
-		0, 0, 0, 0, bolt::pack_scale(bolt::vec2(200, 200)), bolt::colorToHex(bolt::Colorf(0.5, 0.5, 0.5))
-	};
-	bolt::queue_draw_group(app->render, line, state->group_lines);
 
 	bolt::InstanceData text = {
 		-200, 0, 0.5, 0, bolt::pack_scale(bolt::vec2(128, 96)), bolt::colorToHex(bolt::Colorf(1,1,1)), {}, bolt::pack_unorm16x2(bolt::vec2(1,1))

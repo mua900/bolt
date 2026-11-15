@@ -791,9 +791,6 @@ namespace bolt
         GraphicsPipelineParameters pipeline_parameters_instance = get_default_graphics_pipeline_parameters();
         GraphicsPipelineParameters pipeline_parameters_light = get_default_graphics_pipeline_parameters();
         GraphicsPipelineParameters pipeline_parameters_composition = get_default_graphics_pipeline_parameters();
-        GraphicsPipelineParameters pipeline_parameters_lines = get_default_graphics_pipeline_parameters();
-
-        pipeline_parameters_lines.primitive = LineList;
 
         pipeline_parameters.depth_format = DepthFormat;
         pipeline_parameters_instance.depth_format = DepthFormat;
@@ -827,13 +824,6 @@ namespace bolt
 
         SDL_GPUGraphicsPipeline* pipeline_instance_texture = create_gpu_graphics_pipeline(&pipeline_parameters_instance, render, shaders.vertexInstance, shaders.fragmentTexture);
         if (!pipeline_instance_texture)
-        {
-            log_error("Failed to create graphics pipeline: %s", SDL_GetError());
-            return false;
-        }
-
-        SDL_GPUGraphicsPipeline *pipeline_lines = create_gpu_graphics_pipeline(&pipeline_parameters_lines, render, shaders.vertex, shaders.fragment);
-        if (!pipeline_lines)
         {
             log_error("Failed to create graphics pipeline: %s", SDL_GetError());
             return false;
@@ -1025,7 +1015,6 @@ namespace bolt
         render->graphics_texture = render->graphics.add(GraphicsPipeline(pipeline_parameters, pipeline_texture, true, true));
         render->graphics_instance = render->graphics.add(GraphicsPipeline(pipeline_parameters_instance, pipeline_instance, true, true));
         render->graphics_instance_texture = render->graphics.add(GraphicsPipeline(pipeline_parameters_instance, pipeline_instance_texture, true, true));
-        render->graphics_lines = render->graphics.add(GraphicsPipeline(pipeline_parameters_lines, pipeline_lines, true, true));
         render->graphics_light = render->graphics.add(GraphicsPipeline(pipeline_parameters_light, pipeline_light, true, true));
         render->graphics_composition = render->graphics.add(GraphicsPipeline(pipeline_parameters_composition, pipeline_composition, true, false));
         render->vertex_buffer = render->buffers.add(GPUBuffer(vertex_buffer, GPUBufferVertex, InitVertexBufferSize, false));

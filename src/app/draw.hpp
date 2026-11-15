@@ -256,9 +256,6 @@ namespace bolt
         Colorf color = {};
         vec2 sourceOffset = {};
         vec2 sourceScale = {};
-
-        // @todo
-        Flip flip = FlipNone;
     };
 
     enum VertexInputType
@@ -436,7 +433,6 @@ namespace bolt
         GraphicsPipelineId graphics_instance = {};
         GraphicsPipelineId graphics_texture = {};
         GraphicsPipelineId graphics_instance_texture = {};
-        GraphicsPipelineId graphics_lines = {};
         GraphicsPipelineId graphics_light = {};
         GraphicsPipelineId graphics_composition = {};
 
