@@ -2,7 +2,7 @@
 
 namespace bolt {
 
-	bool ActionSet::add_action(const char* name, Input& input)
+	bool ActionSet::add_action_input(const char* name, Input& input)
 	{
 		String s = String(name);
 		Action* action = action_set.find(s);
@@ -18,6 +18,19 @@ namespace bolt {
 			added = action->add_input(input);
 		}
 		return added;
+	}
+
+	bool ActionSet::add_action(const char* name, Action& action)
+	{
+		String s = String(name);
+		if (action_set.find(s))
+		{
+			log_error("Trying to add an action that already exists");
+			return false;
+		}
+
+		action_set.add(s, action);
+		return true;
 	}
 
 	bool ActionSet::read_action(InputState& state, const char* name, Value& out)

@@ -41,7 +41,8 @@ namespace bolt {
     {
         HashTable<Action> action_set = {};
 
-        bool add_action(const char* name, Input& input);
+        bool add_action_input(const char* name, Input& input);
+        bool add_action(const char* name, Action& action);
         bool read_action(InputState& input, const char* name, Value& out);
     };
 
