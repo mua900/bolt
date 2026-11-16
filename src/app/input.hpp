@@ -56,11 +56,21 @@ namespace bolt
     struct KeyboardAxis {
         SDL_Scancode negative;
         SDL_Scancode positive;
+
+        KeyboardAxis() {}
+        KeyboardAxis(SDL_Scancode neg, SDL_Scancode pos)
+            : negative(neg), positive(pos)
+        {}
     };
 
     struct KeyboardVector {
         KeyboardAxis x;
         KeyboardAxis y;
+
+        KeyboardVector() {}
+        KeyboardVector(KeyboardAxis p_x, KeyboardAxis p_y)
+            : x(p_x), y(p_y)
+        {}
     };
 
     struct MouseCursor {
@@ -165,8 +175,6 @@ namespace bolt
         u32 key2 = 0;
         u32 key3 = 0;
         u32 key4 = 0;
-
-
 
         Input() {}
         Input(InputKind k) :
