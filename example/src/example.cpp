@@ -22,6 +22,8 @@ struct State
 	DrawId group_text = {};
 	DrawId group_text2 = {};
 
+	float rot = 0;
+
 	Text text = {};
 	Text text2 = {};
 
@@ -284,12 +286,12 @@ void draw(void *userdata, Application *app)
 		0,
 		100,
 		0,
-		0,
+		state->rot,
 		pack_scale(bolt::vec2(128, 128)),
 		bolt::colorToHex(bolt::Colorf(0.4, 0.4, 0.4)),
 	};
 	bolt::InstanceData solid2 = bolt::InstanceData{
-		300, 300, 0, 0,
+		300, 300, 0, state->rot,
 		pack_scale(bolt::vec2(256, 256)),
 		bolt::colorToHex(bolt::Colorf(0.8, 0.4, 0.6))
 	};
@@ -305,6 +307,8 @@ void draw(void *userdata, Application *app)
 	bolt::queue_draw_group(app->render, text, state->group_text);
 	text.x -= 300;
 	bolt::queue_draw_group(app->render, text, state->group_text2);
+
+	state->rot += 0.01;
 }
 
 bool handleEvent(SDL_Event event, void *userdata, Application* app)
@@ -440,6 +444,7 @@ int main()
 	InitConfiguration conf = bolt::get_default_init_configuration();
 	conf.render.gpuDebug = true;
 	conf.render.doLights = true;
+	conf.render.sample_count = SampleCount4;
 
 	if (!app.initialize(conf))
 	{

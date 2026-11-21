@@ -29,6 +29,7 @@ namespace bolt
 
     struct RenderInitConfig
     {
+        SampleCount sample_count = SampleCount1;
         bool doLights = false;
         bool doShadows = false; // @todo not implemented
         bool gpuDebug = false;
@@ -284,7 +285,7 @@ namespace bolt
         VertexInputType input = {};
         PrimitiveType primitive = {};
         DrawType draw_type = DrawGeometry;
-        // @todo SDL_GPUMultisampleState multisample = {};
+        SDL_GPUMultisampleState multisample = {};
         SDL_GPUTextureFormat format = {};
         SDL_GPUTextureFormat depth_format = {};
     };
@@ -404,6 +405,9 @@ namespace bolt
     struct RenderContext {
         bolt::vec2 render_size = {};
 
+        // sample count for render and depth targets
+        SampleCount sample_count = {};
+
         CoordinateSpace space = {};  // what coordinate space input vertices are in, currently unused
         // a view matrix is derived from this if this pointer is not null
     	const Camera* camera = {};
@@ -448,6 +452,7 @@ namespace bolt
         SDL_GPUTexture* render_target = nullptr;
         SDL_GPUTexture* light_target = nullptr;
         SDL_GPUTexture* depth_target = nullptr;
+        SDL_GPUTexture* msaa_target = nullptr;
 
         // used for uploading Vertex data
         TransferBuffer vertex_transfer_buffer = {};

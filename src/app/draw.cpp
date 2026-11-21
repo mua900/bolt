@@ -272,7 +272,10 @@ namespace bolt
             }
 
             // copy render target to swapchain
-            context.copy_to_swapchain(context.render_target, swapchain, swapchain_width, swapchain_height);
+            if (context.sample_count == SampleCount1)
+            {
+                context.copy_to_swapchain(context.render_target, swapchain, swapchain_width, swapchain_height);
+            }
         }
 
         context.submit_command_buffer();
@@ -337,13 +340,13 @@ namespace bolt
         SDL_GPURenderPass* render_pass = nullptr;
 
         SDL_GPUColorTargetInfo color_targets[1] = {};
-        color_targets[0].texture = render_target;
+        color_targets[0].texture = (sample_count == SampleCount1) ? render_target : msaa_target;
         color_targets[0].mip_level = 0;
         color_targets[0].layer_or_depth_plane = 0;
         color_targets[0].clear_color = SDL_FColor { COLOR_ARG(clear_color) };
         color_targets[0].load_op = SDL_GPU_LOADOP_CLEAR;
-        color_targets[0].store_op = SDL_GPU_STOREOP_STORE;
-        color_targets[0].resolve_texture = nullptr;
+        color_targets[0].store_op = (sample_count == SampleCount1) ? SDL_GPU_STOREOP_STORE : SDL_GPU_STOREOP_RESOLVE;
+        color_targets[0].resolve_texture = (sample_count == SampleCount1) ? nullptr : render_target;
         color_targets[0].resolve_mip_level = 0;
         color_targets[0].resolve_layer = 0;
         color_targets[0].cycle = true;
@@ -519,6 +522,12 @@ namespace bolt
         parameters.primitive = TriangleList;
         parameters.depth_format = SDL_GPU_TEXTUREFORMAT_INVALID;
         parameters.input = InputVertex;
+
+        parameters.multisample.sample_count = SDL_GPU_SAMPLECOUNT_1;  /**< The number of samples to be used in rasterization. */
+        parameters.multisample.sample_mask = 0;               /**< Reserved for future use. Must be set to 0. */
+        parameters.multisample.enable_mask = false;                 /**< Reserved for future use. Must be set to false. */
+        parameters.multisample.enable_alpha_to_coverage = false;    /**< true enables the alpha-to-coverage feature. */
+
         return parameters;
     }
 
@@ -714,12 +723,7 @@ namespace bolt
         // rasterizer.enable_depth_bias;            /**< true to bias fragment depth values. */
         rasterizer.enable_depth_clip = true;            /**< true to enable depth clip, false to enable depth clamp. */
 
-        // @todo add this to parameters
-        SDL_GPUMultisampleState multisample = {};
-        multisample.sample_count = SDL_GPU_SAMPLECOUNT_1;  /**< The number of samples to be used in rasterization. */
-        multisample.sample_mask = 0;               /**< Reserved for future use. Must be set to 0. */
-        multisample.enable_mask = false;                 /**< Reserved for future use. Must be set to false. */
-        multisample.enable_alpha_to_coverage = false;    /**< true enables the alpha-to-coverage feature. */
+        SDL_GPUMultisampleState multisample = parameters->multisample;
 
         SDL_GPUDepthStencilState stencil = {};
         // equal so that we do blending if their depths are equal
@@ -953,6 +957,28 @@ namespace bolt
             return false;
         }
 
+        SDL_GPUTexture *msaa_target = nullptr;
+        if (conf->sample_count != SampleCount1)
+        {
+            SDL_GPUTextureCreateInfo msaaTargetCI = {};
+            msaaTargetCI.type = SDL_GPU_TEXTURETYPE_2D;
+            msaaTargetCI.format = RenderFormat;
+            msaaTargetCI.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+            msaaTargetCI.width = RenderTargetWidth;
+            msaaTargetCI.height = RenderTargetHeight;
+            msaaTargetCI.layer_count_or_depth = 1;
+            msaaTargetCI.num_levels = 1;
+            msaaTargetCI.sample_count = (SDL_GPUSampleCount) conf->sample_count;
+
+            msaa_target = SDL_CreateGPUTexture(render->device, &msaaTargetCI);
+            if (!msaa_target)
+            {
+                log_error("Couldn't create msaa target: %s", SDL_GetError());
+                return false;
+            }
+        }
+
+
         SDL_GPUTexture *depth_target = nullptr;
         {
             // to suppress a d3d12 warning
@@ -967,7 +993,7 @@ namespace bolt
             depthTargetCI.height = RenderTargetHeight;
             depthTargetCI.layer_count_or_depth = 1;
             depthTargetCI.num_levels = 1;
-            depthTargetCI.sample_count = SDL_GPU_SAMPLECOUNT_1;
+            depthTargetCI.sample_count = SDL_GPU_SAMPLECOUNT_1;//(SDL_GPUSampleCount) conf->sample_count;
             depth_target = SDL_CreateGPUTexture(render->device, &depthTargetCI);
 
             SDL_DestroyProperties(depthTargetProperties);
@@ -1011,6 +1037,8 @@ namespace bolt
         render->clear_color = ClearColorDefault;
         render->light_clear_color = LightClearColorDefault;
 
+        render->sample_count = conf->sample_count;
+
         render->graphics_default = render->graphics.add(GraphicsPipeline(pipeline_parameters, pipeline, true, true));
         render->graphics_texture = render->graphics.add(GraphicsPipeline(pipeline_parameters, pipeline_texture, true, true));
         render->graphics_instance = render->graphics.add(GraphicsPipeline(pipeline_parameters_instance, pipeline_instance, true, true));
@@ -1024,6 +1052,7 @@ namespace bolt
         render->instance_buffer = render->buffers.add(GPUBuffer(instance_buffer, GPUBufferVertex, InitInstanceBufferSize, true));
         render->light_buffer = render->buffers.add(GPUBuffer(light_buffer, GPUBufferVertex, InitInstanceBufferSize, false));
         render->render_target = render_target;
+        render->msaa_target = msaa_target;
         render->light_target = light_target;
         render->depth_target = depth_target;
         render->sampler = sampler;
