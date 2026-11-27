@@ -1143,9 +1143,8 @@ namespace bolt
                 vec2 cscale = camera ? vec2(camera->zoom, camera->zoom) : vec2(1,1);
 
                 bolt::mat4 cameraMatrix = bolt::camera_matrix(cpos, cscale);
-                mat4mul(&mvp, &orthographic, &cameraMatrix);
-
-                mat4mul(&mvp, mat, &mvp);
+                mat4mul(&mvp, &cameraMatrix, mat);
+                mat4mul(&mvp, &orthographic, &mvp);
 
                 SDL_PushGPUVertexUniformData(frame.command_buffer, 0, &mvp, sizeof(bolt::mat4));
                 break;

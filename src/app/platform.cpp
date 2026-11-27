@@ -41,6 +41,8 @@ bool init_platform_context(PlatformContext* platform)
     return false;
 #elif SDL_PLATFORM_MACOS
     return false;
+#elif SDL_PLATFORM_ANDROID
+	return false;
 #endif
 }
 
@@ -50,6 +52,7 @@ void cleanup_platform_context(PlatformContext *platform)
     platform->dxgi_adapter3->Release();
 #elif SDL_PLATFORM_LINUX
 #elif SDL_PLATFORM_MACOS
+#elif SDL_PLATFORM_ANDROID
 #endif
 }
 
@@ -64,5 +67,6 @@ void get_process_video_memory_info(PlatformContext* platform, VideoMemoryInfo *i
     }
 #elif SDL_PLATFORM_LINUX
 #elif SDL_PLATFORM_MACOS
+#elif SDL_PLATFORM_ANDROID
 #endif
 }

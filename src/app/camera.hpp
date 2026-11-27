@@ -18,7 +18,7 @@ namespace bolt
         bolt::vec2 screen_to_world(bolt::vec2 p) const;
     };
 
-    // get an camera with identity transform
+    // get a camera with identity transform
     Camera init_camera();
 
 } // namespace

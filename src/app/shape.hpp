@@ -7,9 +7,6 @@
 namespace bolt
 {
 
-    // it is here to reduce data duplication between different systems like graphics, ui and physics
-    // and it needs to server all of them so the code here can be all over the place
-
     using ShapeId = u32;
 
     enum ShapeType

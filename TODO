@@ -1,5 +1,7 @@
 - stop preloading every asset by default (memory bloat)
 - split the example to subsystems like draw, animation, assets etc.
-- don't fail when not finding asset catalog by default, make the behaviour an option
 - make the interface for rendering more user friendly
 - a way to automatically create shader loading code from metadata
+- a simplified obj like, easily editable text format to store meshes and models that can be made up of multiple meshes
+- physics
+- sized svg loading, width and height attributes for svg images

@@ -20,6 +20,7 @@ namespace bolt
     #define MOUSE_MIDDLE_MASK SDL_BUTTON_MMASK
     #define MOUSE_RIGHT_MASK  SDL_BUTTON_RMASK
 
+	// @todo remove
     #define KEY_W       SDL_SCANCODE_W
     #define KEY_D       SDL_SCANCODE_D
     #define KEY_S       SDL_SCANCODE_S
@@ -170,7 +171,7 @@ namespace bolt
     {
         InputKind kind = {};
         u32 device = 0;
-        // what these means depends on input kind
+        // what these mean depends on the input kind
         u32 key = 0;
         u32 key2 = 0;
         u32 key3 = 0;
@@ -206,6 +207,7 @@ namespace bolt
         {}
     };
 
+    // @todo active input devices and types of them
     struct InputState {
         KeyboardState keyboard = {};
         MouseState mouse = {};

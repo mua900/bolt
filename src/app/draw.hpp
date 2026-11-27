@@ -17,19 +17,18 @@ namespace bolt
 
     // @todo
     // normal maps
+    // shadows
     // user pipelines
     // user shaders
-    // put an option to enable msaa
     // directional lights, area lights
     // maybe have an option to have an additional render pass for ui and text since you may not want them to be effected by lighting or blend with other geometry
-    // maybe have multiple command buffers for upload and render commands see: SDL_AcquireGPUCommandBuffer
-    // option for dynamicly resizing render target
+    // option for dynamicaly resizing the render target
 
     struct RenderContext;
 
     struct RenderInitConfig
     {
-        SampleCount sample_count = SampleCount1;
+        SampleCount sample_count = SampleCount1;  // @todo dynamically changing msaa
         bool doLights = false;
         bool doShadows = false; // @todo not implemented
         bool gpuDebug = false;
@@ -52,6 +51,7 @@ namespace bolt
     using Viewport = SDL_GPUViewport;
 
     // @todo implement
+    // need to find a place to cram in this info into one of the per instance vertex formats or create a new fatter one
     enum Flip {
         FlipNone = SDL_FLIP_NONE,
         FlipHorizontal = SDL_FLIP_HORIZONTAL,

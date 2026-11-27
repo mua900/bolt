@@ -69,7 +69,7 @@ namespace bolt
         MIX_SetMixerGain(mixer, gain);
     }
 
-    float AudioPlayer::get_master_frequency_ratio()
+    float AudioPlayer::get_master_frequency_ratio() const
     {
         return MIX_GetMixerFrequencyRatio(mixer);
     }

@@ -10,8 +10,10 @@
     // @todo
 #elif SDL_PLATFORM_MACOS
     // @todo
+#elif SDL_PLATFORM_ANDROID
+	// @todo
 #else
-    #error Platform not supported
+    #error Platform not recognized
 #endif
 
 struct PlatformContext
@@ -22,6 +24,7 @@ struct PlatformContext
     // @todo
 #elif SDL_PLATFORM_MACOS
     // @todo
+#elif SDL_PLATFORM_ANDROID
 #endif
 };
 
@@ -34,7 +37,7 @@ struct VideoMemoryInfo
 bool init_platform_context(PlatformContext* platform);
 void cleanup_platform_context(PlatformContext* platform);
 
-// noop on linux and mac
+// only works on windows using dxgi, no-op everywhere else
 void get_process_video_memory_info(PlatformContext* platform, VideoMemoryInfo* info);
 
 #endif // PLATFORM_HPP

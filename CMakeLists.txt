@@ -145,7 +145,7 @@ if (USE_VENDORED_DEPENDENCIES)
 	set(SDLMIXER_VENDORED ON)
 endif()
 
-# turn the ones you want formats on
+# turn the formats you want on
 # this significantly improves build times and binary size
 set(SDLIMAGE_ANI  OFF)
 set(SDLIMAGE_AVIF OFF)

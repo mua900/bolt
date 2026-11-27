@@ -54,7 +54,7 @@ namespace bolt
 
         void set_master_gain(float gain);
         float get_master_gain() const;
-        float get_master_frequency_ratio();
+        float get_master_frequency_ratio() const;
         void set_master_frequency_ratio(float ratio);
 
         void stop_all(s64 fade_out_ms);
